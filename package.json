@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed": "echo \"Supabase SQL: supabase/migrations/002_seed.sql dosyasını Supabase SQL Editor üzerinden çalıştırın\"",
+    "db:migrate": "echo \"Supabase SQL: supabase/migrations/001_initial.sql dosyasını Supabase SQL Editor üzerinden çalıştırın\""
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.23",

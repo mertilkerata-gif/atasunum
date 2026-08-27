@@ -1,4 +1,5 @@
 import { Sidebar } from '@/components/layout/sidebar'
+import { NotificationCenter } from '@/components/layout/notification-center'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,6 +8,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <main className="flex-1 ml-60 min-h-screen">
         {children}
       </main>
+      <NotificationCenter />
     </div>
   )
 }

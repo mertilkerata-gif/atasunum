@@ -443,10 +443,47 @@ export default function ReportsPage() {
           )}
 
           {/* CAMPAIGN + placeholder for others */}
-          {(activeReport === 'campaign' || activeReport === 'forecast' as any) && (
-            <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-12 text-center">
-              <div className="text-4xl mb-3">🚧</div>
-              <div className="text-white/40 text-sm">Bu rapor yakında eklenecek</div>
+          {activeReport === 'campaign' && (
+            <div className="space-y-5">
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: 'Kampanyalı Gün Siparişi', value: '1.842', diff: '+%23', color: 'text-emerald-400' },
+                  { label: 'Kampanyasız Gün Siparişi', value: '1.497', diff: 'baz', color: 'text-white' },
+                  { label: 'Kampanya Nabız Etkisi', value: '+11 puan', diff: 'ort. artış', color: 'text-orange-400' },
+                ].map(({ label, value, diff, color }) => (
+                  <div key={label} className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-4">
+                    <div className="text-xs text-white/40 mb-1">{label}</div>
+                    <div className={cn('text-2xl font-bold', color)}>{value}</div>
+                    <div className="text-xs text-white/30">{diff}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
+                <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">Kampanya Dönemleri — Etki Analizi</div>
+                <div className="space-y-3">
+                  {[
+                    { name: 'Whopper Günü', dates: '14–16 Ağu', orders: '+%31', pulse: '+18', packing: '+22', status: 'tamamlandı' },
+                    { name: 'Çift Burger Haftası', dates: '1–7 Ağu', orders: '+%24', pulse: '+14', packing: '+17', status: 'tamamlandı' },
+                    { name: 'Öğle Menüsü İndirimi', dates: '20–27 Ağu', orders: '+%18', pulse: '+9', packing: '+11', status: 'aktif' },
+                  ].map(c => (
+                    <div key={c.name} className={cn('flex items-center gap-4 rounded-lg border p-3', c.status === 'aktif' ? 'border-orange-500/30 bg-orange-500/[0.04]' : 'border-white/[0.06] bg-white/[0.02]')}>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-white">{c.name}</span>
+                          {c.status === 'aktif' && <span className="text-[10px] bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full font-medium">Aktif</span>}
+                        </div>
+                        <div className="text-xs text-white/30 mt-0.5">{c.dates}</div>
+                      </div>
+                      <div className="text-center"><div className="text-xs text-white/40">Sipariş</div><div className="text-sm font-bold text-emerald-400">{c.orders}</div></div>
+                      <div className="text-center"><div className="text-xs text-white/40">Nabız</div><div className="text-sm font-bold text-red-400">{c.pulse}</div></div>
+                      <div className="text-center"><div className="text-xs text-white/40">Packing</div><div className="text-sm font-bold text-orange-400">{c.packing}</div></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/[0.05] p-4 text-xs text-white/60">
+                💡 <span className="text-white/80">Kampanyalı günlerde packing kapasitesi ortalama %17 daha fazla zorlanıyor.</span> Kampanya başlamadan 1 gün önce packing kadrosu takviye edilmesi önerilir.
+              </div>
             </div>
           )}
 
