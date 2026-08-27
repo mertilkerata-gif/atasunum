@@ -16,13 +16,21 @@ export function RestaurantCard({ data }: RestaurantCardProps) {
   return (
     <Link href={`/restaurants/${restaurant.id}`}>
       <div className={cn(
-        'rounded-xl border p-5 hover:border-white/20 transition-all cursor-pointer group',
+        'relative rounded-xl border p-5 hover:border-white/20 transition-all cursor-pointer group',
         config.border, config.bg
       )}>
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div>
-            <div className="text-xs text-white/40 mb-0.5">{restaurant.brand === 'BURGER_KING' ? '🍔' : '🍗'} {restaurant.brand.replace('_', ' ')}</div>
+            {pulse.risk_level === 'KRITIK' && (
+          <div className="absolute top-3 right-3">
+            <div className="relative w-2.5 h-2.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+              <div className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-60" />
+            </div>
+          </div>
+        )}
+        <div className="text-xs text-white/40 mb-0.5">{restaurant.brand === 'BURGER_KING' ? '🍔' : '🍗'} {restaurant.brand.replace('_', ' ')}</div>
             <div className="text-sm font-semibold text-white group-hover:text-white/90">{restaurant.name}</div>
             <div className="text-xs text-white/35 mt-0.5">{restaurant.district} · {weather.icon} {weather.temperature}°C</div>
           </div>

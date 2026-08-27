@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Topbar } from '@/components/layout/topbar'
 import { RESTAURANTS } from '@/data/seed/restaurants'
 import { getPulseScore, getSnapshot } from '@/data/seed/mock-data'
+import { getRiskConfig } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
 import { FileText, TrendingUp, TrendingDown, ShoppingBag, Store, Truck, CloudRain, Zap, Download } from 'lucide-react'
@@ -198,7 +199,7 @@ export default function ReportsPage() {
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
                     <div className="text-xs text-white/40 mb-1">En Yoğun Saat</div>
-                    <div className="text-lg font-bold text-white">{peakHour.hour} — {peakHour.hour.replace(':00', ':60').replace('60', '00').replace(peakHour.hour.split(':')[0], String(parseInt(peakHour.hour)+1))}</div>
+                    <div className="text-lg font-bold text-white">{peakHour.hour} — {String(parseInt(peakHour.hour.split(':')[0]) + 1).padStart(2,'0')}:00</div>
                     <div className="text-xs text-white/40">{peakHour.orders} sipariş · Nabız: {peakHour.pulse}</div>
                   </div>
                   <div>
@@ -420,7 +421,6 @@ export default function ReportsPage() {
                   <tbody>
                     {RESTAURANTS.map(r => {
                       const pulse = getPulseScore(r.id)
-                      const { getRiskConfig } = require('@/lib/utils')
                       const config = getRiskConfig(pulse.risk_level)
                       return (
                         <tr key={r.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
