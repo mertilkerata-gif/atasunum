@@ -5,26 +5,37 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Activity, TrendingUp, Store, FileText,
   Lightbulb, Target, FlaskConical, Bot, Settings, ShoppingBag,
-  MessageSquare, DollarSign, Package, Users, AlertOctagon, Smartphone
+  MessageSquare, DollarSign, Package, Users, AlertOctagon,
+  Brain, Sun, Trophy, GitBranch, Map, Zap, Heart, ClipboardList, Terminal, Tv
 } from 'lucide-react'
 
 const nav = [
-  { href: '/overview',          label: 'Genel Bakış',       icon: LayoutDashboard },
-  { href: '/live-operations',   label: 'Canlı Operasyon',   icon: Activity },
-  { href: '/anomalies',         label: 'Anomali Dedektörü', icon: AlertOctagon, badge: 'YENİ' },
-  { href: '/tiklagelsin',       label: 'Tıkla Gelsin',      icon: ShoppingBag },
-  { href: '/forecast',          label: 'Tahmin',            icon: TrendingUp },
-  { href: '/shifts',            label: 'Vardiya AI',        icon: Users, badge: 'YENİ' },
-  { href: '/restaurants',       label: 'Restoranlar',       icon: Store },
-  { href: '/products',          label: 'Ürün & Stok',       icon: Package },
-  { href: '/complaints',        label: 'Şikayetler',        icon: MessageSquare },
-  { href: '/revenue',           label: 'Satış & Ciro',      icon: DollarSign },
-  { href: '/reports',           label: 'Raporlar',          icon: FileText },
-  { href: '/ai-recommendations',label: 'AI Önerileri',      icon: Lightbulb },
-  { href: '/forecast-accuracy', label: 'Tahmin Doğruluğu',  icon: Target },
-  { href: '/simulator',         label: 'Simülatör',         icon: FlaskConical },
-  { href: '/ai-analyst',        label: 'AI Analist',        icon: Bot },
-  { href: '/settings',          label: 'Ayarlar',           icon: Settings },
+  { href: '/overview',       label: 'Genel Bakış',        icon: LayoutDashboard },
+  { href: '/live-operations',label: 'Canlı Operasyon',    icon: Activity },
+  { href: '/tv',             label: 'TV Command Center',  icon: Tv,           badge: 'YENİ', external: true },
+  { href: '/anomalies',      label: 'Anomali Dedektörü',  icon: AlertOctagon, badge: 'YENİ' },
+  { href: '/briefing',       label: 'Sabah Briefing',     icon: Sun,          badge: 'YENİ' },
+  { href: '/tiklagelsin',    label: 'Tıkla Gelsin',       icon: ShoppingBag },
+  { href: '/forecast',       label: 'Tahmin',             icon: TrendingUp },
+  { href: '/shifts',         label: 'Vardiya AI',         icon: Users },
+  { href: '/restaurants',    label: 'Restoranlar',        icon: Store },
+  { href: '/products',       label: 'Ürün & Stok',        icon: Package },
+  { href: '/complaints',     label: 'Şikayetler',         icon: MessageSquare },
+  { href: '/revenue',        label: 'Satış & Ciro',       icon: DollarSign },
+  { href: '/journey',        label: 'Müşteri Yolculuğu',  icon: GitBranch,    badge: 'YENİ' },
+  { href: '/benchmark',      label: 'Benchmark',          icon: Trophy },
+  { href: '/risk-matrix',    label: 'Risk Matrisi',       icon: Map,          badge: 'YENİ' },
+  { href: '/memory',         label: 'Op. Hafıza',         icon: Brain,        badge: 'YENİ' },
+  { href: '/explainer',      label: 'Explainable AI',     icon: Zap,          badge: 'YENİ' },
+  { href: '/reports',        label: 'Raporlar',           icon: FileText },
+  { href: '/ai-recommendations', label: 'AI Önerileri',   icon: Lightbulb },
+  { href: '/forecast-accuracy',  label: 'Tahmin Doğruluğu',icon: Target },
+  { href: '/simulator',      label: 'Simülatör',          icon: FlaskConical },
+  { href: '/ai-analyst',     label: 'AI Analist',         icon: Bot },
+  { href: '/health',         label: 'Sistem Sağlığı',     icon: Heart },
+  { href: '/audit',          label: 'Audit Log',          icon: ClipboardList },
+  { href: '/webhook-test',   label: 'Webhook Test',       icon: Terminal },
+  { href: '/settings',       label: 'Ayarlar',            icon: Settings },
 ]
 
 export function Sidebar() {
@@ -69,7 +80,7 @@ export function Sidebar() {
         {nav.map(({ href, label, icon: Icon, badge }) => {
           const active = pathname === href || (href !== '/' && pathname.startsWith(href))
           return (
-            <Link key={href} href={href}
+            <Link key={href} href={href} target={badge === 'YENİ' && href === '/tv' ? '_blank' : undefined}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] transition-all duration-150 group relative',
                 active
