@@ -5,14 +5,16 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Activity, TrendingUp, Store, FileText,
   Lightbulb, Target, FlaskConical, Bot, Settings, ShoppingBag,
-  MessageSquare, DollarSign, Package
+  MessageSquare, DollarSign, Package, Users, AlertOctagon, Smartphone
 } from 'lucide-react'
 
 const nav = [
   { href: '/overview',          label: 'Genel Bakış',       icon: LayoutDashboard },
   { href: '/live-operations',   label: 'Canlı Operasyon',   icon: Activity },
-  { href: '/tiklagelsin',       label: 'Tıkla Gelsin',      icon: ShoppingBag, badge: 'Demo' },
+  { href: '/anomalies',         label: 'Anomali Dedektörü', icon: AlertOctagon, badge: 'YENİ' },
+  { href: '/tiklagelsin',       label: 'Tıkla Gelsin',      icon: ShoppingBag },
   { href: '/forecast',          label: 'Tahmin',            icon: TrendingUp },
+  { href: '/shifts',            label: 'Vardiya AI',        icon: Users, badge: 'YENİ' },
   { href: '/restaurants',       label: 'Restoranlar',       icon: Store },
   { href: '/products',          label: 'Ürün & Stok',       icon: Package },
   { href: '/complaints',        label: 'Şikayetler',        icon: MessageSquare },
