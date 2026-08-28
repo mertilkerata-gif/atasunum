@@ -1,22 +1,23 @@
 /**
  * Supabase Service
- * Demo: mock data döndürür
- * Prod: NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY ile gerçek DB
+ * Server-side only — tüm env değişkenleri NEXT_PUBLIC_ prefix'siz
+ * Vercel Dashboard > Settings > Environment Variables'dan ekle:
+ *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  */
 
 import { PulseScore, OperationSnapshot } from '@/types'
 import { getPulseScore, getSnapshot } from '@/data/seed/mock-data'
 
-const isDemoMode = !process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'your_supabase_project_url'
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+const isDemoMode = !SUPABASE_URL || SUPABASE_URL === 'your_supabase_project_url' || !SUPABASE_KEY
 
 // Lazy-load Supabase client (sadece prod'da bağlanır)
 async function getClient() {
   if (isDemoMode) return null
   const { createClient } = await import('@supabase/supabase-js')
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  return createClient(SUPABASE_URL!, SUPABASE_KEY!)
 }
 
 export async function savePulseScore(pulse: Omit<PulseScore, 'id'>): Promise<void> {
@@ -55,7 +56,6 @@ export async function getAllPulseScores(): Promise<PulseScore[]> {
     .select('*')
     .order('computed_at', { ascending: false })
     .limit(100)
-  // Her restoran için en son skoru al
   const seen = new Set<string>()
   const latest: PulseScore[] = []
   for (const row of (data ?? [])) {
