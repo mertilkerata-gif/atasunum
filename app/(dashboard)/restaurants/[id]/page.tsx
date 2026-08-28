@@ -140,6 +140,10 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
         {recommendation && (
           <RecommendationPanel recommendation={recommendation} />
         )}
+
+        {/* Ürün & Stok + Şikayet özeti */}
+        <ProductComplaintRow restaurantId={id} />
+
       </div>
     </div>
   )
@@ -197,6 +201,102 @@ function RecommendationPanel({ recommendation }: { recommendation: NonNullable<R
             </span>
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+function ProductComplaintRow({ restaurantId }: { restaurantId: string }) {
+  const { getProductSnapshot } = require('@/data/seed/products')
+  const { getComplaintSummary, REASON_LABELS } = require('@/data/seed/complaints')
+  const { getRevenueSnapshot } = require('@/data/seed/revenue')
+  const { cn } = require('@/lib/utils')
+
+  const products = getProductSnapshot(restaurantId)
+  const complaints = getComplaintSummary(restaurantId)
+  const revenue = getRevenueSnapshot(restaurantId)
+
+  const topProducts = [...products.products].sort((a: any, b: any) => b.demandIndex - a.demandIndex).slice(0, 4)
+  const topComplaint = Object.entries(complaints.byReason as Record<string, number>)
+    .sort(([,a], [,b]) => (b as number) - (a as number)).slice(0, 3)
+
+  return (
+    <div className="grid grid-cols-3 gap-4">
+      {/* Ürün yoğunluğu */}
+      <div className="rounded-xl border p-5" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-4">Ürün Yoğunluğu</div>
+        <div className="space-y-3">
+          {topProducts.map((p: any) => {
+            const color = p.demandIndex >= 150 ? '#ff3d3d' : p.demandIndex >= 120 ? '#f97316' : p.demandIndex >= 100 ? '#eab308' : '#22c55e'
+            return (
+              <div key={p.id} className="flex items-center gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-white/60">{p.name}</span>
+                    <span className="text-xs font-bold font-mono" style={{ color }}>%{p.demandIndex}</span>
+                  </div>
+                  <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${Math.min(p.demandIndex, 200) / 2}%`, background: color }} />
+                  </div>
+                </div>
+                {p.stockRisk !== 'ok' && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded font-bold text-red-300" style={{ background: 'rgba(255,61,61,0.15)' }}>
+                    {p.stockUnits}a
+                  </span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Şikayet özeti */}
+      <div className="rounded-xl border p-5" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-xs text-white/40 uppercase tracking-widest font-medium">Müşteri Şikayeti</div>
+          <span className={cn('text-xl font-bold font-mono', complaints.total > 15 ? 'text-red-400' : complaints.total > 8 ? 'text-orange-400' : 'text-white/50')}>{complaints.total}</span>
+        </div>
+        <div className="space-y-2 mb-4">
+          {topComplaint.map(([reason, count]: [string, any]) => count > 0 && (
+            <div key={reason} className="flex items-center justify-between">
+              <span className="text-xs text-white/50">{(REASON_LABELS as any)[reason]}</span>
+              <span className="text-xs font-bold text-white/70">{count}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center gap-3 pt-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+          <div className="flex-1">
+            <div className="text-[10px] text-white/30">Kayıp Ciro</div>
+            <div className="text-sm font-bold font-mono text-red-400">{complaints.totalLostRevenue.toLocaleString('tr-TR')} ₺</div>
+          </div>
+          <div>
+            <div className="text-[10px] text-white/30">Çözüm</div>
+            <div className="text-sm font-bold font-mono text-emerald-400">%{Math.round(complaints.resolvedRate * 100)}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Ciro özeti */}
+      <div className="rounded-xl border p-5" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-4">Ciro Durumu</div>
+        <div className="space-y-3">
+          <div>
+            <div className="text-[10px] text-white/30 mb-0.5">Gerçekleşen</div>
+            <div className="text-xl font-bold font-mono text-white">{revenue.actualRevenue.toLocaleString('tr-TR')} ₺</div>
+          </div>
+          <div>
+            <div className="text-[10px] text-white/30 mb-0.5">Kayıp Ciro</div>
+            <div className="text-lg font-bold font-mono text-red-400">{revenue.totalLostRevenue.toLocaleString('tr-TR')} ₺</div>
+          </div>
+          <div className="pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+            <div className="text-[10px] text-white/30 mb-1.5">Kapasite Kullanımı</div>
+            <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-all"
+                style={{ width: `${revenue.capacityUtilization}%`, background: revenue.capacityUtilization > 80 ? '#ff3d3d' : '#22c55e' }} />
+            </div>
+            <div className="text-xs font-mono text-white/40 mt-1">%{revenue.capacityUtilization}</div>
+          </div>
+        </div>
       </div>
     </div>
   )

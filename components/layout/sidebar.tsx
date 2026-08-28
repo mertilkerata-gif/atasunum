@@ -4,7 +4,8 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Activity, TrendingUp, Store, FileText,
-  Lightbulb, Target, FlaskConical, Bot, Settings, ShoppingBag
+  Lightbulb, Target, FlaskConical, Bot, Settings, ShoppingBag,
+  MessageSquare, DollarSign, Package
 } from 'lucide-react'
 
 const nav = [
@@ -13,6 +14,9 @@ const nav = [
   { href: '/tiklagelsin',       label: 'Tıkla Gelsin',      icon: ShoppingBag, badge: 'Demo' },
   { href: '/forecast',          label: 'Tahmin',            icon: TrendingUp },
   { href: '/restaurants',       label: 'Restoranlar',       icon: Store },
+  { href: '/products',          label: 'Ürün & Stok',       icon: Package },
+  { href: '/complaints',        label: 'Şikayetler',        icon: MessageSquare },
+  { href: '/revenue',           label: 'Satış & Ciro',      icon: DollarSign },
   { href: '/reports',           label: 'Raporlar',          icon: FileText },
   { href: '/ai-recommendations',label: 'AI Önerileri',      icon: Lightbulb },
   { href: '/forecast-accuracy', label: 'Tahmin Doğruluğu',  icon: Target },
