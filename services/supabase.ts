@@ -8,7 +8,7 @@
 import { PulseScore, OperationSnapshot } from '@/types'
 import { getPulseScore, getSnapshot } from '@/data/seed/mock-data'
 
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+const SUPABASE_URL = process.env.SUPABASE_URL
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 const isDemoMode = !SUPABASE_URL || SUPABASE_URL === 'your_supabase_project_url' || !SUPABASE_KEY
