@@ -1,41 +1,27 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff, Loader2, ChevronRight, Shield } from 'lucide-react'
+import { Loader2, ChevronRight, Shield } from 'lucide-react'
 
 const DEMO_USERS = [
-  { email: 'hq@tabgida.com', password: 'tabgida2026', role: 'HQ Merkez', initial: 'HQ', color: '#f97316' },
-  { email: 'bolge@tabgida.com', password: 'bolge2026', role: 'Bölge Müdürü', initial: 'BM', color: '#818cf8' },
-  { email: 'mudur@tabgida.com', password: 'mudur2026', role: 'Restoran Müdürü', initial: 'RM', color: '#22c55e' },
+  { role: 'HQ Merkez', desc: 'Tüm ağ görünümü', initial: 'HQ', color: '#f97316' },
+  { role: 'Bölge Müdürü', desc: 'Bölgesel operasyon', initial: 'BM', color: '#818cf8' },
+  { role: 'Restoran Müdürü', desc: 'Tek şube yönetimi', initial: 'RM', color: '#22c55e' },
 ]
 
 export default function LoginPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPw, setShowPw] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [loading, setLoading] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => { setMounted(true) }, [])
 
-  const login = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    await new Promise(r => setTimeout(r, 700))
-    const user = DEMO_USERS.find(u => u.email === email && u.password === password)
-    if (user) {
-      if (typeof window !== 'undefined') localStorage.setItem('mn_user', JSON.stringify(user))
-      router.push('/overview')
-    } else {
-      setError('E-posta veya şifre hatalı')
-      setLoading(false)
-    }
+  const loginAs = async (user: typeof DEMO_USERS[0]) => {
+    setLoading(user.role)
+    await new Promise(r => setTimeout(r, 600))
+    if (typeof window !== 'undefined') localStorage.setItem('mn_user', JSON.stringify(user))
+    router.push('/overview')
   }
-
-  const quickLogin = (u: typeof DEMO_USERS[0]) => { setEmail(u.email); setPassword(u.password) }
 
   return (
     <div className="min-h-screen flex" style={{ background: '#050508' }}>
@@ -125,82 +111,39 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-2">Giriş Yap</h2>
-            <p className="text-sm text-white/40">Demo hesabıyla sisteme erişin</p>
+            <h2 className="text-2xl font-bold text-white mb-2">Demo Erişimi</h2>
+            <p className="text-sm text-white/40">Rol seçerek sisteme girin</p>
           </div>
 
-          <form onSubmit={login} className="space-y-4">
-            <div>
-              <label className="block text-[11px] text-white/40 uppercase tracking-widest mb-2">E-posta</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                placeholder="kullanici@tabgida.com"
+          <div className="space-y-3">
+            {DEMO_USERS.map(u => (
+              <button key={u.role} onClick={() => loginAs(u)} disabled={loading !== null}
+                className="w-full flex items-center gap-4 p-4 rounded-2xl border transition-all duration-200 group"
                 style={{
-                  width: '100%', background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: '12px', padding: '12px 16px',
-                  color: 'rgba(255,255,255,0.9)', fontSize: '14px',
-                  outline: 'none', transition: 'all 0.2s',
-                }} />
-            </div>
+                  background: loading === u.role ? u.color + '12' : 'rgba(255,255,255,0.03)',
+                  borderColor: loading === u.role ? u.color + '35' : 'rgba(255,255,255,0.07)',
+                  textAlign: 'left',
+                  boxShadow: loading === u.role ? `0 0 20px ${u.color}15` : 'none',
+                }}
+                onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.borderColor = u.color + '25' }}
+                onMouseLeave={e => { if (!loading) (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)' }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 transition-all"
+                  style={{ background: u.color + '18', border: `1px solid ${u.color}25`, color: u.color }}>
+                  {loading === u.role ? <Loader2 size={16} className="animate-spin" /> : u.initial}
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-semibold text-white/80 group-hover:text-white transition-colors">{u.role}</div>
+                  <div className="text-[11px] text-white/30 mt-0.5">{u.desc}</div>
+                </div>
+                <ChevronRight className="w-4 h-4 transition-all group-hover:translate-x-0.5"
+                  style={{ color: loading === u.role ? u.color : 'rgba(255,255,255,0.2)' }} />
+              </button>
+            ))}
+          </div>
 
-            <div>
-              <label className="block text-[11px] text-white/40 uppercase tracking-widest mb-2">Şifre</label>
-              <div className="flex gap-2">
-                <input type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required
-                  placeholder="••••••••"
-                  style={{
-                    flex: 1, background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: '12px', padding: '12px 16px',
-                    color: 'rgba(255,255,255,0.9)', fontSize: '14px',
-                    outline: 'none',
-                  }} />
-                <button type="button" onClick={() => setShowPw(p => !p)}
-                  style={{
-                    padding: '0 14px', background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
-                    color: 'rgba(255,255,255,0.3)', cursor: 'pointer',
-                  }}>
-                  {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            {error && (
-              <div className="text-xs text-red-400 px-4 py-3 rounded-xl border"
-                style={{ background: 'rgba(255,61,61,0.06)', borderColor: 'rgba(255,61,61,0.2)' }}>
-                {error}
-              </div>
-            )}
-
-            <button type="submit" disabled={loading} className="btn-primary w-full rounded-xl py-3 text-sm font-semibold text-white flex items-center justify-center gap-2 mt-2">
-              {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Giriş yapılıyor...</> : <>Giriş Yap <ChevronRight className="w-4 h-4" /></>}
-            </button>
-          </form>
-
-          {/* Demo accounts */}
-          <div className="mt-6 pt-6 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-            <div className="flex items-center gap-2 mb-4">
-              <Shield className="w-3.5 h-3.5 text-white/20" />
-              <span className="text-[11px] text-white/25 uppercase tracking-widest">Demo Hesapları</span>
-            </div>
-            <div className="space-y-2">
-              {DEMO_USERS.map(u => (
-                <button key={u.email} onClick={() => quickLogin(u)}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl border transition-all hover:border-white/[0.12]"
-                  style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.07)', textAlign: 'left' }}>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white shrink-0"
-                    style={{ background: u.color + '20', border: `1px solid ${u.color}30`, color: u.color }}>
-                    {u.initial}
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-xs font-medium text-white/70">{u.role}</div>
-                    <div className="text-[10px] text-white/30 font-mono">{u.email}</div>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-white/20" />
-                </button>
-              ))}
-            </div>
+          <div className="mt-6 flex items-center gap-2 text-[11px] text-white/20">
+            <Shield size={12} />
+            <span>Demo ortamı — gerçek veriler kullanılmaz</span>
           </div>
         </div>
       </div>
