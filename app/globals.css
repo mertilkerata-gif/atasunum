@@ -1,201 +1,73 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&display=swap');
 
-/* ─── Geist Mono + Inter ─── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-/* ─── Design Tokens — Obsidian Premium ─── */
 :root {
-  /* Base — derin gece, sıcak siyah */
-  --bg-void:    #000000;
-  --bg-base:    #080808;
-  --bg-surface: #0e0e0e;
-  --bg-raised:  #141414;
-  --bg-card:    #111111;
-  --bg-overlay: #1a1a1a;
+  --bg:        #0a0a0a;
+  --bg-1:      #111111;
+  --bg-2:      #161616;
+  --bg-3:      #1c1c1c;
 
-  /* Border — çok ince, neredeyse görünmez */
-  --border-hair:    rgba(255,255,255,0.04);
-  --border-faint:   rgba(255,255,255,0.06);
-  --border-subtle:  rgba(255,255,255,0.09);
-  --border-default: rgba(255,255,255,0.13);
-  --border-strong:  rgba(255,255,255,0.20);
+  --line:      rgba(255,255,255,0.06);
+  --line-2:    rgba(255,255,255,0.10);
 
-  /* Text */
-  --text-primary:   #f5f5f5;
-  --text-secondary: rgba(245,245,245,0.50);
-  --text-muted:     rgba(245,245,245,0.28);
-  --text-ghost:     rgba(245,245,245,0.14);
+  --t1: #ededed;
+  --t2: rgba(237,237,237,0.48);
+  --t3: rgba(237,237,237,0.24);
+  --t4: rgba(237,237,237,0.12);
 
-  /* Accent — amber/turuncu: mutfak, enerji, aciliyet */
-  --accent:         #e8820c;
-  --accent-bright:  #f59e0b;
-  --accent-dim:     rgba(232,130,12,0.12);
-  --accent-glow:    rgba(232,130,12,0.30);
-  --accent-border:  rgba(232,130,12,0.25);
+  --red:       #f04438;
+  --red-bg:    rgba(240,68,56,0.08);
+  --red-line:  rgba(240,68,56,0.18);
 
-  /* Risk */
-  --risk-kritik:        #ef4444;
-  --risk-kritik-dim:    rgba(239,68,68,0.08);
-  --risk-kritik-border: rgba(239,68,68,0.20);
-  --risk-kritik-glow:   rgba(239,68,68,0.35);
+  --orange:    #f79009;
+  --orange-bg: rgba(247,144,9,0.08);
+  --orange-ln: rgba(247,144,9,0.18);
 
-  --risk-riskli:        #f97316;
-  --risk-riskli-dim:    rgba(249,115,22,0.08);
-  --risk-riskli-border: rgba(249,115,22,0.20);
+  --yellow:    #eaaa08;
+  --yellow-bg: rgba(234,170,8,0.08);
+  --yellow-ln: rgba(234,170,8,0.18);
 
-  --risk-yogun:        #eab308;
-  --risk-yogun-dim:    rgba(234,179,8,0.08);
-  --risk-yogun-border: rgba(234,179,8,0.20);
+  --green:     #17b26a;
+  --green-bg:  rgba(23,178,106,0.08);
+  --green-ln:  rgba(23,178,106,0.18);
 
-  --risk-normal:        #22c55e;
-  --risk-normal-dim:    rgba(34,197,94,0.07);
-  --risk-normal-border: rgba(34,197,94,0.18);
-
-  /* Semantic */
-  --success: #22c55e;
-  --warning: #eab308;
-  --danger:  #ef4444;
-  --info:    #60a5fa;
+  --blue:      #2e90fa;
+  --blue-bg:   rgba(46,144,250,0.08);
+  --blue-ln:   rgba(46,144,250,0.18);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: var(--bg-base);
-  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--t1);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
-  letter-spacing: -0.01em;
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: -0.006em;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 2px; height: 2px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+::-webkit-scrollbar { width: 0px; }
 
-/* ─── Temel Kart ─── */
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-faint);
-  border-radius: 12px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-.card:hover {
-  border-color: var(--border-subtle);
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
-}
+.num { font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
 
-/* ─── Stat Card ─── */
-.stat-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-faint);
-  border-radius: 12px;
-  position: relative;
-  overflow: hidden;
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-.stat-card::after {
+@keyframes pulse-ring {
+  0%   { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+.anim-fade { animation: fade-up 0.2s ease both; }
+
+.pulse-ring-anim::before {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 50%);
-  pointer-events: none;
+  border-radius: 50%;
+  background: var(--red);
+  animation: pulse-ring 1.8s ease-out infinite;
 }
-
-/* ─── Glass ─── */
-.glass {
-  background: rgba(14,14,14,0.80);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid var(--border-subtle);
-}
-
-/* ─── Risk Badges ─── */
-.badge-kritik { background: var(--risk-kritik-dim); color: var(--risk-kritik); border: 1px solid var(--risk-kritik-border); }
-.badge-riskli { background: var(--risk-riskli-dim); color: var(--risk-riskli); border: 1px solid var(--risk-riskli-border); }
-.badge-yogun  { background: var(--risk-yogun-dim);  color: var(--risk-yogun);  border: 1px solid var(--risk-yogun-border); }
-.badge-normal { background: var(--risk-normal-dim); color: var(--risk-normal); border: 1px solid var(--risk-normal-border); }
-
-/* ─── Glow ─── */
-.glow-red    { box-shadow: 0 0 0 1px var(--risk-kritik-border), 0 4px 20px rgba(239,68,68,0.12); }
-.glow-orange { box-shadow: 0 0 0 1px rgba(249,115,22,0.20), 0 4px 20px rgba(249,115,22,0.10); }
-.glow-amber  { box-shadow: 0 0 0 1px var(--accent-border), 0 4px 20px var(--accent-dim); }
-.glow-green  { box-shadow: 0 0 0 1px var(--risk-normal-border), 0 4px 20px rgba(34,197,94,0.08); }
-
-/* ─── Anomali Severity ─── */
-.severity-critical {
-  background: var(--risk-kritik-dim);
-  border-color: var(--risk-kritik-border) !important;
-}
-.severity-warning {
-  background: var(--risk-riskli-dim);
-  border-color: var(--risk-riskli-border) !important;
-}
-.severity-info {
-  background: rgba(96,165,250,0.05);
-  border-color: rgba(96,165,250,0.14) !important;
-}
-
-/* ─── Pulse (canlı nokta) ─── */
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.6; transform: scale(0.8); }
-}
-.pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
-
-/* ─── Animations ─── */
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes slide-right {
-  from { opacity: 0; transform: translateX(-8px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-@keyframes scan-line {
-  0%   { transform: translateY(-100%); opacity: 0; }
-  10%  { opacity: 0.3; }
-  90%  { opacity: 0.3; }
-  100% { transform: translateY(100vh); opacity: 0; }
-}
-
-.animate-fade-in { animation: fade-in 0.25s ease forwards; }
-.animate-slide-right { animation: slide-right 0.20s ease forwards; }
-
-/* ─── Main content area ─── */
-.main-content {
-  background: var(--bg-base);
-  min-height: 100vh;
-}
-
-/* ─── Divider ─── */
-.divider {
-  height: 1px;
-  background: var(--border-hair);
-}
-
-/* ─── Number display ─── */
-.num {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum';
-  letter-spacing: -0.03em;
-}
-
-/* ─── Metric pill ─── */
-.metric-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-}
-.metric-pill.up   { background: rgba(239,68,68,0.08);  color: #f87171; border: 1px solid rgba(239,68,68,0.15); }
-.metric-pill.down { background: rgba(34,197,94,0.08);  color: #4ade80; border: 1px solid rgba(34,197,94,0.15); }
-.metric-pill.warn { background: rgba(234,179,8,0.08);  color: #fbbf24; border: 1px solid rgba(234,179,8,0.15); }

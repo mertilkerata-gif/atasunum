@@ -6,210 +6,138 @@ import { fetchAllPulseScores, fetchRestaurants, fetchLatestSnapshots } from '@/l
 import { getPredictions, getWeather, getHourlyForecast, getRecommendation, getSnapshot, getPulseScore } from '@/data/seed/mock-data'
 import { RESTAURANTS } from '@/data/seed/restaurants'
 import { RestaurantDashboard, RiskLevel } from '@/types'
-import { getRiskConfig, cn } from '@/lib/utils'
-import { Loader2, RefreshCw, Database, Wifi } from 'lucide-react'
+import { RefreshCw, Wifi, WifiOff } from 'lucide-react'
 
-function buildDashboard(restaurantId: string, pulseData?: Record<string, unknown>, snapshotData?: Record<string, unknown>): RestaurantDashboard {
-  const restaurant = RESTAURANTS.find(r => r.id === restaurantId)!
-  const pulse = pulseData ?? getPulseScore(restaurantId)
-  const snapshot = snapshotData ?? getSnapshot(restaurantId)
+const RISK_ORDER: Record<RiskLevel, number> = { KRITIK: 0, RISKLI: 1, YOGUN: 2, NORMAL: 3 }
+
+function buildDashboard(id: string, restaurant: typeof RESTAURANTS[0], pulseMap: Record<string, unknown>, snapshotMap: Record<string, unknown>): RestaurantDashboard {
   return {
     restaurant,
-    pulse: pulse as RestaurantDashboard['pulse'],
-    snapshot: snapshot as RestaurantDashboard['snapshot'],
-    predictions: getPredictions(restaurantId),
-    latest_recommendation: getRecommendation(restaurantId),
-    weather: getWeather(restaurantId),
-    hourly_forecast: getHourlyForecast(restaurantId),
+    pulse: (pulseMap[id] ?? getPulseScore(id)) as RestaurantDashboard['pulse'],
+    snapshot: (snapshotMap[id] ?? getSnapshot(id)) as RestaurantDashboard['snapshot'],
+    predictions: getPredictions(id),
+    latest_recommendation: getRecommendation(id),
+    weather: getWeather(id),
+    hourly_forecast: getHourlyForecast(id),
   }
 }
 
+type Filter = RiskLevel | 'ALL'
+
 export default function OverviewPage() {
-  const [dashboards, setDashboards] = useState<RestaurantDashboard[]>([])
+  const [boards, setBoards] = useState<RestaurantDashboard[]>([])
   const [loading, setLoading] = useState(true)
   const [isLive, setIsLive] = useState(false)
-  const [filter, setFilter] = useState<RiskLevel | 'ALL'>('ALL')
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
+  const [filter, setFilter] = useState<Filter>('ALL')
+  const [refreshed, setRefreshed] = useState<Date | null>(null)
 
-  const fetchData = useCallback(async () => {
+  const load = useCallback(async () => {
     try {
-      const [pulseRows, restaurantRows, snapshotRows] = await Promise.all([
-        fetchAllPulseScores(),
-        fetchRestaurants(),
-        fetchLatestSnapshots(),
+      const [pulseRows, restRows, snapRows] = await Promise.all([
+        fetchAllPulseScores(), fetchRestaurants(), fetchLatestSnapshots(),
       ])
-
-      const pulseMap = Object.fromEntries(pulseRows.map(p => [p.restaurant_id, p]))
-      const snapshotMap = Object.fromEntries(snapshotRows.map(s => [s.restaurant_id, s]))
-
-      // Supabase'den gelen restoranları önce, sonra mock'dakiler
-      const allIds = [...new Set([
-        ...restaurantRows.map(r => r.id),
-        ...RESTAURANTS.map(r => r.id),
-      ])]
-
-      const result: RestaurantDashboard[] = allIds.map(id => {
-        const sbRestaurant = restaurantRows.find(r => r.id === id)
-        const mockRestaurant = RESTAURANTS.find(r => r.id === id)
-        const restaurant = sbRestaurant ?? mockRestaurant
-        if (!restaurant) return null
-
-        return {
-          restaurant: restaurant as RestaurantDashboard['restaurant'],
-          pulse: (pulseMap[id] ?? getPulseScore(id)) as RestaurantDashboard['pulse'],
-          snapshot: (snapshotMap[id] ?? getSnapshot(id)) as RestaurantDashboard['snapshot'],
-          predictions: getPredictions(id),
-          latest_recommendation: getRecommendation(id),
-          weather: getWeather(id),
-          hourly_forecast: getHourlyForecast(id),
-        }
-      }).filter(Boolean) as RestaurantDashboard[]
-
-      const riskOrder: Record<RiskLevel, number> = { KRITIK: 0, RISKLI: 1, YOGUN: 2, NORMAL: 3 }
-      result.sort((a, b) => riskOrder[a.pulse.risk_level] - riskOrder[b.pulse.risk_level])
-
-      setDashboards(result)
+      const pm = Object.fromEntries(pulseRows.map(p => [p.restaurant_id, p]))
+      const sm = Object.fromEntries(snapRows.map(s => [s.restaurant_id, s]))
+      const allRests = restRows.length > 0 ? restRows : RESTAURANTS
+      const result = allRests
+        .map(r => buildDashboard(r.id, r as typeof RESTAURANTS[0], pm, sm))
+        .sort((a, b) => RISK_ORDER[a.pulse.risk_level] - RISK_ORDER[b.pulse.risk_level])
+      setBoards(result)
       setIsLive(pulseRows.length > 0)
-      setLastRefresh(new Date())
-    } catch (err) {
-      console.error('Veri çekme hatası:', err)
-      // Fallback: mock data
-      const fallback = RESTAURANTS.map(r => buildDashboard(r.id))
-      const riskOrder: Record<RiskLevel, number> = { KRITIK: 0, RISKLI: 1, YOGUN: 2, NORMAL: 3 }
-      fallback.sort((a, b) => riskOrder[a.pulse.risk_level] - riskOrder[b.pulse.risk_level])
-      setDashboards(fallback)
+      setRefreshed(new Date())
+    } catch {
+      setBoards(RESTAURANTS.map(r => buildDashboard(r.id, r, {}, {})).sort((a, b) => RISK_ORDER[a.pulse.risk_level] - RISK_ORDER[b.pulse.risk_level]))
       setIsLive(false)
-    } finally {
-      setLoading(false)
-    }
+    } finally { setLoading(false) }
   }, [])
 
-  useEffect(() => {
-    fetchData()
-    const t = setInterval(fetchData, 60000)
-    return () => clearInterval(t)
-  }, [fetchData])
+  useEffect(() => { load(); const t = setInterval(load, 60000); return () => clearInterval(t) }, [load])
 
-  const filtered = dashboards.filter(d => filter === 'ALL' || d.pulse.risk_level === filter)
+  const shown = boards.filter(d => filter === 'ALL' || d.pulse.risk_level === filter)
+  const cnt = { KRITIK: boards.filter(d=>d.pulse.risk_level==='KRITIK').length, RISKLI: boards.filter(d=>d.pulse.risk_level==='RISKLI').length, YOGUN: boards.filter(d=>d.pulse.risk_level==='YOGUN').length, NORMAL: boards.filter(d=>d.pulse.risk_level==='NORMAL').length }
+  const avg = boards.length ? Math.round(boards.reduce((s,d)=>s+d.pulse.score,0)/boards.length) : 0
 
-  const counts = {
-    KRITIK: dashboards.filter(d => d.pulse.risk_level === 'KRITIK').length,
-    RISKLI: dashboards.filter(d => d.pulse.risk_level === 'RISKLI').length,
-    YOGUN:  dashboards.filter(d => d.pulse.risk_level === 'YOGUN').length,
-    NORMAL: dashboards.filter(d => d.pulse.risk_level === 'NORMAL').length,
-    avgScore: dashboards.length
-      ? Math.round(dashboards.reduce((s, d) => s + d.pulse.score, 0) / dashboards.length)
-      : 0,
-  }
-
-  const FILTERS: { key: RiskLevel | 'ALL'; label: string; count: number; color?: string }[] = [
-    { key: 'ALL',    label: 'Tümü',   count: dashboards.length },
-    { key: 'KRITIK', label: 'Kritik', count: counts.KRITIK, color: '#ef4444' },
-    { key: 'RISKLI', label: 'Riskli', count: counts.RISKLI, color: '#f97316' },
-    { key: 'YOGUN',  label: 'Yoğun',  count: counts.YOGUN,  color: '#eab308' },
-    { key: 'NORMAL', label: 'Normal', count: counts.NORMAL, color: '#22c55e' },
+  const FILTERS: { key: Filter; label: string; count: number; color: string }[] = [
+    { key:'ALL',    label:'Tümü',   count:boards.length, color:'var(--t2)' },
+    { key:'KRITIK', label:'Kritik', count:cnt.KRITIK,    color:'var(--red)' },
+    { key:'RISKLI', label:'Riskli', count:cnt.RISKLI,    color:'var(--orange)' },
+    { key:'YOGUN',  label:'Yoğun',  count:cnt.YOGUN,     color:'var(--yellow)' },
+    { key:'NORMAL', label:'Normal', count:cnt.NORMAL,    color:'var(--green)' },
   ]
 
   return (
-    <div className="animate-fade-in">
-      <Topbar
-        title="Genel Bakış"
-        subtitle="Tüm restoranlar — anlık nabız durumu"
+    <div className="anim-fade">
+      <Topbar title="Genel Bakış"
         actions={
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
-              style={{
-                background: isLive ? 'rgba(34,197,94,0.07)' : 'rgba(255,255,255,0.04)',
-                border: isLive ? '1px solid rgba(34,197,94,0.18)' : '1px solid rgba(255,255,255,0.08)',
-              }}>
-              {isLive
-                ? <Wifi size={10} className="text-emerald-400" />
-                : <Database size={10} className="text-white/30" />
-              }
-              <span className="text-[9px] font-medium"
-                style={{ color: isLive ? 'rgba(34,197,94,0.8)' : 'rgba(245,245,245,0.30)' }}>
-                {isLive ? 'Supabase' : 'Demo'}
-              </span>
-            </div>
-            <button onClick={fetchData} className="p-1.5 rounded-[7px] hover:bg-white/[0.05] transition-colors"
-              style={{ border: '1px solid var(--border-faint)' }}>
-              <RefreshCw size={11} className="text-white/25" />
+            <button onClick={load} className="p-1.5 rounded-[7px] hover:bg-white/5 transition-colors"
+              style={{ border: '1px solid var(--line)' }}>
+              <RefreshCw size={12} style={{ color: 'var(--t3)' }} />
             </button>
+            <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px]"
+              style={{ background: isLive ? 'var(--green-bg)' : 'rgba(255,255,255,0.04)', border: isLive ? '1px solid var(--green-ln)' : '1px solid var(--line)', color: isLive ? 'var(--green)' : 'var(--t4)' }}>
+              {isLive ? <Wifi size={9}/> : <WifiOff size={9}/>}
+              {isLive ? 'Supabase' : 'Demo'}
+            </div>
           </div>
         }
       />
 
       <div className="p-6 space-y-5">
-
-        {/* KPI summary */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {/* KPI bar */}
+        <div className="grid grid-cols-5 rounded-[12px] overflow-hidden" style={{ background: 'var(--bg-1)', border: '1px solid var(--line)' }}>
           {[
-            { label: 'Ort. Nabız', value: counts.avgScore, suffix: '/100', color: counts.avgScore > 70 ? '#ef4444' : counts.avgScore > 50 ? '#f97316' : '#22c55e' },
-            { label: 'Kritik', value: counts.KRITIK, color: '#ef4444' },
-            { label: 'Riskli', value: counts.RISKLI, color: '#f97316' },
-            { label: 'Yoğun', value: counts.YOGUN, color: '#eab308' },
-            { label: 'Normal', value: counts.NORMAL, color: '#22c55e' },
-          ].map(k => (
-            <div key={k.label} className="rounded-[12px] px-4 py-3"
-              style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-faint)' }}>
-              <div className="text-[9px] uppercase tracking-[0.15em] mb-1.5" style={{ color: 'var(--text-ghost)' }}>
-                {k.label}
-              </div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-[22px] font-bold num leading-none" style={{ color: k.color, letterSpacing: '-0.04em' }}>
-                  {loading ? '—' : k.value}
-                </span>
-                {k.suffix && <span className="text-[10px]" style={{ color: 'var(--text-ghost)' }}>{k.suffix}</span>}
+            { label: 'Ort. Nabız', value: loading?'—':avg, color: avg>70?'var(--red)':avg>50?'var(--orange)':'var(--green)', suffix:'/100' },
+            { label: 'Kritik', value: loading?'—':cnt.KRITIK, color: 'var(--red)' },
+            { label: 'Riskli', value: loading?'—':cnt.RISKLI, color: 'var(--orange)' },
+            { label: 'Yoğun',  value: loading?'—':cnt.YOGUN,  color: 'var(--yellow)' },
+            { label: 'Normal', value: loading?'—':cnt.NORMAL, color: 'var(--green)' },
+          ].map((k,i) => (
+            <div key={k.label} className="py-4 px-5 text-center" style={{ borderRight: i<4?'1px solid var(--line)':undefined }}>
+              <div className="text-[9px] uppercase tracking-[0.14em] mb-2" style={{ color: 'var(--t4)' }}>{k.label}</div>
+              <div className="flex items-baseline justify-center gap-0.5">
+                <span className="text-[26px] font-bold num leading-none" style={{ color: k.color, letterSpacing:'-0.04em' }}>{k.value}</span>
+                {k.suffix && <span className="text-[10px]" style={{ color: 'var(--t4)' }}>{k.suffix}</span>}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Filtreler */}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        {/* Filter tabs */}
+        <div className="flex items-center gap-1">
           {FILTERS.map(f => (
-            <button key={f.key} onClick={() => setFilter(f.key)}
-              className={cn('flex items-center gap-2 px-3 py-1.5 rounded-[8px] text-[11px] font-medium transition-all duration-100')}
+            <button key={f.key} onClick={()=>setFilter(f.key)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[11.5px] transition-colors duration-100"
               style={{
-                background: filter === f.key ? 'rgba(255,255,255,0.07)' : 'var(--bg-surface)',
-                border: filter === f.key ? '1px solid rgba(255,255,255,0.12)' : '1px solid var(--border-faint)',
-                color: filter === f.key ? 'var(--text-primary)' : 'var(--text-muted)',
+                background: filter===f.key ? 'var(--bg-2)' : 'transparent',
+                border: filter===f.key ? '1px solid var(--line-2)' : '1px solid transparent',
+                color: filter===f.key ? 'var(--t1)' : 'var(--t3)',
               }}>
-              {f.color && (
-                <span className="w-1.5 h-1.5 rounded-full shrink-0"
-                  style={{ background: filter === f.key ? f.color : 'rgba(255,255,255,0.15)' }} />
-              )}
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: filter===f.key?f.color:'var(--line-2)' }} />
               {f.label}
-              <span className="text-[10px] num px-1.5 py-px rounded-[5px]"
-                style={{
-                  background: filter === f.key ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.04)',
-                  color: 'var(--text-ghost)',
-                }}>
-                {f.count}
-              </span>
+              <span className="text-[10px] num" style={{ color: 'var(--t4)' }}>{f.count}</span>
             </button>
           ))}
         </div>
 
-        {/* Restoran kartları */}
+        {/* Cards grid */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={20} className="text-white/20 animate-spin" />
+            <div className="w-4 h-4 rounded-full border-2 border-white/10 border-t-white/30 animate-spin" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            {filtered.map((d, i) => (
-              <div key={d.restaurant.id} className="animate-fade-in" style={{ animationDelay: `${i * 30}ms` }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
+            {shown.map((d,i) => (
+              <div key={d.restaurant.id} className="anim-fade" style={{ animationDelay:`${i*30}ms` }}>
                 <RestaurantCard data={d} />
               </div>
             ))}
           </div>
         )}
 
-        {lastRefresh && (
-          <div className="text-[10px] num" style={{ color: 'var(--text-ghost)' }}>
-            Son güncelleme: {lastRefresh.toLocaleTimeString('tr-TR')}
-            {isLive && ' · Supabase bağlı'}
+        {refreshed && (
+          <div className="text-[10px] num" style={{ color: 'var(--t4)' }}>
+            Son güncelleme: {refreshed.toLocaleTimeString('tr-TR')} {isLive ? '· Supabase bağlı' : '· Demo verisi · 5 dk otomatik yenileme'}
           </div>
         )}
       </div>

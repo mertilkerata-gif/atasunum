@@ -9,63 +9,24 @@ interface TopbarProps {
 
 export function Topbar({ title, subtitle, actions }: TopbarProps) {
   const [time, setTime] = useState('')
-
   useEffect(() => {
-    const update = () => {
-      const now = new Date()
-      setTime(now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
-    }
-    update()
-    const t = setInterval(update, 1000)
-    return () => clearInterval(t)
+    const upd = () => setTime(new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
+    upd(); const t = setInterval(upd, 1000); return () => clearInterval(t)
   }, [])
 
   return (
-    <header
-      className="sticky top-0 z-30 flex items-center h-[50px] gap-4"
-      style={{
-        paddingLeft: '24px',
-        paddingRight: '24px',
-        background: 'rgba(8,8,8,0.95)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid var(--border-hair)',
-      }}
-    >
-      <div className="flex-1 min-w-0 flex items-center gap-3">
-        <div className="min-w-0">
-          <h1 className="text-[13px] font-semibold truncate leading-tight" style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-            {title}
-          </h1>
-          {subtitle && (
-            <p className="text-[10px] truncate mt-px" style={{ color: 'var(--text-ghost)' }}>
-              {subtitle}
-            </p>
-          )}
+    <header className="sticky top-0 z-30 flex items-center gap-4 h-[52px] px-6"
+      style={{ background: 'rgba(10,10,10,0.95)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--line)' }}>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <h1 className="text-[13.5px] font-semibold truncate" style={{ color: 'var(--t1)', letterSpacing: '-0.02em' }}>{title}</h1>
+          {subtitle && <span className="text-[11px] hidden md:block truncate" style={{ color: 'var(--t3)' }}>— {subtitle}</span>}
         </div>
       </div>
-
-      {actions && (
-        <div className="flex items-center gap-2 shrink-0">{actions}</div>
-      )}
-
-      <div className="hidden md:flex items-center gap-3 shrink-0">
-        <span
-          className="text-[10px] num tabular-nums"
-          style={{ color: 'var(--text-ghost)', fontVariantNumeric: 'tabular-nums' }}
-        >
-          {time}
-        </span>
-        <div className="flex items-center gap-1.5 rounded-full px-2 py-1"
-          style={{
-            background: 'rgba(34,197,94,0.06)',
-            border: '1px solid rgba(34,197,94,0.15)',
-          }}>
-          <div className="w-1 h-1 rounded-full bg-emerald-400 pulse-dot"
-            style={{ boxShadow: '0 0 4px rgba(52,211,153,0.9)' }} />
-          <span className="text-[9px] uppercase tracking-[0.15em]" style={{ color: 'rgba(34,197,94,0.7)' }}>
-            Canlı
-          </span>
-        </div>
+      {actions}
+      <div className="flex items-center gap-2.5">
+        <span className="text-[11px] num hidden md:block" style={{ color: 'var(--t4)' }}>{time}</span>
+        <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--green)', boxShadow: '0 0 5px var(--green)' }} />
       </div>
     </header>
   )
