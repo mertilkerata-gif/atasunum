@@ -1,14 +1,12 @@
 import { Sidebar } from '@/components/layout/sidebar'
-import { NotificationCenter } from '@/components/layout/notification-center'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen" style={{ background: 'var(--bg-base)' }}>
+    <div className="dw">
       <Sidebar />
-      <main className="flex-1 min-h-screen main-content" style={{ marginLeft: '210px' }}>
+      <div className="dm">
         {children}
-      </main>
-      <NotificationCenter />
+      </div>
     </div>
   )
 }

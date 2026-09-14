@@ -41,7 +41,7 @@ export default function RestaurantsPage() {
   return (
     <div className="animate-fade-in">
       <Topbar title="Restoranlar" subtitle="Aktif lokasyonlar ve anlık durum"
-        actions={
+        action={
           <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
             style={{ background: isLive ? 'rgba(34,197,94,0.07)' : 'rgba(255,255,255,0.04)', border: isLive ? '1px solid rgba(34,197,94,0.18)' : '1px solid rgba(255,255,255,0.08)' }}>
             <Wifi size={10} className={isLive ? 'text-emerald-400' : 'text-white/20'} />

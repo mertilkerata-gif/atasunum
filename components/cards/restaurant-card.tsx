@@ -1,69 +1,45 @@
 'use client'
 import Link from 'next/link'
 import { RestaurantDashboard } from '@/types'
-
-interface RestaurantCardProps { data: RestaurantDashboard }
+import { ArrowUpRight } from 'lucide-react'
 
 function riskMeta(level: string) {
   switch (level) {
-    case 'KRITIK': return { color: '#f04438', bg: 'rgba(240,68,56,0.07)', border: 'rgba(240,68,56,0.16)', label: 'Kritik' }
-    case 'RISKLI': return { color: '#f79009', bg: 'rgba(247,144,9,0.07)', border: 'rgba(247,144,9,0.16)', label: 'Riskli' }
-    case 'YOGUN':  return { color: '#eaaa08', bg: 'rgba(234,170,8,0.07)', border: 'rgba(234,170,8,0.16)', label: 'Yoğun'  }
-    default:        return { color: '#17b26a', bg: 'rgba(23,178,106,0.06)', border: 'rgba(23,178,106,0.14)', label: 'Normal' }
+    case 'KRITIK': return { color: 'var(--red)',   bg: 'var(--red2)',   border: 'rgba(242,87,87,.2)',   label: 'Kritik', badgeClass: 'badge-red' }
+    case 'RISKLI': return { color: 'var(--amber)', bg: 'var(--amber2)', border: 'rgba(240,168,67,.2)',  label: 'Riskli', badgeClass: 'badge-amber' }
+    case 'YOGUN':  return { color: 'var(--amber)', bg: 'var(--amber2)', border: 'rgba(240,168,67,.2)',  label: 'Yoğun',  badgeClass: 'badge-amber' }
+    default:       return { color: 'var(--green)', bg: 'var(--green2)', border: 'rgba(34,211,160,.18)', label: 'Normal', badgeClass: 'badge-green' }
   }
 }
 
-function ScoreArc({ score, color }: { score: number; color: string }) {
-  const r = 28, cx = 36, cy = 36, sw = 4
-  const circ = 2 * Math.PI * r
-  const arc  = circ * 0.75
-  const off  = arc - (arc * Math.min(score, 100)) / 100
+function Arc({ score, color }: { score: number; color: string }) {
+  const r = 26, cx = 34, cy = 34, sw = 4.5
+  const circ = 2 * Math.PI * r, arc = circ * 0.75
+  const off = arc - (arc * Math.min(score, 100)) / 100
+  const id = `arc-${score}-${color.replace(/[^a-z0-9]/gi,'')}`
   return (
-    <svg width={72} height={58} viewBox="0 0 72 72" style={{ overflow: 'visible' }}>
+    <svg width={68} height={56} viewBox="0 0 68 68" style={{ overflow: 'visible' }}>
       <defs>
-        <filter id={`g${score}`}>
-          <feGaussianBlur stdDeviation="2.5" result="b"/>
+        <filter id={id + 'g'}>
+          <feGaussianBlur stdDeviation="2" result="b"/>
           <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
       </defs>
-      {/* Track */}
-      <circle cx={cx} cy={cy} r={r} fill="none"
-        stroke="rgba(255,255,255,0.05)" strokeWidth={sw}
-        strokeDasharray={`${arc} ${circ}`} strokeLinecap="round"
-        transform={`rotate(135 ${cx} ${cy})`} />
-      {/* Arc */}
-      <circle cx={cx} cy={cy} r={r} fill="none"
-        stroke={color} strokeWidth={sw}
-        strokeDasharray={`${arc} ${circ}`} strokeDashoffset={off}
-        strokeLinecap="round"
-        transform={`rotate(135 ${cx} ${cy})`}
-        filter={`url(#g${score})`}
-        style={{ transition: 'stroke-dashoffset 1s cubic-bezier(.4,0,.2,1)' }} />
-      {/* Score */}
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--s4)" strokeWidth={sw}
+        strokeDasharray={`${arc} ${circ}`} strokeLinecap="round" transform={`rotate(135 ${cx} ${cy})`} />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth={sw}
+        strokeDasharray={`${arc} ${circ}`} strokeDashoffset={off} strokeLinecap="round"
+        transform={`rotate(135 ${cx} ${cy})`} filter={`url(#${id}g)`}
+        style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.4,0,.2,1)' }} />
       <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="middle"
-        style={{ fill: color, fontSize: 15, fontWeight: 700, fontFamily: 'Inter', letterSpacing: '-0.03em' }}>
+        style={{ fill: color, fontSize: 14, fontWeight: 700, fontFamily: 'JetBrains Mono,monospace', letterSpacing: '-0.03em' }}>
         {score}
       </text>
     </svg>
   )
 }
 
-function StationBar({ label, pct, color }: { label: string; pct: number; color: string }) {
-  const high = pct >= 80
-  return (
-    <div className="flex items-center gap-2">
-      <span className="w-10 text-[10px] shrink-0" style={{ color: 'var(--t4)' }}>{label}</span>
-      <div className="flex-1 h-[2px] rounded-full" style={{ background: 'rgba(255,255,255,0.05)' }}>
-        <div className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${pct}%`, background: high ? '#f04438' : color, opacity: high ? 1 : 0.7 }} />
-      </div>
-      <span className="w-6 text-[10px] text-right num shrink-0"
-        style={{ color: high ? '#f04438' : 'var(--t4)' }}>{pct}</span>
-    </div>
-  )
-}
-
-export function RestaurantCard({ data }: RestaurantCardProps) {
+export function RestaurantCard({ data }: { data: RestaurantDashboard }) {
   const { restaurant, pulse, snapshot } = data
   const m = riskMeta(pulse.risk_level)
   const isKritik = pulse.risk_level === 'KRITIK'
@@ -71,105 +47,119 @@ export function RestaurantCard({ data }: RestaurantCardProps) {
 
   return (
     <Link href={`/restaurants/${restaurant.id}`}>
-      <div className="rounded-[12px] overflow-hidden cursor-pointer group transition-all duration-150"
-        style={{
-          background: 'var(--bg-1)',
-          border: `1px solid ${isKritik ? m.border : 'var(--line)'}`,
-          boxShadow: isKritik ? `0 0 20px rgba(240,68,56,0.06)` : 'none',
-        }}>
+      <div className="card anim-pop" style={{
+        borderLeft: `3px solid ${m.color}`,
+        cursor: 'pointer',
+        transition: 'border-color .15s, transform .15s, box-shadow .15s',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+        onMouseEnter={e => {
+          const el = e.currentTarget as HTMLDivElement
+          el.style.transform = 'translateY(-2px)'
+          el.style.boxShadow = `0 8px 28px rgba(0,0,0,.3), 0 0 0 1px var(--bdr2)`
+        }}
+        onMouseLeave={e => {
+          const el = e.currentTarget as HTMLDivElement
+          el.style.transform = ''
+          el.style.boxShadow = ''
+        }}
+      >
+        {/* Kritik radial glow */}
+        {isKritik && (
+          <div style={{ position: 'absolute', top: 0, right: 0, width: 120, height: 120, background: 'radial-gradient(circle at top right,rgba(242,87,87,.08),transparent 70%)', pointerEvents: 'none' }} />
+        )}
 
-        {/* Top strip — colored by risk */}
-        <div className="h-[2px]" style={{ background: m.color, opacity: isKritik ? 1 : 0.35 }} />
+        {/* Kritik pulse indicator */}
+        {isKritik && (
+          <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 2 }}>
+            <div style={{ position: 'relative', width: 8, height: 8 }}>
+              <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--red)', animation: 'pulse 1.6s ease-in-out infinite', opacity: .5 }} />
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--red)', boxShadow: '0 0 8px var(--red)' }} />
+            </div>
+          </div>
+        )}
 
-        <div className="p-4">
-          {/* Header row */}
-          <div className="flex items-start justify-between gap-3 mb-4">
-            <div className="min-w-0">
-              {/* Brand */}
-              <div className="text-[9.5px] font-semibold uppercase tracking-[0.12em] mb-1"
-                style={{ color: restaurant.brand === 'BURGER_KING' ? 'rgba(46,144,250,0.6)' : 'rgba(247,144,9,0.6)' }}>
+        <div style={{ padding: '18px 20px' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: '10px', fontWeight: 700, color: restaurant.brand === 'BURGER_KING' ? 'var(--blue)' : 'var(--amber)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 4 } as React.CSSProperties}>
                 {restaurant.brand === 'BURGER_KING' ? 'Burger King' : 'Popeyes'}
-              </div>
-              {/* Name */}
-              <div className="text-[14px] font-semibold leading-tight truncate group-hover:text-white transition-colors"
-                style={{ color: 'var(--t1)', letterSpacing: '-0.02em' }}>
+              </p>
+              <p style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--tx)', letterSpacing: '-.25px', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {restaurant.name.replace('Burger King ', '').replace('Popeyes ', '')}
-              </div>
-              {/* District */}
-              <div className="text-[11px] mt-0.5" style={{ color: 'var(--t3)' }}>
-                {restaurant.district}
-              </div>
+              </p>
+              <p style={{ fontSize: 12, color: 'var(--tx3)', marginTop: 3 }}>{restaurant.district} · {restaurant.region}</p>
             </div>
-            {/* Score arc */}
-            <div className="shrink-0 -mt-1">
-              <ScoreArc score={pulse.score} color={m.color} />
-            </div>
+            <Arc score={pulse.score} color={m.color} />
           </div>
 
           {/* Risk badge */}
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
-              style={{ background: m.bg, border: `1px solid ${m.border}` }}>
-              {isKritik && (
-                <div className="relative w-1.5 h-1.5 shrink-0">
-                  <div className="absolute inset-0 rounded-full" style={{ background: m.color, animation: 'pulse-ring 1.6s ease-out infinite', opacity: 0.5 }} />
-                  <div className="relative w-1.5 h-1.5 rounded-full" style={{ background: m.color }} />
-                </div>
-              )}
-              <span className="text-[10px] font-semibold" style={{ color: m.color }}>{m.label}</span>
-            </div>
+          <div style={{ marginBottom: 16 }}>
+            <span className={`badge ${m.badgeClass}`}>
+              {isKritik && '⚠ '}{m.label}
+            </span>
           </div>
 
           {/* KPI row */}
-          <div className="grid grid-cols-3 divide-x mb-4" style={{ borderColor: 'var(--line)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1, marginBottom: 16, background: 'var(--bdr)', borderRadius: 10, overflow: 'hidden' }}>
             {[
-              { v: pulse.open_orders, label: 'Sipariş', alert: pulse.open_orders > 25 },
-              { v: (pulse.avg_prep_time ?? 0).toFixed(1), label: 'Hazır dk', alert: (pulse.avg_prep_time ?? 0) > 10 },
-              { v: (pulse.courier_wait ?? 0).toFixed(1), label: 'Kurye dk', alert: (pulse.courier_wait ?? 0) > 7 },
-            ].map(({ v, label, alert }) => (
-              <div key={label} className="px-3 first:pl-0 last:pr-0 text-center">
-                <div className="text-[18px] font-bold num leading-none mb-0.5"
-                  style={{ color: alert ? '#f04438' : 'var(--t1)', letterSpacing: '-0.04em' }}>
-                  {v}
+              { v: pulse.open_orders,                      u: '',   label: 'Açık Sipariş', alert: pulse.open_orders > 25 },
+              { v: (pulse.avg_prep_time ?? 0).toFixed(1),  u: 'dk', label: 'Hazırlama',   alert: (pulse.avg_prep_time ?? 0) > 10 },
+              { v: (pulse.courier_wait ?? 0).toFixed(1),   u: 'dk', label: 'Kurye Bkl',   alert: (pulse.courier_wait ?? 0) > 7 },
+            ].map(({ v, u, label, alert }) => (
+              <div key={label} style={{ background: 'var(--s2)', padding: '10px 12px', textAlign: 'center' }}>
+                <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'JetBrains Mono,monospace', letterSpacing: '-.04em', lineHeight: 1.1, color: alert ? 'var(--red)' : 'var(--tx)' }}>
+                  {v}<span style={{ fontSize: 10, fontWeight: 400, color: 'var(--tx3)', marginLeft: 1 }}>{u}</span>
                 </div>
-                <div className="text-[9px] uppercase tracking-[0.1em]" style={{ color: 'var(--t4)' }}>{label}</div>
+                <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--tx3)', textTransform: 'uppercase', letterSpacing: '.06em', marginTop: 4 }}>{label}</div>
               </div>
             ))}
           </div>
 
           {/* Station bars */}
-          <div className="space-y-1.5 mb-3">
-            <StationBar label="Grill"   pct={stations.grill   ?? 0} color="#f79009" />
-            <StationBar label="Fryer"   pct={stations.fryer   ?? 0} color="#eaaa08" />
-            <StationBar label="Packing" pct={stations.packing ?? 0} color="#2e90fa" />
-            <StationBar label="Kurye"   pct={stations.courier ?? 0} color="#17b26a" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 14 }}>
+            {[
+              { label: 'Grill',   val: stations.grill   ?? 0, color: 'var(--amber)' },
+              { label: 'Fryer',   val: stations.fryer   ?? 0, color: '#f0c040' },
+              { label: 'Packing', val: stations.packing ?? 0, color: 'var(--ac)' },
+              { label: 'Kurye',   val: stations.courier ?? 0, color: 'var(--green)' },
+            ].map(({ label, val, color }) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ width: 44, fontSize: 11, color: 'var(--tx3)', flexShrink: 0 }}>{label}</span>
+                <div className="prog" style={{ flex: 1 }}>
+                  <div className="prog-fill" style={{ width: `${val}%`, background: val >= 80 ? 'var(--red)' : color }} />
+                </div>
+                <span style={{ width: 24, fontSize: 11, fontFamily: 'JetBrains Mono,monospace', color: val >= 80 ? 'var(--red)' : 'var(--tx3)', textAlign: 'right', flexShrink: 0 }}>{val}</span>
+              </div>
+            ))}
           </div>
 
           {/* Signals */}
           {pulse.top_signals?.length > 0 && (
-            <div className="pt-3" style={{ borderTop: '1px solid var(--line)' }}>
+            <div style={{ borderTop: '1px solid var(--bdr)', paddingTop: 12, marginBottom: 12 }}>
               {pulse.top_signals.slice(0, 2).map((s, i) => (
-                <div key={i} className="flex items-start gap-1.5 text-[10.5px] leading-snug mt-1 first:mt-0">
-                  <span className="shrink-0 mt-px" style={{ color: m.color }}>·</span>
-                  <span style={{ color: 'var(--t3)' }}>{s}</span>
-                </div>
+                <p key={i} style={{ fontSize: 11.5, color: 'var(--tx2)', lineHeight: 1.5, display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: i < 1 ? 4 : 0 }}>
+                  <span style={{ color: m.color, flexShrink: 0, marginTop: 1 }}>›</span>{s}
+                </p>
               ))}
             </div>
           )}
 
           {/* Footer */}
-          <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: '1px solid var(--line)' }}>
-            {(snapshot?.tiklagelsin_delivery_orders ?? 0) > 0 && (
-              <span className="text-[10px] num" style={{ color: 'var(--t3)' }}>
-                🛵 {snapshot.tiklagelsin_delivery_orders}
-              </span>
-            )}
-            {(snapshot?.restaurant_orders ?? 0) > 0 && (
-              <span className="text-[10px] num" style={{ color: 'var(--t3)' }}>
-                🏪 {snapshot.restaurant_orders}
-              </span>
-            )}
-            <span className="ml-auto text-[10px]" style={{ color: 'var(--t4)' }}>{restaurant.region}</span>
+          <div style={{ borderTop: '1px solid var(--bdr)', paddingTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {(snapshot?.tiklagelsin_delivery_orders ?? 0) > 0 && (
+                <span style={{ fontSize: 11, color: 'var(--tx3)' }}>🛵 {snapshot.tiklagelsin_delivery_orders}</span>
+              )}
+              {(snapshot?.restaurant_orders ?? 0) > 0 && (
+                <span style={{ fontSize: 11, color: 'var(--tx3)' }}>🏪 {snapshot.restaurant_orders}</span>
+              )}
+            </div>
+            <span style={{ fontSize: 11, color: 'var(--tx3)', display: 'flex', alignItems: 'center', gap: 3 }}>
+              Detay <ArrowUpRight size={11} />
+            </span>
           </div>
         </div>
       </div>

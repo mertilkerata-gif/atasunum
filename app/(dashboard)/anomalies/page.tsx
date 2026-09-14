@@ -339,7 +339,7 @@ export default function AnomaliesPage() {
       <Topbar
         title="Anomali Dedektörü"
         subtitle="Sistem otomatik anomali tespiti — gerçek zamanlı"
-        actions={
+        action={
           <div className="flex items-center gap-2">
             {counts.critical_unacked > 0 && (
               <div className="flex items-center gap-1.5 rounded-full px-3 py-1"

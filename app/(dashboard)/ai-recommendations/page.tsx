@@ -107,7 +107,7 @@ export default function AIRecommendationsPage() {
   return (
     <div className="animate-fade-in">
       <Topbar title="AI Önerileri" subtitle="Otomatik üretilen operasyon reçeteleri"
-        actions={
+        action={
           <div className="flex items-center gap-2">
             <div className="text-[10px] num rounded-full px-2.5 py-1"
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-faint)', color: 'var(--text-ghost)' }}>

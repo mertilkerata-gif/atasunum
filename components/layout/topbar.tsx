@@ -1,33 +1,27 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, ReactNode } from 'react'
+import { Bell } from 'lucide-react'
 
-interface TopbarProps {
-  title: string
-  subtitle?: string
-  actions?: React.ReactNode
-}
-
-export function Topbar({ title, subtitle, actions }: TopbarProps) {
+export function Topbar({ title, subtitle, action }: {
+  title: string; subtitle?: string; action?: ReactNode
+}) {
   const [time, setTime] = useState('')
   useEffect(() => {
-    const upd = () => setTime(new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
-    upd(); const t = setInterval(upd, 1000); return () => clearInterval(t)
+    const u = () => setTime(new Date().toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit', second:'2-digit' }))
+    u(); const t = setInterval(u,1000); return () => clearInterval(t)
   }, [])
 
   return (
-    <header className="sticky top-0 z-30 flex items-center gap-4 h-[52px] px-6"
-      style={{ background: 'rgba(10,10,10,0.95)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--line)' }}>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <h1 className="text-[13.5px] font-semibold truncate" style={{ color: 'var(--t1)', letterSpacing: '-0.02em' }}>{title}</h1>
-          {subtitle && <span className="text-[11px] hidden md:block truncate" style={{ color: 'var(--t3)' }}>— {subtitle}</span>}
-        </div>
+    <div className="topbar">
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'baseline', gap: 10 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--tx)', letterSpacing: '-.15px', flexShrink: 0 }}>{title}</span>
+        {subtitle && <span style={{ fontSize: 12, color: 'var(--tx3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{subtitle}</span>}
       </div>
-      {actions}
-      <div className="flex items-center gap-2.5">
-        <span className="text-[11px] num hidden md:block" style={{ color: 'var(--t4)' }}>{time}</span>
-        <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--green)', boxShadow: '0 0 5px var(--green)' }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+        {action}
+        <span style={{ fontSize: 11.5, fontFamily: 'JetBrains Mono, monospace', color: 'var(--tx3)' }}>{time}</span>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--green)', boxShadow: '0 0 6px var(--green)', animation: 'pulse 2.5s ease-in-out infinite' }} />
       </div>
-    </header>
+    </div>
   )
 }

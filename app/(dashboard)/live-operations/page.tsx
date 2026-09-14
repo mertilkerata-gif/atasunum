@@ -77,7 +77,7 @@ export default function LiveOperationsPage() {
   return (
     <div className="animate-fade-in">
       <Topbar title="Canlı Operasyon" subtitle="Anlık sipariş ve istasyon durumu — 5sn güncelleme"
-        actions={
+        action={
           <div className="flex items-center gap-2">
             {criticalCount > 0 && (
               <div className="flex items-center gap-1.5 rounded-full px-3 py-1"
