@@ -1,13 +1,13 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
-  LayoutDashboard, Radio, Monitor, AlertCircle, Sun, TrendingUp,
+  LayoutDashboard, LogOut, Radio, Monitor, AlertCircle, Sun, TrendingUp,
   Users, Map, Zap, Bot, Lightbulb, Truck, UtensilsCrossed,
   Archive, MessageCircle, BarChart3, Activity, Target,
   FlaskConical, FileText, Heart, ScrollText, Webhook,
-  Settings, Menu, X, LogOut
+  Settings, Menu, X
 } from 'lucide-react'
 
 const NAV = [
@@ -47,6 +47,42 @@ const NAV = [
     { href: '/settings',     label: 'Ayarlar',        Icon: Settings   },
   ]},
 ]
+
+
+function UserSection() {
+  const [user, setUser] = useState<{ role: string; initial: string; color: string } | null>(null)
+  useEffect(() => {
+    try {
+      const u = localStorage.getItem('mn_user')
+      if (u) setUser(JSON.parse(u))
+    } catch {}
+  }, [])
+
+  const logout = () => {
+    localStorage.removeItem('mn_user')
+    window.location.href = '/login'
+  }
+
+  return (
+    <div style={{ padding: '10px 12px', borderTop: '1px solid var(--bdr)', display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0 }}>
+      <div className="sb-av" style={{ background: user?.color ? `linear-gradient(135deg,${user.color},#5b4de0)` : undefined }}>
+        {user?.initial ?? 'HQ'}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--tx)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {user?.role ?? 'Demo Kullanıcı'}
+        </p>
+        <p style={{ fontSize: 10, color: 'var(--tx3)' }}>TAB Gıda</p>
+      </div>
+      <button onClick={logout} title="Çıkış Yap"
+        style={{ background: 'none', border: 'none', padding: 5, cursor: 'pointer', borderRadius: 7, display: 'flex', flexShrink: 0 }}
+        onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--s2)'}
+        onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'none'}>
+        <LogOut size={13} style={{ color: 'var(--tx3)' }} />
+      </button>
+    </div>
+  )
+}
 
 function SidebarInner({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
@@ -105,14 +141,7 @@ function SidebarInner({ onClose }: { onClose?: () => void }) {
       </nav>
 
       {/* User */}
-      <div className="sb-user">
-        <div className="sb-av">HQ</div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--tx)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Demo Kullanıcı</p>
-          <p style={{ fontSize: 10.5, color: 'var(--tx3)' }}>HQ Yöneticisi</p>
-        </div>
-        <Settings size={13} color="var(--tx3)" style={{ flexShrink: 0 }} />
-      </div>
+      <UserSection />
     </div>
   )
 }
