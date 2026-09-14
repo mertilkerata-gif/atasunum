@@ -45,12 +45,12 @@ function calcMAPE(data: typeof ACCURACY_DATA) {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-[#1a1a2e] border border-white/[0.1] rounded-lg px-3 py-2 text-xs">
-      <div className="text-white/50 mb-1">{label}</div>
+    <div className="bg-[#1a1a2e] border rounded-lg px-3 py-2 text-xs">
+      <div className="mb-1">{label}</div>
       {payload.map((p: any) => (
         <div key={p.name} className="flex items-center gap-2 mt-0.5">
           <span style={{ color: p.color }}>●</span>
-          <span className="text-white/60">{p.name}:</span>
+          <span >{p.name}:</span>
           <span className="text-white font-semibold">{p.value}</span>
         </div>
       ))}
@@ -82,7 +82,7 @@ export default function ForecastAccuracyPage() {
           ))}
           <div className="ml-auto">
             <select value={restaurantFilter} onChange={e => setRestaurantFilter(e.target.value)}
-              className="bg-white/[0.06] border border-white/[0.1] text-white text-sm rounded-lg px-3 py-1.5 outline-none">
+              className="border text-white text-sm rounded-lg px-3 py-1.5 outline-none">
               <option value="all" className="bg-[#1a1a2e]">Tüm Restoranlar</option>
               {RESTAURANTS.map(r => <option key={r.id} value={r.id} className="bg-[#1a1a2e]">{r.name}</option>)}
             </select>
@@ -98,16 +98,16 @@ export default function ForecastAccuracyPage() {
             { label: 'Tahmin Sayısı', value: ACCURACY_DATA.length.toString(), desc: 'bugün değerlendirilen', color: 'text-white', good: true },
           ].map(({ label, value, desc, color, good }) => (
             <div key={label} className={cn('rounded-xl border p-4', good ? 'border-white/[0.08] bg-white/[0.04]' : 'border-orange-500/20 bg-orange-500/[0.04]')}>
-              <div className="text-xs text-white/40 uppercase tracking-wide mb-1">{label}</div>
+              <div className="text-xs uppercase tracking-wide mb-1">{label}</div>
               <div className={cn('text-2xl font-bold tabular-nums', color)}>{value}</div>
-              <div className="text-xs text-white/30 mt-0.5">{desc}</div>
+              <div className="text-xs mt-0.5">{desc}</div>
             </div>
           ))}
         </div>
 
         {/* Main comparison chart */}
-        <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-          <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">Tahmin vs Gerçekleşen — Saatlik</div>
+        <div className="rounded-xl border p-5">
+          <div className="text-xs uppercase tracking-wide font-medium mb-4">Tahmin vs Gerçekleşen — Saatlik</div>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={ACCURACY_DATA}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
@@ -123,13 +123,13 @@ export default function ForecastAccuracyPage() {
 
         <div className="grid grid-cols-2 gap-5">
           {/* Weekly accuracy trend */}
-          <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-            <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">Haftalık Doğruluk Trendi</div>
+          <div className="rounded-xl border p-5">
+            <div className="text-xs uppercase tracking-wide font-medium mb-4">Haftalık Doğruluk Trendi</div>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={WEEKLY_ACCURACY}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
-                <XAxis dataKey="day" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis domain={[80, 100]} tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="day" tick={{ fill: 'var(--tx3)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis domain={[80, 100]} tick={{ fill: 'var(--tx3)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
                 <Bar dataKey="accuracy" fill="#6366f1" name="Doğruluk %" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -137,18 +137,18 @@ export default function ForecastAccuracyPage() {
           </div>
 
           {/* Restaurant accuracy table */}
-          <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-            <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">Restoran Bazlı Doğruluk</div>
+          <div className="rounded-xl border p-5">
+            <div className="text-xs uppercase tracking-wide font-medium mb-4">Restoran Bazlı Doğruluk</div>
             <div className="space-y-2">
               {RESTAURANT_ACCURACY.sort((a, b) => b.accuracy - a.accuracy).map(r => (
                 <div key={r.id} className="flex items-center gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs text-white/70 truncate">{r.name}</div>
+                    <div className="text-xs truncate">{r.name}</div>
                   </div>
-                  <div className="text-xs text-white/40 w-16 text-right">MAE: {r.mae}</div>
+                  <div className="text-xs w-16 text-right">MAE: {r.mae}</div>
                   <div className="w-20">
                     <div className="flex items-center gap-1.5">
-                      <div className="flex-1 h-1 bg-white/[0.08] rounded-full overflow-hidden">
+                      <div className="flex-1 h-1 rounded-full overflow-hidden">
                         <div className={cn('h-full rounded-full', r.accuracy >= 93 ? 'bg-emerald-500' : r.accuracy >= 90 ? 'bg-yellow-500' : 'bg-orange-500')}
                           style={{ width: `${r.accuracy - 80}%` }} />
                       </div>
@@ -164,8 +164,8 @@ export default function ForecastAccuracyPage() {
         </div>
 
         {/* Error distribution */}
-        <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-          <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">Hata Dağılımı (Tahmin − Gerçek)</div>
+        <div className="rounded-xl border p-5">
+          <div className="text-xs uppercase tracking-wide font-medium mb-4">Hata Dağılımı (Tahmin − Gerçek)</div>
           <ResponsiveContainer width="100%" height={140}>
             <BarChart data={ACCURACY_DATA}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
@@ -178,7 +178,7 @@ export default function ForecastAccuracyPage() {
               />
             </BarChart>
           </ResponsiveContainer>
-          <div className="flex items-center gap-4 mt-2 text-xs text-white/30">
+          <div className="flex items-center gap-4 mt-2 text-xs">
             <span>🔵 Pozitif = Fazla tahmin</span>
             <span>⬛ Negatif = Eksik tahmin</span>
           </div>

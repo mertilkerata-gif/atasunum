@@ -78,8 +78,8 @@ const AI_IMPACT_DATA = [
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-[#1a1a2e] border border-white/[0.1] rounded-lg px-3 py-2 text-xs">
-      <div className="text-white/50 mb-1">{label}</div>
+    <div className="bg-[#1a1a2e] border rounded-lg px-3 py-2 text-xs">
+      <div className="mb-1">{label}</div>
       {payload.map((p: any) => (
         <div key={p.name} className="flex items-center gap-2">
           <span style={{ color: p.color }}>●</span>
@@ -108,7 +108,7 @@ export default function ReportsPage() {
       <div className="flex h-[calc(100vh-56px)]">
 
         {/* Left: Report type list */}
-        <div className="w-56 border-r border-white/[0.06] bg-[#0a0a0f] py-4 px-2 shrink-0 overflow-y-auto">
+        <div className="w-56 border-r bg-[#0a0a0f] py-4 px-2 shrink-0 overflow-y-auto">
           {REPORT_TYPES.map(rt => (
             <button key={rt.id} onClick={() => setActiveReport(rt.id as ReportType)}
               className={cn('w-full flex items-start gap-2.5 px-3 py-3 rounded-lg text-left mb-0.5 transition-all',
@@ -116,7 +116,7 @@ export default function ReportsPage() {
               <rt.icon className={cn('w-4 h-4 mt-0.5 shrink-0', activeReport === rt.id ? 'text-orange-400' : 'text-white/30')} />
               <div>
                 <div className={cn('text-xs font-medium', activeReport === rt.id ? 'text-orange-300' : 'text-white/60')}>{rt.label}</div>
-                <div className="text-[10px] text-white/25 mt-0.5">{rt.desc}</div>
+                <div className="text-[10px] mt-0.5">{rt.desc}</div>
               </div>
             </button>
           ))}
@@ -129,15 +129,15 @@ export default function ReportsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <select value={restaurantFilter} onChange={e => setRestaurantFilter(e.target.value)}
-                className="bg-white/[0.06] border border-white/[0.1] text-white text-xs rounded-lg px-3 py-1.5 outline-none">
+                className="border text-white text-xs rounded-lg px-3 py-1.5 outline-none">
                 <option value="all" className="bg-[#1a1a2e]">Tüm Restoranlar</option>
                 {RESTAURANTS.map(r => <option key={r.id} value={r.id} className="bg-[#1a1a2e]">{r.name}</option>)}
               </select>
               {['Bugün', 'Dün', 'Bu Hafta', 'Bu Ay'].map(p => (
-                <button key={p} className="text-xs px-3 py-1.5 rounded-lg border border-white/[0.08] text-white/40 hover:text-white/60 transition-colors">{p}</button>
+                <button key={p} className="text-xs px-3 py-1.5 rounded-lg border hover: transition-colors">{p}</button>
               ))}
             </div>
-            <button className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-white/[0.08] text-white/40 hover:text-white/60 transition-colors">
+            <button className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border hover: transition-colors">
               <Download className="w-3 h-3" /> İndir
             </button>
           </div>
@@ -154,19 +154,19 @@ export default function ReportsPage() {
                   { label: 'Normal Restoran', value: totalDine.toLocaleString(), sub: `%${Math.round(totalDine/totalOrders*100)}`, color: 'text-purple-400' },
                   { label: 'Kritik Süre', value: `${criticalMinutes}dk`, sub: 'nabız > 80', color: 'text-red-400' },
                 ].map(({ label, value, sub, color }) => (
-                  <div key={label} className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-4">
-                    <div className="text-xs text-white/40 uppercase tracking-wide mb-1">{label}</div>
+                  <div key={label} className="rounded-xl border p-4">
+                    <div className="text-xs uppercase tracking-wide mb-1">{label}</div>
                     <div className={cn('text-2xl font-bold tabular-nums', color)}>{value}</div>
-                    <div className="text-xs text-white/30 mt-0.5">{sub}</div>
+                    <div className="text-xs mt-0.5">{sub}</div>
                   </div>
                 ))}
               </div>
 
               {/* Hourly chart */}
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
+              <div className="rounded-xl border p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="text-xs text-white/40 uppercase tracking-wide font-medium">Saatlik Sipariş Dağılımı</div>
-                  <div className="text-xs text-white/30">En yoğun: <span className="text-orange-400 font-medium">{peakHour.hour} — {peakHour.orders} sipariş</span></div>
+                  <div className="text-xs uppercase tracking-wide font-medium">Saatlik Sipariş Dağılımı</div>
+                  <div className="text-xs">En yoğun: <span className="text-orange-400 font-medium">{peakHour.hour} — {peakHour.orders} sipariş</span></div>
                 </div>
                 <ResponsiveContainer width="100%" height={200}>
                   <AreaChart data={HOURLY_DATA}>
@@ -198,18 +198,18 @@ export default function ReportsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
-                    <div className="text-xs text-white/40 mb-1">En Yoğun Saat</div>
+                    <div className="text-xs mb-1">En Yoğun Saat</div>
                     <div className="text-lg font-bold text-white">{peakHour.hour} — {String(parseInt(peakHour.hour.split(':')[0]) + 1).padStart(2,'0')}:00</div>
-                    <div className="text-xs text-white/40">{peakHour.orders} sipariş · Nabız: {peakHour.pulse}</div>
+                    <div className="text-xs">{peakHour.orders} sipariş · Nabız: {peakHour.pulse}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-white/40 mb-1">Ana Darboğaz</div>
+                    <div className="text-xs mb-1">Ana Darboğaz</div>
                     <div className="text-lg font-bold text-orange-400">Packing</div>
-                    <div className="text-xs text-white/40">Ortalama yük: %74</div>
+                    <div className="text-xs">Ortalama yük: %74</div>
                   </div>
                 </div>
-                <div className="bg-white/[0.04] rounded-lg p-3">
-                  <div className="text-xs text-white/60 leading-relaxed">
+                <div className="rounded-lg p-3">
+                  <div className="text-xs leading-relaxed">
                     <span className="text-white font-medium">Analiz:</span> Yoğunluğun ana nedeni 18:30 sonrası Tıkla Gelsin Paket Servis talep artışı ve packing kapasitesinin talebi karşılayamamasıydı. Yağmurlu hava koşulları paket siparişlerini %{Math.round((totalDelivery/totalOrders)*100 - 55)} puan artırdı.
                   </div>
                   <div className="text-xs text-indigo-300 mt-2 leading-relaxed">
@@ -223,25 +223,25 @@ export default function ReportsPage() {
           {/* WEEKLY REPORT */}
           {activeReport === 'weekly' && (
             <div className="space-y-5">
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-                <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">7 Günlük Sipariş Trendi</div>
+              <div className="rounded-xl border p-5">
+                <div className="text-xs uppercase tracking-wide font-medium mb-4">7 Günlük Sipariş Trendi</div>
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={WEEKLY_DATA}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
-                    <XAxis dataKey="day" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="day" tick={{ fill: 'var(--tx3)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: 'var(--tx3)', fontSize: 11 }} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip />} />
                     <Bar dataKey="orders" fill="#f97316" radius={[4, 4, 0, 0]} name="Sipariş" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-                <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">Ortalama Nabız Skoru</div>
+              <div className="rounded-xl border p-5">
+                <div className="text-xs uppercase tracking-wide font-medium mb-4">Ortalama Nabız Skoru</div>
                 <ResponsiveContainer width="100%" height={180}>
                   <LineChart data={WEEKLY_DATA}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
-                    <XAxis dataKey="day" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis domain={[0, 100]} tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="day" tick={{ fill: 'var(--tx3)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis domain={[0, 100]} tick={{ fill: 'var(--tx3)', fontSize: 11 }} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip />} />
                     <Line type="monotone" dataKey="avgPulse" stroke="#ef4444" strokeWidth={2} dot={{ fill: '#ef4444', r: 4 }} name="Ort. Nabız" />
                     <Line type="monotone" dataKey="critical" stroke="#f97316" strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="Kritik dk" />
@@ -255,8 +255,8 @@ export default function ReportsPage() {
           {activeReport === 'channel' && (
             <div className="space-y-5">
               <div className="grid grid-cols-2 gap-5">
-                <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-                  <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">Sipariş Kanalı Dağılımı</div>
+                <div className="rounded-xl border p-5">
+                  <div className="text-xs uppercase tracking-wide font-medium mb-4">Sipariş Kanalı Dağılımı</div>
                   <ResponsiveContainer width="100%" height={200}>
                     <PieChart>
                       <Pie data={CHANNEL_DATA} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value">
@@ -269,14 +269,14 @@ export default function ReportsPage() {
                     {CHANNEL_DATA.map(d => (
                       <div key={d.name} className="flex items-center gap-2">
                         <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: d.color }} />
-                        <span className="text-xs text-white/60 flex-1">{d.name}</span>
+                        <span className="text-xs flex-1">{d.name}</span>
                         <span className="text-xs font-bold text-white">%{d.value}</span>
                       </div>
                     ))}
                   </div>
                 </div>
-                <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-                  <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">Kanal Bazlı Saatlik Dağılım</div>
+                <div className="rounded-xl border p-5">
+                  <div className="text-xs uppercase tracking-wide font-medium mb-4">Kanal Bazlı Saatlik Dağılım</div>
                   <ResponsiveContainer width="100%" height={220}>
                     <BarChart data={HOURLY_DATA.filter((_, i) => i % 2 === 0)}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
@@ -298,17 +298,17 @@ export default function ReportsPage() {
             <div className="space-y-5">
               <div className="grid grid-cols-4 gap-3">
                 {KITCHEN_DATA.map(k => (
-                  <div key={k.station} className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-4">
-                    <div className="text-xs text-white/40 uppercase tracking-wide mb-2">{k.station}</div>
+                  <div key={k.station} className="rounded-xl border p-4">
+                    <div className="text-xs uppercase tracking-wide mb-2">{k.station}</div>
                     <div className={cn('text-2xl font-bold', k.avgLoad >= 70 ? 'text-orange-400' : 'text-white')}>{k.avgLoad}%</div>
-                    <div className="text-xs text-white/30">ort. yük</div>
+                    <div className="text-xs">ort. yük</div>
                     <div className="mt-2 text-xs text-red-400 font-medium">Peak: {k.peakLoad}%</div>
-                    <div className="text-xs text-white/30">{k.bottleneckHours}s darboğaz</div>
+                    <div className="text-xs">{k.bottleneckHours}s darboğaz</div>
                   </div>
                 ))}
               </div>
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-                <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">İstasyon Yük Karşılaştırması</div>
+              <div className="rounded-xl border p-5">
+                <div className="text-xs uppercase tracking-wide font-medium mb-4">İstasyon Yük Karşılaştırması</div>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={KITCHEN_DATA} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
@@ -326,14 +326,14 @@ export default function ReportsPage() {
           {/* WEATHER REPORT */}
           {activeReport === 'weather' && (
             <div className="space-y-5">
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-                <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-2">Hava Koşulu — Sipariş İlişkisi</div>
-                <div className="text-xs text-white/30 mb-4">Baz: Güneşli gün = 100 endeks</div>
+              <div className="rounded-xl border p-5">
+                <div className="text-xs uppercase tracking-wide font-medium mb-2">Hava Koşulu — Sipariş İlişkisi</div>
+                <div className="text-xs mb-4">Baz: Güneşli gün = 100 endeks</div>
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={WEATHER_DATA}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
-                    <XAxis dataKey="condition" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="condition" tick={{ fill: 'var(--tx3)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: 'var(--tx3)', fontSize: 11 }} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip />} />
                     <Bar dataKey="delivery" fill="#f97316" name="TG Paket" radius={[3, 3, 0, 0]} />
                     <Bar dataKey="dine" fill="#8b5cf6" name="Restoran" radius={[3, 3, 0, 0]} />
@@ -343,19 +343,19 @@ export default function ReportsPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-xl border border-orange-500/20 bg-orange-500/[0.05] p-4">
-                  <div className="text-xs text-white/40 mb-2">🌧️ Yağmurlu Günler Etkisi</div>
+                  <div className="text-xs mb-2">🌧️ Yağmurlu Günler Etkisi</div>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm"><span className="text-white/60">TG Paket Servis</span><span className="text-emerald-400 font-bold">+%31</span></div>
-                    <div className="flex justify-between text-sm"><span className="text-white/60">Normal Restoran</span><span className="text-red-400 font-bold">-%22</span></div>
-                    <div className="flex justify-between text-sm"><span className="text-white/60">Gel Al</span><span className="text-red-400 font-bold">-%11</span></div>
+                    <div className="flex justify-between text-sm"><span >TG Paket Servis</span><span className="text-emerald-400 font-bold">+%31</span></div>
+                    <div className="flex justify-between text-sm"><span >Normal Restoran</span><span className="text-red-400 font-bold">-%22</span></div>
+                    <div className="flex justify-between text-sm"><span >Gel Al</span><span className="text-red-400 font-bold">-%11</span></div>
                   </div>
                 </div>
                 <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/[0.05] p-4">
-                  <div className="text-xs text-white/40 mb-2">☀️ Güneşli Günler Etkisi</div>
+                  <div className="text-xs mb-2">☀️ Güneşli Günler Etkisi</div>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm"><span className="text-white/60">TG Paket Servis</span><span className="text-white/50 font-bold">Baz</span></div>
-                    <div className="flex justify-between text-sm"><span className="text-white/60">Normal Restoran</span><span className="text-emerald-400 font-bold">+%18</span></div>
-                    <div className="flex justify-between text-sm"><span className="text-white/60">Gel Al</span><span className="text-emerald-400 font-bold">+%12</span></div>
+                    <div className="flex justify-between text-sm"><span >TG Paket Servis</span><span className="font-bold">Baz</span></div>
+                    <div className="flex justify-between text-sm"><span >Normal Restoran</span><span className="text-emerald-400 font-bold">+%18</span></div>
+                    <div className="flex justify-between text-sm"><span >Gel Al</span><span className="text-emerald-400 font-bold">+%12</span></div>
                   </div>
                 </div>
               </div>
@@ -371,29 +371,29 @@ export default function ReportsPage() {
                   { label: 'Uygulama Oranı', value: '%73', sub: '64 / 87' },
                   { label: 'Ort. İyileştirme', value: '%33', sub: 'hazırlama süresinde' },
                 ].map(({ label, value, sub }) => (
-                  <div key={label} className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-4">
-                    <div className="text-xs text-white/40 mb-1">{label}</div>
+                  <div key={label} className="rounded-xl border p-4">
+                    <div className="text-xs mb-1">{label}</div>
                     <div className="text-2xl font-bold text-white">{value}</div>
-                    <div className="text-xs text-white/30">{sub}</div>
+                    <div className="text-xs">{sub}</div>
                   </div>
                 ))}
               </div>
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-                <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">Aksiyon Etki Analizi</div>
+              <div className="rounded-xl border p-5">
+                <div className="text-xs uppercase tracking-wide font-medium mb-4">Aksiyon Etki Analizi</div>
                 <div className="space-y-3">
                   {AI_IMPACT_DATA.map(d => (
-                    <div key={d.action} className="flex items-center gap-4 p-3 rounded-lg bg-white/[0.03]">
+                    <div key={d.action} className="flex items-center gap-4 p-3 rounded-lg">
                       <div className="flex-1">
                         <div className="text-sm text-white font-medium">{d.action}</div>
-                        <div className="text-xs text-white/30 mt-0.5">{d.applied} kez uygulandı</div>
+                        <div className="text-xs mt-0.5">{d.applied} kez uygulandı</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-xs text-white/40 mb-0.5">Öncesi</div>
+                        <div className="text-xs mb-0.5">Öncesi</div>
                         <div className="text-sm font-bold text-red-400">{d.avgBefore}dk</div>
                       </div>
-                      <div className="text-white/20">→</div>
+                      <div >→</div>
                       <div className="text-center">
-                        <div className="text-xs text-white/40 mb-0.5">Sonrası</div>
+                        <div className="text-xs mb-0.5">Sonrası</div>
                         <div className="text-sm font-bold text-emerald-400">{d.avgAfter}dk</div>
                       </div>
                       <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-1.5 text-center">
@@ -409,12 +409,12 @@ export default function ReportsPage() {
           {/* COMPARISON */}
           {activeReport === 'comparison' && (
             <div className="space-y-5">
-              <div className="rounded-xl border border-white/[0.08] overflow-hidden">
+              <div className="rounded-xl border overflow-hidden">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-white/[0.06] bg-white/[0.02]">
+                    <tr className="border-b">
                       {['Restoran', 'Nabız', 'Ort. Hazırlama', 'Kurye Bekl.', 'Açık Sipariş', 'Risk'].map(h => (
-                        <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold text-white/30 uppercase tracking-wide">{h}</th>
+                        <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wide">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -423,15 +423,15 @@ export default function ReportsPage() {
                       const pulse = getPulseScore(r.id)
                       const config = getRiskConfig(pulse.risk_level)
                       return (
-                        <tr key={r.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                        <tr key={r.id} className="border-b hover:">
                           <td className="px-4 py-3">
                             <div className="text-sm text-white font-medium">{r.name}</div>
-                            <div className="text-xs text-white/30">{r.district}</div>
+                            <div className="text-xs">{r.district}</div>
                           </td>
                           <td className="px-4 py-3"><span className={cn('text-lg font-bold tabular-nums', config.color)}>{pulse.score}</span></td>
                           <td className="px-4 py-3"><span className={cn('text-sm tabular-nums', pulse.avg_prep_time > 10 ? 'text-red-400' : 'text-white/70')}>{pulse.avg_prep_time.toFixed(1)}dk</span></td>
                           <td className="px-4 py-3"><span className={cn('text-sm tabular-nums', pulse.courier_wait > 7 ? 'text-red-400' : 'text-white/70')}>{pulse.courier_wait.toFixed(1)}dk</span></td>
-                          <td className="px-4 py-3"><span className="text-sm text-white/70">{pulse.open_orders}</span></td>
+                          <td className="px-4 py-3"><span className="text-sm">{pulse.open_orders}</span></td>
                           <td className="px-4 py-3"><span className={cn('text-xs px-2 py-1 rounded-full font-medium', config.badge)}>{config.label}</span></td>
                         </tr>
                       )
@@ -451,15 +451,15 @@ export default function ReportsPage() {
                   { label: 'Kampanyasız Gün Siparişi', value: '1.497', diff: 'baz', color: 'text-white' },
                   { label: 'Kampanya Nabız Etkisi', value: '+11 puan', diff: 'ort. artış', color: 'text-orange-400' },
                 ].map(({ label, value, diff, color }) => (
-                  <div key={label} className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-4">
-                    <div className="text-xs text-white/40 mb-1">{label}</div>
+                  <div key={label} className="rounded-xl border p-4">
+                    <div className="text-xs mb-1">{label}</div>
                     <div className={cn('text-2xl font-bold', color)}>{value}</div>
-                    <div className="text-xs text-white/30">{diff}</div>
+                    <div className="text-xs">{diff}</div>
                   </div>
                 ))}
               </div>
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-                <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">Kampanya Dönemleri — Etki Analizi</div>
+              <div className="rounded-xl border p-5">
+                <div className="text-xs uppercase tracking-wide font-medium mb-4">Kampanya Dönemleri — Etki Analizi</div>
                 <div className="space-y-3">
                   {[
                     { name: 'Whopper Günü', dates: '14–16 Ağu', orders: '+%31', pulse: '+18', packing: '+22', status: 'tamamlandı' },
@@ -472,17 +472,17 @@ export default function ReportsPage() {
                           <span className="text-sm font-medium text-white">{c.name}</span>
                           {c.status === 'aktif' && <span className="text-[10px] bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full font-medium">Aktif</span>}
                         </div>
-                        <div className="text-xs text-white/30 mt-0.5">{c.dates}</div>
+                        <div className="text-xs mt-0.5">{c.dates}</div>
                       </div>
-                      <div className="text-center"><div className="text-xs text-white/40">Sipariş</div><div className="text-sm font-bold text-emerald-400">{c.orders}</div></div>
-                      <div className="text-center"><div className="text-xs text-white/40">Nabız</div><div className="text-sm font-bold text-red-400">{c.pulse}</div></div>
-                      <div className="text-center"><div className="text-xs text-white/40">Packing</div><div className="text-sm font-bold text-orange-400">{c.packing}</div></div>
+                      <div className="text-center"><div className="text-xs">Sipariş</div><div className="text-sm font-bold text-emerald-400">{c.orders}</div></div>
+                      <div className="text-center"><div className="text-xs">Nabız</div><div className="text-sm font-bold text-red-400">{c.pulse}</div></div>
+                      <div className="text-center"><div className="text-xs">Packing</div><div className="text-sm font-bold text-orange-400">{c.packing}</div></div>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/[0.05] p-4 text-xs text-white/60">
-                💡 <span className="text-white/80">Kampanyalı günlerde packing kapasitesi ortalama %17 daha fazla zorlanıyor.</span> Kampanya başlamadan 1 gün önce packing kadrosu takviye edilmesi önerilir.
+              <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/[0.05] p-4 text-xs">
+                💡 <span >Kampanyalı günlerde packing kapasitesi ortalama %17 daha fazla zorlanıyor.</span> Kampanya başlamadan 1 gün önce packing kadrosu takviye edilmesi önerilir.
               </div>
             </div>
           )}

@@ -130,7 +130,7 @@ export default function AIRecommendationsPage() {
       <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={20} className="text-white/20 animate-spin" />
+            <Loader2 size={20} className="animate-spin" />
           </div>
         ) : (
           recs.map((rec, i) => {
@@ -180,7 +180,7 @@ export default function AIRecommendationsPage() {
                       <div key={action.id}
                         className={cn('flex items-center gap-3 rounded-[10px] px-3 py-2.5 transition-all', action.applied && 'opacity-50')}
                         style={{
-                          background: action.applied ? 'rgba(255,255,255,0.02)' : pc.bg,
+                          background: action.applied ? 'var(--s2)' : pc.bg,
                           border: `1px solid ${action.applied ? 'var(--bdr)' : pc.border}`,
                         }}>
                         <div className="w-1.5 h-1.5 rounded-full shrink-0"

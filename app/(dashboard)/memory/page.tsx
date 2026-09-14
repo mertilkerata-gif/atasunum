@@ -39,17 +39,17 @@ export default function MemoryPage() {
           ].map(({ label, value, unit, color, icon }) => (
             <div key={label} className="card" style={{ padding: "20px" }}>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] text-white/30 uppercase tracking-widest">{label}</span>
+                <span className="text-[10px] uppercase tracking-widest">{label}</span>
                 <span className={cn('opacity-40', color)}>{icon}</span>
               </div>
               <div className={cn('text-2xl font-bold font-mono', color)}>{value}</div>
-              <div className="text-[11px] text-white/25 mt-1">{unit}</div>
+              <div className="text-[11px] mt-1">{unit}</div>
             </div>
           ))}
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 border border-white/[0.07] rounded-xl p-1" style={{ background: 'rgba(255,255,255,0.02)', width: 'fit-content' }}>
+        <div className="flex gap-1 border rounded-xl p-1" style={{ background: 'var(--s2)', width: 'fit-content' }}>
           {[{ id: 'history', label: '📋 Aksiyon Geçmişi' }, { id: 'patterns', label: '🧠 Öğrenilen Örüntüler' }].map(t => (
             <button key={t.id} onClick={() => setTab(t.id as any)}
               className={cn('px-5 py-2.5 rounded-lg text-xs font-medium transition-all',
@@ -81,7 +81,7 @@ export default function MemoryPage() {
                             style={{ background: color + '20', color, border: `1px solid ${color}30` }}>
                             {ACTION_LABELS[entry.actionType]}
                           </span>
-                          <span className="text-xs text-white/50">{entry.restaurantName}</span>
+                          <span className="text-xs">{entry.restaurantName}</span>
                           {entry.aiRecommended && (
                             <span className="text-[9px] px-1.5 py-0.5 rounded font-medium"
                               style={{ background: 'rgba(129,140,248,0.15)', color: '#818cf8', border: '1px solid rgba(129,140,248,0.2)' }}>
@@ -89,41 +89,41 @@ export default function MemoryPage() {
                             </span>
                           )}
                         </div>
-                        <span className="text-[10px] text-white/25 font-mono shrink-0">{entry.date} {entry.time}</span>
+                        <span className="text-[10px] font-mono shrink-0">{entry.date} {entry.time}</span>
                       </div>
 
-                      <div className="text-sm font-medium text-white/80 mb-3">{entry.action}</div>
+                      <div className="text-sm font-medium mb-3">{entry.action}</div>
 
                       {/* Before → After */}
                       <div className="flex items-center gap-4 mb-3">
                         <div className="rounded-xl border px-4 py-2.5 min-w-[120px]"
                           style={{ background: 'rgba(255,61,61,0.06)', borderColor: 'rgba(255,61,61,0.15)' }}>
-                          <div className="text-[9px] text-white/25 mb-0.5">Öncesi · {entry.before.metric}</div>
+                          <div className="text-[9px] mb-0.5">Öncesi · {entry.before.metric}</div>
                           <div className="text-sm font-bold font-mono text-red-400">{entry.before.value}</div>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-white/20 shrink-0" />
+                        <ChevronRight className="w-4 h-4 shrink-0" />
                         <div className="rounded-xl border px-4 py-2.5 min-w-[120px]"
                           style={{ background: 'rgba(34,197,94,0.06)', borderColor: 'rgba(34,197,94,0.15)' }}>
-                          <div className="text-[9px] text-white/25 mb-0.5">Sonrası · {entry.after.metric}</div>
+                          <div className="text-[9px] mb-0.5">Sonrası · {entry.after.metric}</div>
                           <div className="text-sm font-bold font-mono text-emerald-400">{entry.after.value}</div>
                         </div>
                         <div className="flex flex-col items-center">
                           <div className="text-lg font-bold text-emerald-400">↓%{entry.improvement}</div>
                           {scoreImprovement > 0 && (
-                            <div className="text-[10px] text-white/30">Nabız ↓{scoreImprovement}</div>
+                            <div className="text-[10px]">Nabız ↓{scoreImprovement}</div>
                           )}
                         </div>
                       </div>
 
                       {/* Pulse change */}
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="text-[10px] text-white/30">Nabız:</div>
+                        <div className="text-[10px]">Nabız:</div>
                         <div className="flex items-center gap-2">
                           <span className={cn('text-sm font-bold font-mono', getRiskConfig(entry.pulseBefore >= 80 ? 'KRITIK' : entry.pulseBefore >= 60 ? 'RISKLI' : entry.pulseBefore >= 40 ? 'YOGUN' : 'NORMAL').color)}>{entry.pulseBefore}</span>
-                          <span className="text-white/20">→</span>
+                          <span >→</span>
                           <span className={cn('text-sm font-bold font-mono', getRiskConfig(entry.pulseAfter >= 80 ? 'KRITIK' : entry.pulseAfter >= 60 ? 'RISKLI' : entry.pulseAfter >= 40 ? 'YOGUN' : 'NORMAL').color)}>{entry.pulseAfter}</span>
                         </div>
-                        <div className="text-[10px] text-white/25">— {entry.appliedBy}</div>
+                        <div className="text-[10px]">— {entry.appliedBy}</div>
                       </div>
 
                       {entry.learnedPattern && (
@@ -145,18 +145,18 @@ export default function MemoryPage() {
         {tab === 'patterns' && (
           <div className="space-y-4">
             {LEARNED_PATTERNS.map(p => (
-              <div key={p.id} className="rounded-2xl border p-6" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
+              <div key={p.id} className="card" style={{ padding: 24 }}>
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <Brain className="w-4 h-4 text-orange-400" />
                       <span className="text-sm font-bold text-white">{p.pattern}</span>
                     </div>
-                    <div className="text-xs text-white/40">Tetikleyici: {p.trigger}</div>
+                    <div className="text-xs">Tetikleyici: {p.trigger}</div>
                   </div>
                   <div className="text-right shrink-0">
                     <div className="text-2xl font-bold font-mono text-emerald-400">%{p.successRate}</div>
-                    <div className="text-[10px] text-white/30">başarı oranı</div>
+                    <div className="text-[10px]">başarı oranı</div>
                   </div>
                 </div>
                 <div className="rounded-xl border px-4 py-3 mb-4"
@@ -164,7 +164,7 @@ export default function MemoryPage() {
                   <div className="text-[10px] text-indigo-300/60 mb-1">Önerilen Aksiyon</div>
                   <div className="text-sm text-indigo-200">{p.recommendedAction}</div>
                 </div>
-                <div className="flex items-center gap-6 text-xs text-white/30">
+                <div className="flex items-center gap-6 text-xs">
                   <span>{p.appliedCount} kez uygulandı</span>
                   <span>Ort. %{p.avgImprovement} iyileşme</span>
                   <span>{p.restaurants.length} restoran</span>

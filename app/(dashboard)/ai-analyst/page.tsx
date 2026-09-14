@@ -82,7 +82,7 @@ export default function AIAnalystPage() {
             <div className={cn('max-w-2xl rounded-xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap',
               msg.role === 'user' ? 'bg-orange-500/15 border border-orange-500/20 text-white' : 'bg-white/[0.05] border border-white/[0.08] text-white/80')}>
               {msg.content}
-              <div className="text-[10px] text-white/25 mt-2">{msg.timestamp.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</div>
+              <div className="text-[10px] mt-2">{msg.timestamp.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</div>
             </div>
           </div>
         ))}
@@ -91,9 +91,9 @@ export default function AIAnalystPage() {
             <div className="w-8 h-8 rounded-full bg-indigo-500/30 border border-indigo-500/40 flex items-center justify-center">
               <Bot className="w-4 h-4 text-indigo-400" />
             </div>
-            <div className="bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 flex items-center gap-2">
+            <div className="border rounded-xl px-4 py-3 flex items-center gap-2">
               <Loader2 className="w-3.5 h-3.5 text-indigo-400 animate-spin" />
-              <span className="text-xs text-white/40">Analiz ediliyor...</span>
+              <span className="text-xs">Analiz ediliyor...</span>
             </div>
           </div>
         )}
@@ -104,7 +104,7 @@ export default function AIAnalystPage() {
         <div className="flex gap-2 overflow-x-auto pb-1">
           {SUGGESTED.map(q => (
             <button key={q} onClick={() => send(q)}
-              className="shrink-0 flex items-center gap-1.5 bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] rounded-full px-3 py-1.5 text-xs text-white/50 hover:text-white/70 transition-all">
+              className="shrink-0 flex items-center gap-1.5 border hover: rounded-full px-3 py-1.5 text-xs hover: transition-all">
               <Sparkles className="w-3 h-3 text-indigo-400" />{q}
             </button>
           ))}
@@ -116,7 +116,7 @@ export default function AIAnalystPage() {
           <input value={input} onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send(input)}
             placeholder="Örn: Hangi restoranlarda packing darboğazı var?"
-            className="flex-1 bg-white/[0.06] border border-white/[0.1] rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-indigo-500/50 transition-colors" />
+            className="flex-1 border rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-indigo-500/50 transition-colors" />
           <button onClick={() => send(input)} disabled={loading || !input.trim()}
             className="px-4 py-3 bg-indigo-500 hover:bg-indigo-400 disabled:opacity-40 text-white rounded-xl transition-colors">
             <Send className="w-4 h-4" />

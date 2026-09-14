@@ -36,12 +36,12 @@ export default function RiskMatrixPage() {
         <div className="grid grid-cols-12 gap-5">
           {/* Matrix */}
           <div className="col-span-8 rounded-2xl border p-6" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
-            <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-4">Risk Matrisi</div>
+            <div className="text-xs uppercase tracking-widest font-medium mb-4">Risk Matrisi</div>
             <div className="relative" style={{ paddingLeft: '32px', paddingBottom: '28px' }}>
               {/* Y axis label */}
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] text-white/25 uppercase tracking-widest whitespace-nowrap">Etki Büyüklüğü →</div>
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] uppercase tracking-widest whitespace-nowrap">Etki Büyüklüğü →</div>
               {/* X axis label */}
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-[10px] text-white/25 uppercase tracking-widest">Oluşma Olasılığı →</div>
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-widest">Oluşma Olasılığı →</div>
 
               <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
                 {/* Quadrants */}
@@ -114,7 +114,7 @@ export default function RiskMatrixPage() {
           {/* Legend + table */}
           <div className="col-span-4 space-y-4">
             <div className="card" style={{ padding: "16px" }} data-dup={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
-              <div className="text-[10px] text-white/30 uppercase tracking-widest mb-3">Kadrant Eylemleri</div>
+              <div className="text-[10px] uppercase tracking-widest mb-3">Kadrant Eylemleri</div>
               {[
                 { label: '🔴 Acil Aksiyon', desc: 'Hemen müdahale et', color: '#ff3d3d' },
                 { label: '🟡 İzle', desc: 'Hazırlıklı ol, bekle', color: '#eab308' },
@@ -124,8 +124,8 @@ export default function RiskMatrixPage() {
                 <div key={label} className="flex items-center gap-2 mb-2.5">
                   <div className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
                   <div>
-                    <div className="text-xs font-medium text-white/70">{label}</div>
-                    <div className="text-[10px] text-white/30">{desc}</div>
+                    <div className="text-xs font-medium">{label}</div>
+                    <div className="text-[10px]">{desc}</div>
                   </div>
                 </div>
               ))}
@@ -133,7 +133,7 @@ export default function RiskMatrixPage() {
 
             {/* Top risks */}
             <div className="card" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
-              <div className="px-4 py-3 border-b text-[10px] text-white/30 uppercase tracking-widest"
+              <div className="px-4 py-3 border-b text-[10px] uppercase tracking-widest"
                 style={{ borderColor: 'var(--bdr)' }}>Öncelikli Riskler</div>
               {data.sort((a, b) => (b.probability + b.impact) - (a.probability + a.impact)).slice(0, 5).map(d => {
                 const config = getRiskConfig(d.pulse.risk_level)
@@ -141,7 +141,7 @@ export default function RiskMatrixPage() {
                   <div key={d.restaurant.id} className="flex items-center gap-3 px-4 py-2.5 border-b"
                     style={{ borderColor: 'var(--bdr)' }}>
                     <div className="w-2 h-2 rounded-full shrink-0" style={{ background: config.colorHex }} />
-                    <span className="text-xs text-white/60 flex-1 truncate">{d.restaurant.name.replace('Burger King ','BK ').replace('Popeyes ','Pop.')}</span>
+                    <span className="text-xs flex-1 truncate">{d.restaurant.name.replace('Burger King ','BK ').replace('Popeyes ','Pop.')}</span>
                     <span className={cn('text-xs font-bold font-mono', config.color)}>{d.pulse.score}</span>
                   </div>
                 )

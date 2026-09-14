@@ -72,7 +72,7 @@ export default function RestaurantsPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 size={20} className="text-white/20 animate-spin" />
+            <Loader2 size={20} className="animate-spin" />
           </div>
         ) : (
           <div className="space-y-2">
@@ -80,7 +80,7 @@ export default function RestaurantsPage() {
               const rc = getRiskConfig(r.risk_level as 'KRITIK' | 'RISKLI' | 'YOGUN' | 'NORMAL')
               return (
                 <Link href={`/restaurants/${r.id}`} key={r.id}
-                  className="flex items-center gap-4 rounded-[11px] px-4 py-3 border transition-all hover:border-white/10 animate-fade-in"
+                  className="flex items-center gap-4 rounded-[11px] px-4 py-3 border transition-all hover: animate-fade-in"
                   style={{ animationDelay: `${i * 25}ms`, background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
 
                   <div className="w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0"
@@ -91,7 +91,7 @@ export default function RestaurantsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="text-[12.5px] font-medium truncate" style={{ color: 'var(--tx)' }}>{r.name}</div>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <MapPin size={9} className="text-white/20 shrink-0" />
+                      <MapPin size={9} className="shrink-0" />
                       <span className="text-[10px]" style={{ color: 'var(--tx3)' }}>{r.district} · {r.region}</span>
                     </div>
                   </div>
@@ -109,7 +109,7 @@ export default function RestaurantsPage() {
                       style={{ background: rc.bg, color: rc.color, border: `1px solid ${rc.border}` }}>
                       {r.risk_level}
                     </div>
-                    <ExternalLink size={12} className="text-white/15" />
+                    <ExternalLink size={12} />
                   </div>
                 </Link>
               )

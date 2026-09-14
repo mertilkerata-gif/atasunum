@@ -18,8 +18,8 @@ const DEMAND_CONFIG = {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-xl border px-3 py-2 text-xs" style={{ background: '#13131e', borderColor: 'rgba(255,255,255,0.1)' }}>
-      <div className="text-white/40 mb-1">{label}</div>
+    <div className="rounded-xl border px-3 py-2 text-xs" style={{ background: 'var(--s2)', borderColor: 'rgba(255,255,255,0.1)' }}>
+      <div className="mb-1">{label}</div>
       {payload.map((p: any) => (
         <div key={p.name} className="flex gap-2 mt-0.5">
           <span style={{ color: p.color }}>●</span>
@@ -69,15 +69,15 @@ export default function ShiftsPage() {
         {/* Restoran + tarih seçici */}
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-4">
-            <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-2">Restoran</label>
+            <label className="block text-[10px] uppercase tracking-widest mb-2">Restoran</label>
             <select value={restaurantId} onChange={e => setRestaurantId(e.target.value)}
               className="w-full rounded-xl border px-4 py-2.5 text-sm text-white outline-none"
               style={{ background: 'var(--s1)', borderColor: 'rgba(255,255,255,0.1)' }}>
-              {RESTAURANTS.map(r => <option key={r.id} value={r.id} style={{ background: '#13131e' }}>{r.name}</option>)}
+              {RESTAURANTS.map(r => <option key={r.id} value={r.id} style={{ background: 'var(--s2)' }}>{r.name}</option>)}
             </select>
           </div>
           <div className="col-span-8">
-            <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-2">Tarih Seç</label>
+            <label className="block text-[10px] uppercase tracking-widest mb-2">Tarih Seç</label>
             <div className="flex gap-2 overflow-x-auto pb-1">
               {weeklyPlans.map(plan => {
                 const dc = DEMAND_CONFIG[plan.predictedDemand]
@@ -91,7 +91,7 @@ export default function ShiftsPage() {
                       borderColor: isSelected ? dc.border : 'var(--bdr)',
                       minWidth: '90px',
                     }}>
-                    <div className="text-[10px] text-white/30 mb-0.5">{plan.dayOfWeek.slice(0, 3)}</div>
+                    <div className="text-[10px] mb-0.5">{plan.dayOfWeek.slice(0, 3)}</div>
                     <div className={cn('text-xs font-semibold', isSelected ? dc.color : 'text-white/50')}>
                       {new Date(plan.date).getDate()} Ağu
                     </div>
@@ -108,8 +108,7 @@ export default function ShiftsPage() {
 
         {/* Dış olaylar banner */}
         {currentPlan.externalEvents.length > 0 && (
-          <div className="rounded-2xl border p-4 flex items-start gap-3"
-            style={{ background: 'rgba(129,140,248,0.05)', borderColor: 'rgba(129,140,248,0.18)' }}>
+          <div className="card" style={{ padding: 16 }}>
             <Calendar className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
             <div className="flex-1">
               <div className="text-xs font-semibold text-indigo-300 mb-2">{currentPlan.dayOfWeek} — Dış Faktörler</div>
@@ -118,7 +117,7 @@ export default function ShiftsPage() {
                   <div key={i} className="flex items-center gap-2 rounded-lg border px-3 py-1.5"
                     style={{ background: 'var(--s2)', borderColor: 'var(--bdr)' }}>
                     <span className="text-sm">{e.icon}</span>
-                    <span className="text-xs text-white/70">{e.name}</span>
+                    <span className="text-xs">{e.name}</span>
                     <span className={cn('text-xs font-bold', e.impact > 0.3 ? 'text-orange-400' : 'text-yellow-400')}>
                       +{Math.round(e.impact * 100)}% TG
                     </span>
@@ -133,31 +132,31 @@ export default function ShiftsPage() {
           {/* AI Plan */}
           <div className="col-span-7 space-y-4">
             {/* Talep tahmini */}
-            <div className="card" style={{ padding: "20px" }} data-dup={{ background: demandConfig.bg, borderColor: demandConfig.border }}>
+            <div className="card" style={{ padding: "20px" }}>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <div className="text-[10px] text-white/30 uppercase tracking-widest mb-1">AI Talep Tahmini</div>
+                  <div className="text-[10px] uppercase tracking-widest mb-1">AI Talep Tahmini</div>
                   <div className={cn('text-2xl font-bold', demandConfig.color)}>{demandConfig.label} Talep</div>
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold font-mono text-white">{currentPlan.estimatedOrders}</div>
-                  <div className="text-xs text-white/30">tahmini sipariş</div>
-                  <div className="text-sm font-mono text-white/50 mt-0.5">{currentPlan.estimatedRevenue.toLocaleString('tr-TR')} ₺</div>
+                  <div className="text-xs">tahmini sipariş</div>
+                  <div className="text-sm font-mono mt-0.5">{currentPlan.estimatedRevenue.toLocaleString('tr-TR')} ₺</div>
                 </div>
               </div>
-              <div className="text-xs text-white/50 leading-relaxed p-3 rounded-xl"
+              <div className="text-xs leading-relaxed p-3 rounded-xl"
                 style={{ background: 'rgba(0,0,0,0.2)' }}>
                 <Zap className="w-3 h-3 inline mr-1.5 text-indigo-400" />
                 {currentPlan.aiJustification}
               </div>
-              <div className="text-[10px] text-white/25 mt-2 text-right">Güven: %{Math.round(currentPlan.confidence * 100)}</div>
+              <div className="text-[10px] mt-2 text-right">Güven: %{Math.round(currentPlan.confidence * 100)}</div>
             </div>
 
             {/* Personel karşılaştırma */}
-            <div className="card" style={{ padding: "20px" }} data-dup={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
+            <div className="card" style={{ padding: "20px" }}>
               <div className="flex items-center justify-between mb-4">
-                <div className="text-xs text-white/40 uppercase tracking-widest font-medium">Personel Planı</div>
-                <div className="flex items-center gap-4 text-[10px] text-white/30">
+                <div className="text-xs uppercase tracking-widest font-medium">Personel Planı</div>
+                <div className="flex items-center gap-4 text-[10px]">
                   <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-indigo-400 inline-block" />Mevcut</span>
                   <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-orange-400 inline-block" />Önerilen</span>
                 </div>
@@ -178,7 +177,7 @@ export default function ShiftsPage() {
                     <div key={key} className="flex items-center gap-4">
                       <div className="w-24 flex items-center gap-1.5 shrink-0">
                         <span className="text-xs">{icon}</span>
-                        <span className="text-xs text-white/50">{label}</span>
+                        <span className="text-xs">{label}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-1">
                         {/* Mevcut */}
@@ -212,13 +211,13 @@ export default function ShiftsPage() {
               <div className="flex items-center justify-between mt-4 pt-4 border-t" style={{ borderColor: 'var(--bdr)' }}>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-white/30" />
-                    <span className="text-xs text-white/40">Mevcut</span>
+                    <Users className="w-4 h-4" />
+                    <span className="text-xs">Mevcut</span>
                     <span className="text-lg font-bold font-mono text-indigo-400">{currentPlan.currentStaff.total}</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-white/20" />
+                  <ChevronRight className="w-4 h-4" />
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-white/40">Önerilen</span>
+                    <span className="text-xs">Önerilen</span>
                     <span className={cn('text-lg font-bold font-mono', staffGap > 0 ? 'text-orange-400' : 'text-emerald-400')}>
                       {currentPlan.recommendedStaff.total}
                     </span>
@@ -252,13 +251,13 @@ export default function ShiftsPage() {
 
             {/* Risk faktörleri */}
             {currentPlan.riskFactors.length > 0 && (
-              <div className="card" style={{ padding: "20px" }} data-dup={{ background: 'rgba(249,115,22,0.04)', borderColor: 'rgba(249,115,22,0.15)' }}>
-                <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-3">Risk Faktörleri</div>
+              <div className="card" style={{ padding: "20px" }}>
+                <div className="text-xs uppercase tracking-widest font-medium mb-3">Risk Faktörleri</div>
                 <div className="space-y-2">
                   {currentPlan.riskFactors.map((rf, i) => (
                     <div key={i} className="flex items-start gap-2">
                       <AlertTriangle className="w-3.5 h-3.5 text-orange-400 shrink-0 mt-0.5" />
-                      <span className="text-xs text-white/60">{rf}</span>
+                      <span className="text-xs">{rf}</span>
                     </div>
                   ))}
                 </div>
@@ -269,13 +268,13 @@ export default function ShiftsPage() {
           {/* Sağ panel: tarihsel performans + peak saatler */}
           <div className="col-span-5 space-y-4">
             {/* Peak saatler */}
-            <div className="card" style={{ padding: "20px" }} data-dup={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
-              <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-4">Peak Saatler</div>
+            <div className="card" style={{ padding: "20px" }}>
+              <div className="text-xs uppercase tracking-widest font-medium mb-4">Peak Saatler</div>
               <div className="space-y-3">
                 {currentPlan.peakHours.map((ph, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <div className="text-xs font-mono text-white/50 w-20 shrink-0">{ph.start}–{ph.end}</div>
-                    <div className="flex-1 h-2 bg-white/[0.06] rounded-full overflow-hidden">
+                    <div className="text-xs font-mono w-20 shrink-0">{ph.start}–{ph.end}</div>
+                    <div className="flex-1 h-2 rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all"
                         style={{
                           width: `${ph.intensity * 100}%`,
@@ -283,19 +282,19 @@ export default function ShiftsPage() {
                           boxShadow: ph.intensity > 0.9 ? '0 0 8px rgba(255,61,61,0.5)' : 'none',
                         }} />
                     </div>
-                    <span className="text-xs text-white/30 w-8 text-right">%{Math.round(ph.intensity * 100)}</span>
+                    <span className="text-xs w-8 text-right">%{Math.round(ph.intensity * 100)}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Geçmiş performans */}
-            <div className="card" style={{ padding: "20px" }} data-dup={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
-              <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-4">Geçen Hafta Performansı</div>
+            <div className="card" style={{ padding: "20px" }}>
+              <div className="text-xs uppercase tracking-widest font-medium mb-4">Geçen Hafta Performansı</div>
               <ResponsiveContainer width="100%" height={140}>
                 <BarChart data={HISTORICAL_PERFORMANCE}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
-                  <XAxis dataKey="dayOfWeek" tickFormatter={v => v.slice(0,3)} tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="dayOfWeek" tickFormatter={v => v.slice(0,3)} tick={{ fill: 'var(--tx3)', fontSize: 10 }} axisLine={false} tickLine={false} />
                   <YAxis hide />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="avgPulseScore" name="Ort. Nabız" radius={[3, 3, 0, 0]}>
@@ -309,10 +308,10 @@ export default function ShiftsPage() {
               <div className="mt-3 space-y-2">
                 {HISTORICAL_PERFORMANCE.slice(-3).map((h, i) => (
                   <div key={i} className="flex items-center gap-3 text-xs">
-                    <span className="text-white/30 w-12">{h.dayOfWeek.slice(0,3)}</span>
-                    <span className="text-white/50">{h.staffCount} kişi</span>
+                    <span className="w-12">{h.dayOfWeek.slice(0,3)}</span>
+                    <span >{h.staffCount} kişi</span>
                     <span className={cn('font-mono font-bold', h.avgPulseScore >= 60 ? 'text-orange-400' : 'text-emerald-400')}>{h.avgPulseScore} nabız</span>
-                    <span className="text-white/30 ml-auto">%{Math.round(h.delayRate * 100)} gecikme</span>
+                    <span className="ml-auto">%{Math.round(h.delayRate * 100)} gecikme</span>
                   </div>
                 ))}
               </div>

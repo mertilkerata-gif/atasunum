@@ -10,12 +10,12 @@ import { TrendingDown, TrendingUp, DollarSign, AlertTriangle, Target } from 'luc
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-xl border px-3 py-2 text-xs" style={{ background: '#13131e', borderColor: 'rgba(255,255,255,0.1)' }}>
-      <div className="text-white/40 mb-1">{label}</div>
+    <div className="rounded-xl border px-3 py-2 text-xs" style={{ background: 'var(--s2)', borderColor: 'rgba(255,255,255,0.1)' }}>
+      <div className="mb-1">{label}</div>
       {payload.map((p: any) => (
         <div key={p.name} className="flex items-center gap-2 mt-0.5">
           <span style={{ color: p.color }}>●</span>
-          <span className="text-white/60">{p.name}:</span>
+          <span >{p.name}:</span>
           <span className="text-white font-semibold">{typeof p.value === 'number' ? p.value.toLocaleString('tr-TR') + ' ₺' : p.value}</span>
         </div>
       ))}
@@ -61,13 +61,13 @@ export default function RevenuePage() {
           ].map(({ label, value, suffix, color, icon, sub }) => (
             <div key={label} className="card" style={{ padding: "20px" }} data-dup={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] text-white/30 uppercase tracking-widest">{label}</span>
+                <span className="text-[10px] uppercase tracking-widest">{label}</span>
                 <span className={cn('opacity-40', color)}>{icon}</span>
               </div>
               <div className={cn('text-2xl font-bold font-mono', color)}>
                 {value.toLocaleString('tr-TR')}{suffix}
               </div>
-              {sub && <div className="text-[10px] text-white/25 mt-1">{sub}</div>}
+              {sub && <div className="text-[10px] mt-1">{sub}</div>}
             </div>
           ))}
         </div>
@@ -75,7 +75,7 @@ export default function RevenuePage() {
         {/* Kayıp ciro dağılımı */}
         <div className="grid grid-cols-12 gap-5">
           <div className="col-span-4 rounded-2xl border p-5" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
-            <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-4">Kayıp Ciro — Neden?</div>
+            <div className="text-xs uppercase tracking-widest font-medium mb-4">Kayıp Ciro — Neden?</div>
             <ResponsiveContainer width="100%" height={160}>
               <PieChart>
                 <Pie data={lossBreakdown} cx="50%" cy="50%" innerRadius={45} outerRadius={68} paddingAngle={3} dataKey="value">
@@ -88,7 +88,7 @@ export default function RevenuePage() {
               {lossBreakdown.map(d => (
                 <div key={d.name} className="flex items-center gap-2.5">
                   <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: d.color }} />
-                  <span className="text-xs text-white/50 flex-1">{d.name}</span>
+                  <span className="text-xs flex-1">{d.name}</span>
                   <span className="text-xs font-bold font-mono text-white">{d.value.toLocaleString('tr-TR')} ₺</span>
                 </div>
               ))}
@@ -97,12 +97,12 @@ export default function RevenuePage() {
 
           {/* Restoran bazlı kayıp */}
           <div className="col-span-8 rounded-2xl border p-5" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
-            <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-4">Restoran Bazlı Ciro Analizi</div>
+            <div className="text-xs uppercase tracking-widest font-medium mb-4">Restoran Bazlı Ciro Analizi</div>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={barData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
-                <XAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 9 }} axisLine={false} tickLine={false} angle={-20} textAnchor="end" height={40} />
-                <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `${(v/1000).toFixed(0)}K`} />
+                <XAxis dataKey="name" tick={{ fill: 'var(--tx3)', fontSize: 9 }} axisLine={false} tickLine={false} angle={-20} textAnchor="end" height={40} />
+                <YAxis tick={{ fill: 'var(--tx3)', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `${(v/1000).toFixed(0)}K`} />
                 <Tooltip content={<CustomTooltip />} />
                 <Bar dataKey="actual" name="Gerçekleşen" fill="#22c55e" radius={[0, 0, 0, 0]} stackId="a" />
                 <Bar dataKey="lost" name="Kayıp" fill="#ff3d3d" radius={[0, 0, 0, 0]} stackId="a" />
@@ -115,13 +115,13 @@ export default function RevenuePage() {
         {/* Restoran detay tablosu */}
         <div className="card" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
           <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--bdr)' }}>
-            <div className="text-xs text-white/40 uppercase tracking-widest font-medium">Detaylı Analiz</div>
+            <div className="text-xs uppercase tracking-widest font-medium">Detaylı Analiz</div>
           </div>
           <table className="w-full">
             <thead>
-              <tr className="border-b" style={{ borderColor: 'var(--bdr)', background: 'rgba(255,255,255,0.02)' }}>
+              <tr className="border-b" style={{ borderColor: 'var(--bdr)', background: 'var(--s2)' }}>
                 {['Restoran', 'Nabız', 'Gerçekleşen Ciro', 'Kayıp Ciro', 'Fırsat Kaybı', 'Kapasite', 'Büyüme'].map(h => (
-                  <th key={h} className="px-5 py-3 text-left text-[10px] font-semibold text-white/25 uppercase tracking-widest">{h}</th>
+                  <th key={h} className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-widest">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -131,11 +131,11 @@ export default function RevenuePage() {
                 const pulse = getPulseScore(r.id)
                 const config = getRiskConfig(pulse.risk_level)
                 return (
-                  <tr key={r.id} className="border-b transition-colors hover:bg-white/[0.02]"
+                  <tr key={r.id} className="border-b transition-colors hover:"
                     style={{ borderColor: 'var(--bdr)' }}>
                     <td className="px-5 py-3">
-                      <div className="text-xs font-medium text-white/70">{r.name}</div>
-                      <div className="text-[10px] text-white/25">{r.district}</div>
+                      <div className="text-xs font-medium">{r.name}</div>
+                      <div className="text-[10px]">{r.district}</div>
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-1.5">
@@ -156,11 +156,11 @@ export default function RevenuePage() {
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-16 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                        <div className="w-16 h-1.5 rounded-full overflow-hidden">
                           <div className="h-full rounded-full"
                             style={{ width: `${rev.capacityUtilization}%`, background: rev.capacityUtilization > 80 ? '#ff3d3d' : rev.capacityUtilization > 60 ? '#f97316' : '#22c55e' }} />
                         </div>
-                        <span className="text-xs font-mono text-white/40">%{rev.capacityUtilization}</span>
+                        <span className="text-xs font-mono">%{rev.capacityUtilization}</span>
                       </div>
                     </td>
                     <td className="px-5 py-3">
@@ -182,7 +182,7 @@ export default function RevenuePage() {
             <div className="text-indigo-400 shrink-0 mt-0.5">💡</div>
             <div>
               <div className="text-sm font-semibold text-indigo-300 mb-1">AI Ciro Analizi</div>
-              <div className="text-xs text-white/50 leading-relaxed">
+              <div className="text-xs leading-relaxed">
                 Bugün toplam <span className="text-white font-medium">{network.totalLost.toLocaleString('tr-TR')} ₺</span> kayıp ciro tespit edildi.
                 Bunun <span className="text-red-400 font-medium">%{Math.round(lossBreakdown[0].value / network.totalLost * 100)}'i gecikmiş teslimat iptallerinden</span> kaynaklanıyor.
                 Operasyonel önlemler alınırsa <span className="text-emerald-400 font-medium">%60–70 oranında önlenebilir</span>.

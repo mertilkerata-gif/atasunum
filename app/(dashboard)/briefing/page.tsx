@@ -40,8 +40,7 @@ export default function BriefingPage() {
       <div className="p-6 space-y-5 max-w-4xl">
 
         {/* Header card */}
-        <div className="rounded-2xl border p-6 relative overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, rgba(249,115,22,0.08), rgba(129,140,248,0.05))', borderColor: 'rgba(249,115,22,0.2)' }}>
+        <div className="card" style={{ padding: 24 }}>
           <div className="absolute top-0 left-0 right-0 h-px"
             style={{ background: 'linear-gradient(90deg, transparent, rgba(249,115,22,0.6), transparent)' }} />
           <div className="flex items-start justify-between">
@@ -50,7 +49,7 @@ export default function BriefingPage() {
                 <Sun className="w-5 h-5 text-orange-400" />
                 <span className="text-lg font-bold text-white">Günaydın</span>
               </div>
-              <p className="text-sm text-white/60 leading-relaxed max-w-lg">
+              <p className="text-sm leading-relaxed max-w-lg">
                 Dün <span className="text-white font-medium">{revenue.totalOrders.toLocaleString('tr-TR')}</span> sipariş işlendi,
                 toplam <span className="text-emerald-400 font-medium">{revenue.totalActual.toLocaleString('tr-TR')} ₺</span> ciro elde edildi.
                 {revenue.totalLost > 0 && <> <span className="text-red-400 font-medium">{revenue.totalLost.toLocaleString('tr-TR')} ₺</span> kayıp ciro tespit edildi.</>}
@@ -76,9 +75,9 @@ export default function BriefingPage() {
             { label: 'Şikayet', value: totalComplaints, sub: 'toplam', color: totalComplaints > 50 ? 'text-orange-400' : 'text-white/60' },
           ].map(({ label, value, sub, color }) => (
             <div key={label} className="card" style={{ padding: "16px" }}>
-              <div className="text-[10px] text-white/30 uppercase tracking-widest mb-2">{label}</div>
+              <div className="text-[10px] uppercase tracking-widest mb-2">{label}</div>
               <div className={cn('text-2xl font-bold font-mono', color)}>{value}</div>
-              <div className="text-[11px] text-white/25 mt-1">{sub}</div>
+              <div className="text-[11px] mt-1">{sub}</div>
             </div>
           ))}
         </div>
@@ -96,7 +95,7 @@ export default function BriefingPage() {
                   style={{ background: 'var(--s2)', borderColor: 'var(--bdr)' }}>
                   <span className="text-lg">{e.icon}</span>
                   <div>
-                    <div className="text-xs font-medium text-white/80">{e.name}</div>
+                    <div className="text-xs font-medium">{e.name}</div>
                     <div className="text-[10px] text-orange-400">TG siparişi +{Math.round(e.impact * 100)}% bekleniyor</div>
                   </div>
                 </div>
@@ -120,7 +119,7 @@ export default function BriefingPage() {
                 <div className="shrink-0">
                   {action.done
                     ? <CheckCircle className="w-5 h-5 text-emerald-400" />
-                    : <div className="w-5 h-5 rounded-full border-2 border-white/20" />
+                    : <div className="w-5 h-5 rounded-full border-2" />
                   }
                 </div>
               </div>
@@ -141,11 +140,10 @@ export default function BriefingPage() {
               const plan = generateShiftPlan(r.id, todayDate)
               const gap = plan.recommendedStaff.total - plan.currentStaff.total
               return (
-                <div key={r.id} className="rounded-xl border p-3"
-                  style={{ background: gap > 0 ? 'rgba(249,115,22,0.05)' : 'rgba(255,255,255,0.02)', borderColor: gap > 0 ? 'rgba(249,115,22,0.15)' : 'var(--s2)' }}>
-                  <div className="text-xs font-medium text-white/70 truncate mb-1">{r.name.replace('Burger King ','BK ')}</div>
+                <div key={r.id} className="card" style={{ padding: 12 }}>
+                  <div className="text-xs font-medium truncate mb-1">{r.name.replace('Burger King ','BK ')}</div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-white/40">{plan.currentStaff.total} kişi</span>
+                    <span className="text-xs">{plan.currentStaff.total} kişi</span>
                     {gap > 0
                       ? <span className="text-xs font-bold text-orange-400">+{gap} gerek</span>
                       : <span className="text-xs text-emerald-400">✓ Yeterli</span>}
@@ -162,12 +160,12 @@ export default function BriefingPage() {
             <Zap className="w-4 h-4 text-indigo-400" />
             <span className="text-sm font-semibold text-indigo-300">AI Günlük Değerlendirmesi</span>
           </div>
-          <p className="text-sm text-white/55 leading-relaxed">
-            Dünkü operasyonun ana zorluğu <span className="text-white/80">akşam saatlerinde Packing kapasitesinin Tıkla Gelsin talebini karşılayamamasıydı</span>.
+          <p className="text-sm leading-relaxed">
+            Dünkü operasyonun ana zorluğu <span >akşam saatlerinde Packing kapasitesinin Tıkla Gelsin talebini karşılayamamasıydı</span>.
             Bugün {todayEvents.length > 0 ? `${todayEvents[0].name} nedeniyle benzer veya daha yüksek yoğunluk bekleniyor` : 'yoğunluğun dünle benzer seyretmesi bekleniyor'}.
             Öncelikli aksiyon: <span className="text-orange-300">kritik restoranların sabah vardiyasında Packing kadrolarını güçlendirmek</span>.
           </p>
-          <div className="mt-3 text-[10px] text-white/20">Güven: %84 · Kaynak: 7 günlük tarihsel veri + dış olaylar</div>
+          <div className="mt-3 text-[10px]">Güven: %84 · Kaynak: 7 günlük tarihsel veri + dış olaylar</div>
         </div>
       </div>
     </div>

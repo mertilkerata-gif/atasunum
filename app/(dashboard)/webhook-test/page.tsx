@@ -51,7 +51,7 @@ export default function WebhookTestPage() {
       <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div className="grid grid-cols-12 gap-5">
           <div className="col-span-4 space-y-2">
-            <div className="text-[10px] text-white/30 uppercase tracking-widest px-1 mb-3">Endpoint Seç</div>
+            <div className="text-[10px] uppercase tracking-widest px-1 mb-3">Endpoint Seç</div>
             {ENDPOINTS.map(ep => (
               <button key={ep.id} onClick={() => select(ep)}
                 className={cn('w-full text-left rounded-xl border px-4 py-3 transition-all', sel.id === ep.id ? 'border-orange-500/30 bg-orange-500/[0.08]' : 'border-white/[0.07] hover:border-white/[0.12]')}
@@ -60,7 +60,7 @@ export default function WebhookTestPage() {
                   <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded', ep.method === 'POST' ? 'bg-orange-500/20 text-orange-300' : 'bg-blue-500/20 text-blue-300')}>{ep.method}</span>
                   <span className={cn('text-xs font-medium', sel.id === ep.id ? 'text-orange-300' : 'text-white/60')}>{ep.label}</span>
                 </div>
-                <code className="text-[10px] text-white/25">{ep.path}</code>
+                <code className="text-[10px]">{ep.path}</code>
               </button>
             ))}
           </div>
@@ -68,10 +68,10 @@ export default function WebhookTestPage() {
             {sel.method === 'POST' && (
               <div className="card" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
                 <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--bdr)' }}>
-                  <span className="text-xs text-white/40 uppercase tracking-widest">Request Body (JSON)</span>
+                  <span className="text-xs uppercase tracking-widest">Request Body (JSON)</span>
                 </div>
                 <textarea value={payload} onChange={e => setPayload(e.target.value)} rows={12}
-                  className="w-full px-5 py-4 text-xs font-mono text-white/70 outline-none resize-none"
+                  className="w-full px-5 py-4 text-xs font-mono outline-none resize-none"
                   style={{ background: 'transparent', lineHeight: '1.6' }} />
               </div>
             )}
@@ -87,14 +87,14 @@ export default function WebhookTestPage() {
                   <div className="flex items-center gap-3">
                     {result.ok ? <CheckCircle className="w-4 h-4 text-emerald-400" /> : <XCircle className="w-4 h-4 text-red-400" />}
                     <span className={cn('text-sm font-bold', result.ok ? 'text-emerald-400' : 'text-red-400')}>HTTP {result.status}</span>
-                    <span className="text-xs text-white/30">{result.ms}ms</span>
+                    <span className="text-xs">{result.ms}ms</span>
                   </div>
                   <button onClick={() => navigator.clipboard.writeText(JSON.stringify(result.data, null, 2))}
-                    className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors">
+                    className="flex items-center gap-1.5 text-xs hover: transition-colors">
                     <Copy className="w-3.5 h-3.5" /> Kopyala
                   </button>
                 </div>
-                <pre className="px-5 py-4 text-xs font-mono text-white/60 overflow-auto max-h-80 leading-relaxed">{JSON.stringify(result.data, null, 2)}</pre>
+                <pre className="px-5 py-4 text-xs font-mono overflow-auto max-h-80 leading-relaxed">{JSON.stringify(result.data, null, 2)}</pre>
               </div>
             )}
           </div>

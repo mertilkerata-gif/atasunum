@@ -104,12 +104,11 @@ export default function BenchmarkPage() {
           {Object.entries(BADGES).map(([key, badge]) => {
             const winner = data.find(d => d.badges.includes(key))
             return (
-              <div key={key} className="rounded-2xl border p-4 text-center"
-                style={{ background: badge.bg, borderColor: badge.border }}>
+              <div key={key} className="card" style={{ padding: 16 }}>
                 <div className="text-3xl mb-2">{badge.icon}</div>
                 <div className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: badge.color }}>{badge.label}</div>
                 {winner && (
-                  <div className="text-[11px] text-white/60 truncate">{winner.restaurant.name.replace('Burger King ','BK ').replace('Popeyes ','Pop.')}</div>
+                  <div className="text-[11px] truncate">{winner.restaurant.name.replace('Burger King ','BK ').replace('Popeyes ','Pop.')}</div>
                 )}
               </div>
             )
@@ -134,9 +133,9 @@ export default function BenchmarkPage() {
             <div className="card" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
               {/* Header */}
               <div className="px-5 py-3 border-b flex items-center justify-between"
-                style={{ borderColor: 'var(--bdr)', background: 'rgba(255,255,255,0.02)' }}>
-                <span className="text-xs text-white/40 uppercase tracking-widest">{mc.label} Sıralaması</span>
-                <span className="text-xs text-white/25">Ağ Ort: <span className="font-mono text-white/50">{(avg[metric]).toLocaleString('tr-TR')}{mc.unit}</span></span>
+                style={{ borderColor: 'var(--bdr)', background: 'var(--s2)' }}>
+                <span className="text-xs uppercase tracking-widest">{mc.label} Sıralaması</span>
+                <span className="text-xs">Ağ Ort: <span className="font-mono">{(avg[metric]).toLocaleString('tr-TR')}{mc.unit}</span></span>
               </div>
 
               {ranked.map((d, i) => {
@@ -150,22 +149,22 @@ export default function BenchmarkPage() {
                   <div key={d.restaurant.id} className={cn('flex items-center gap-4 px-5 py-3.5 border-b transition-all hover:bg-white/[0.02]', i === 0 && 'bg-white/[0.02]')}
                     style={{ borderColor: 'var(--bdr)' }}>
                     <div className="w-8 text-center">
-                      {i < 3 ? <span className="text-lg">{medals[i]}</span> : <span className="text-sm font-mono text-white/20">{i + 1}</span>}
+                      {i < 3 ? <span className="text-lg">{medals[i]}</span> : <span className="text-sm font-mono">{i + 1}</span>}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-white/70 truncate">{d.restaurant.name}</span>
+                        <span className="text-xs font-medium truncate">{d.restaurant.name}</span>
                         {d.badges.map(b => <span key={b} className="text-sm">{BADGES[b]?.icon}</span>)}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className={cn('text-[10px] px-1.5 py-0.5 rounded font-medium', config.badge)}>{config.label}</span>
-                        <span className="text-[10px] text-white/25">{d.restaurant.district}</span>
+                        <span className="text-[10px]">{d.restaurant.district}</span>
                       </div>
                     </div>
 
                     {/* Bar */}
                     <div className="w-32 flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                      <div className="flex-1 h-1.5 rounded-full overflow-hidden">
                         <div className="h-full rounded-full transition-all"
                           style={{
                             width: metric === 'revenue'
@@ -191,8 +190,8 @@ export default function BenchmarkPage() {
 
           {/* Radar chart */}
           <div className="col-span-5 rounded-2xl border p-5" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
-            <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-1">Top 3 Karşılaştırma</div>
-            <div className="text-[10px] text-white/20 mb-4">Yüksek = daha iyi performans</div>
+            <div className="text-xs uppercase tracking-widest font-medium mb-1">Top 3 Karşılaştırma</div>
+            <div className="text-[10px] mb-4">Yüksek = daha iyi performans</div>
             <ResponsiveContainer width="100%" height={260}>
               <RadarChart data={radarData}>
                 <PolarGrid stroke="var(--bdr)" />
@@ -204,14 +203,14 @@ export default function BenchmarkPage() {
                     <Radar key={name} name={name} dataKey={name} stroke={colors[i]} fill={colors[i]} fillOpacity={0.1} strokeWidth={2} />
                   )
                 })}
-                <Tooltip contentStyle={{ background: '#13131e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '11px' }} />
+                <Tooltip contentStyle={{ background: 'var(--s2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '11px' }} />
               </RadarChart>
             </ResponsiveContainer>
             <div className="flex justify-center gap-4 mt-2">
               {ranked.slice(0, 3).map((d, i) => {
                 const colors = ['#f97316', '#818cf8', '#22c55e']
                 return (
-                  <div key={d.restaurant.id} className="flex items-center gap-1.5 text-[10px] text-white/40">
+                  <div key={d.restaurant.id} className="flex items-center gap-1.5 text-[10px]">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ background: colors[i] }} />
                     {d.restaurant.name.split(' ').slice(-1)[0]}
                   </div>

@@ -89,8 +89,8 @@ export default function SimulatorPage() {
       <div className="p-6 max-w-5xl space-y-6">
 
         {/* Restoran seç */}
-        <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-          <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-3">Restoran</div>
+        <div className="rounded-xl border p-5">
+          <div className="text-xs uppercase tracking-wide font-medium mb-3">Restoran</div>
           <div className="grid grid-cols-5 gap-2">
             {RESTAURANTS.map(r => {
               const p = getPulseScore(r.id)
@@ -100,7 +100,7 @@ export default function SimulatorPage() {
                   className={cn('rounded-lg border px-3 py-2 text-xs text-left transition-all',
                     restaurantId === r.id ? `${c.bg} ${c.border} ${c.color}` : 'border-white/[0.08] text-white/40 hover:text-white/60')}>
                   <div className="font-medium truncate">{r.name.split(' ').slice(-1)[0]}</div>
-                  <div className="text-white/30">{r.district}</div>
+                  <div >{r.district}</div>
                   <div className={cn('font-bold mt-1', c.color)}>{p.score}</div>
                 </button>
               )
@@ -110,8 +110,8 @@ export default function SimulatorPage() {
 
         <div className="grid grid-cols-2 gap-6">
           {/* Parametreler */}
-          <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5 space-y-5">
-            <div className="text-xs text-white/40 uppercase tracking-wide font-medium">Senaryo Parametreleri</div>
+          <div className="rounded-xl border p-5 space-y-5">
+            <div className="text-xs uppercase tracking-wide font-medium">Senaryo Parametreleri</div>
 
             {[
               { key: 'extraPacking' as const, label: '+Packing Personeli', options: [0, 1, 2] },
@@ -120,7 +120,7 @@ export default function SimulatorPage() {
               { key: 'orderIncrease' as const, label: 'Sipariş Artışı', options: [0, 20, 40] },
             ].map(({ key, label, options }) => (
               <div key={key}>
-                <div className="text-xs text-white/60 mb-2">{label}</div>
+                <div className="text-xs mb-2">{label}</div>
                 <div className="flex gap-2">
                   {options.map(opt => (
                     <button key={opt} onClick={() => setParams(p => ({ ...p, [key]: opt }))}
@@ -134,7 +134,7 @@ export default function SimulatorPage() {
             ))}
 
             <div>
-              <div className="text-xs text-white/60 mb-2">Kampanya</div>
+              <div className="text-xs mb-2">Kampanya</div>
               <div className="flex gap-2">
                 {[true, false].map(v => (
                   <button key={String(v)} onClick={() => setParams(p => ({ ...p, campaignActive: v }))}
@@ -156,25 +156,25 @@ export default function SimulatorPage() {
           </div>
 
           {/* Sonuçlar */}
-          <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-            <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">Karşılaştırma</div>
+          <div className="rounded-xl border p-5">
+            <div className="text-xs uppercase tracking-wide font-medium mb-4">Karşılaştırma</div>
             <div className="grid grid-cols-2 gap-4 mb-5">
               <div className={cn('rounded-xl border p-4', origConfig.bg, origConfig.border)}>
-                <div className="text-xs text-white/40 mb-2">Mevcut</div>
+                <div className="text-xs mb-2">Mevcut</div>
                 <div className={cn('text-4xl font-bold tabular-nums', origConfig.color)}>{pulse.score}</div>
                 <div className={cn('text-xs mt-1 font-medium', origConfig.color)}>{origConfig.label}</div>
-                <div className="text-xs text-white/35 mt-2">{snapshot.avg_preparation_time.toFixed(1)} dk hazırlama</div>
+                <div className="text-xs mt-2">{snapshot.avg_preparation_time.toFixed(1)} dk hazırlama</div>
               </div>
               <div className={cn('rounded-xl border p-4 transition-all', result && simConfig ? `${simConfig.bg} ${simConfig.border}` : 'border-white/[0.06] bg-white/[0.02]')}>
-                <div className="text-xs text-white/40 mb-2">Simülasyon</div>
+                <div className="text-xs mb-2">Simülasyon</div>
                 {result && simConfig ? (
                   <>
                     <div className={cn('text-4xl font-bold tabular-nums', simConfig.color)}>{result.simulated.score}</div>
                     <div className={cn('text-xs mt-1 font-medium', simConfig.color)}>{simConfig.label}</div>
-                    <div className="text-xs text-white/35 mt-2">{result.simulated.avg_prep_time.toFixed(1)} dk hazırlama</div>
+                    <div className="text-xs mt-2">{result.simulated.avg_prep_time.toFixed(1)} dk hazırlama</div>
                   </>
                 ) : (
-                  <div className="text-white/20 text-sm mt-4">{loading ? 'Hesaplanıyor...' : 'Simülasyonu çalıştır'}</div>
+                  <div className="text-sm mt-4">{loading ? 'Hesaplanıyor...' : 'Simülasyonu çalıştır'}</div>
                 )}
               </div>
             </div>
@@ -182,14 +182,14 @@ export default function SimulatorPage() {
             {result && (
               <div className="space-y-3">
                 <div className={cn('rounded-lg border p-3', result.delta.score > 0 ? 'border-emerald-500/30 bg-emerald-500/[0.06]' : result.delta.score < 0 ? 'border-red-500/30 bg-red-500/[0.06]' : 'border-white/[0.08]')}>
-                  <div className="text-xs text-white/40 mb-1">Nabız Skoru Değişimi</div>
+                  <div className="text-xs mb-1">Nabız Skoru Değişimi</div>
                   <div className={cn('text-2xl font-bold tabular-nums', result.delta.score > 0 ? 'text-emerald-400' : result.delta.score < 0 ? 'text-red-400' : 'text-white/50')}>
                     {result.delta.score > 0 ? '▼' : result.delta.score < 0 ? '▲' : '='} {Math.abs(result.delta.score)} puan
-                    <span className="text-sm font-normal text-white/30 ml-2">(%{Math.abs(result.delta.score_pct)})</span>
+                    <span className="text-sm font-normal ml-2">(%{Math.abs(result.delta.score_pct)})</span>
                   </div>
                 </div>
-                <div className="rounded-lg border border-white/[0.08] bg-white/[0.04] p-3">
-                  <div className="text-xs text-white/40 mb-1">Hazırlama Süresi</div>
+                <div className="rounded-lg border p-3">
+                  <div className="text-xs mb-1">Hazırlama Süresi</div>
                   <div className={cn('text-2xl font-bold tabular-nums', result.delta.prep_time > 0 ? 'text-emerald-400' : result.delta.prep_time < 0 ? 'text-red-400' : 'text-white/50')}>
                     {result.delta.prep_time > 0 ? '▼' : result.delta.prep_time < 0 ? '▲' : '='} {Math.abs(result.delta.prep_time).toFixed(1)} dk
                   </div>
@@ -201,17 +201,17 @@ export default function SimulatorPage() {
                 )}
 
                 {/* İstasyon karşılaştırma */}
-                <div className="rounded-lg border border-white/[0.08] bg-white/[0.03] p-3">
-                  <div className="text-xs text-white/30 mb-2">İstasyon Değişimi</div>
+                <div className="rounded-lg border p-3">
+                  <div className="text-xs mb-2">İstasyon Değişimi</div>
                   {(['grill', 'fryer', 'packing', 'courier'] as const).map(st => {
                     const before = result.current.station_scores[st]
                     const after = result.simulated.station_scores[st]
                     const diff = after - before
                     return (
                       <div key={st} className="flex items-center gap-2 mb-1.5">
-                        <span className="text-xs text-white/40 w-12 capitalize">{st}</span>
-                        <span className="text-xs tabular-nums text-white/60 w-6">{before}</span>
-                        <span className="text-white/20">→</span>
+                        <span className="text-xs w-12 capitalize">{st}</span>
+                        <span className="text-xs tabular-nums w-6">{before}</span>
+                        <span >→</span>
                         <span className={cn('text-xs tabular-nums font-bold w-6', diff < 0 ? 'text-emerald-400' : diff > 0 ? 'text-red-400' : 'text-white/50')}>{after}</span>
                         {diff !== 0 && <span className={cn('text-[10px]', diff < 0 ? 'text-emerald-400' : 'text-red-400')}>({diff > 0 ? '+' : ''}{diff})</span>}
                       </div>

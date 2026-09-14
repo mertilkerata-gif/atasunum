@@ -50,8 +50,8 @@ export default function ProductsPage() {
                 <div key={i} className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5"
                   style={{ background: 'rgba(255,61,61,0.08)', borderColor: 'rgba(255,61,61,0.2)' }}>
                   <span className="text-xs text-red-300 font-medium">{p.name}</span>
-                  <span className="text-[10px] text-white/30">·</span>
-                  <span className="text-[10px] text-white/40">{p.restaurantName.replace('Burger King ', 'BK ').replace('Popeyes ', 'Pop.')}</span>
+                  <span className="text-[10px]">·</span>
+                  <span className="text-[10px]">{p.restaurantName.replace('Burger King ', 'BK ').replace('Popeyes ', 'Pop.')}</span>
                   <span className="text-[10px] font-bold text-red-400">{p.stockUnits} adet</span>
                 </div>
               ))}
@@ -62,7 +62,7 @@ export default function ProductsPage() {
         <div className="grid grid-cols-12 gap-5">
           {/* Restoran seçici */}
           <div className="col-span-3 space-y-2">
-            <div className="text-[10px] text-white/30 uppercase tracking-widest px-1 mb-3">Restoran Seç</div>
+            <div className="text-[10px] uppercase tracking-widest px-1 mb-3">Restoran Seç</div>
             {RESTAURANTS.map(r => {
               const p = getPulseScore(r.id)
               const snap = getProductSnapshot(r.id)
@@ -75,7 +75,7 @@ export default function ProductsPage() {
                   <div className={cn('text-xs font-medium truncate', isSelected ? c.color : 'text-white/60')}>{r.name.replace('Burger King ', 'BK ').replace('Popeyes ', 'Pop.')}</div>
                   <div className="flex items-center gap-2 mt-1">
                     {snap.inventoryRiskScore > 50 && <AlertTriangle className="w-3 h-3 text-red-400" />}
-                    <span className="text-[10px] text-white/25">Stok risk: {snap.inventoryRiskScore}</span>
+                    <span className="text-[10px]">Stok risk: {snap.inventoryRiskScore}</span>
                   </div>
                 </button>
               )
@@ -89,7 +89,7 @@ export default function ProductsPage() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <div className="text-sm font-semibold text-white">{restaurant.name}</div>
-                  <div className="text-xs text-white/30 mt-0.5">
+                  <div className="text-xs mt-0.5">
                     En yoğun: <span className="text-orange-400">{snapshot.topDemandProduct}</span> ·
                     Darboğaz: <span className="text-red-400">{snapshot.bottleneckProduct}</span>
                   </div>
@@ -114,12 +114,12 @@ export default function ProductsPage() {
                   return (
                     <div key={product.id} className="flex items-center gap-4 rounded-xl border p-3"
                       style={{
-                        background: product.demandIndex >= 150 ? 'rgba(255,61,61,0.04)' : 'rgba(255,255,255,0.02)',
+                        background: product.demandIndex >= 150 ? 'rgba(255,61,61,0.04)' : 'var(--s2)',
                         borderColor: product.demandIndex >= 150 ? 'rgba(255,61,61,0.15)' : 'var(--s2)',
                       }}>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-white/80">{product.name}</span>
+                          <span className="text-xs font-medium">{product.name}</span>
                           <span className="text-[9px] px-1.5 py-0.5 rounded font-medium"
                             style={{ background: stationColor + '20', color: stationColor, border: `1px solid ${stationColor}30` }}>
                             {product.station.toUpperCase()}
@@ -132,7 +132,7 @@ export default function ProductsPage() {
                           )}
                         </div>
                         <div className="flex items-center gap-3 mt-1.5">
-                          <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                          <div className="flex-1 h-1.5 rounded-full overflow-hidden">
                             <div className="h-full rounded-full transition-all"
                               style={{ width: `${Math.min(product.demandIndex, 200) / 2}%`, background: demandColor, boxShadow: product.demandIndex >= 150 ? `0 0 6px ${demandColor}60` : 'none' }} />
                           </div>
@@ -144,17 +144,17 @@ export default function ProductsPage() {
                       <div className="flex items-center gap-4 shrink-0">
                         <div className="text-center">
                           <div className="text-sm font-bold font-mono text-white">{product.currentDemand}</div>
-                          <div className="text-[9px] text-white/25">30 dk</div>
+                          <div className="text-[9px]">30 dk</div>
                         </div>
                         <div className="text-center">
                           <div className={cn('text-sm font-bold font-mono', product.stockRisk === 'critical' ? 'text-red-400' : product.stockRisk === 'low' ? 'text-orange-400' : 'text-white/40')}>
                             {product.stockUnits}
                           </div>
-                          <div className="text-[9px] text-white/25">stok</div>
+                          <div className="text-[9px]">stok</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-xs text-white/30">{product.avgPrepTime} dk</div>
-                          <div className="text-[9px] text-white/20">hazırlama</div>
+                          <div className="text-xs">{product.avgPrepTime} dk</div>
+                          <div className="text-[9px]">hazırlama</div>
                         </div>
                       </div>
                     </div>
@@ -169,7 +169,7 @@ export default function ProductsPage() {
         <div className="card" style={{ padding: "20px" }}>
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="w-4 h-4 text-orange-400" />
-            <div className="text-xs text-white/40 uppercase tracking-widest font-medium">Ağ Geneli — En Yüksek Talep Endeksi</div>
+            <div className="text-xs uppercase tracking-widest font-medium">Ağ Geneli — En Yüksek Talep Endeksi</div>
           </div>
           <div className="grid grid-cols-4 gap-3">
             {networkTopProducts.slice(0, 4).map((p: any) => {
@@ -179,11 +179,11 @@ export default function ProductsPage() {
                 <div key={p.id} className="card" style={{ padding: "16px" }}>
                   <div className="flex items-center gap-1.5 mb-2">
                     <Flame className="w-3.5 h-3.5" style={{ color: demandColor }} />
-                    <span className="text-xs font-medium text-white/70">{p.name}</span>
+                    <span className="text-xs font-medium">{p.name}</span>
                   </div>
                   <div className="text-2xl font-bold font-mono mb-1" style={{ color: demandColor }}>%{p.avgIndex}</div>
                   <div className="text-[10px]" style={{ color: stationColor }}>{p.station.toUpperCase()} istasyonu</div>
-                  <div className="text-[10px] text-white/25 mt-1">Toplam: {p.totalDemand} adet/30dk</div>
+                  <div className="text-[10px] mt-1">Toplam: {p.totalDemand} adet/30dk</div>
                 </div>
               )
             })}

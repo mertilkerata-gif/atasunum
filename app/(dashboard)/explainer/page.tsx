@@ -43,22 +43,22 @@ export default function ExplainerPage() {
         <select value={restaurantId} onChange={e => setRestaurantId(e.target.value)}
           className="rounded-xl border px-4 py-2.5 text-sm text-white outline-none"
           style={{ background: 'var(--s1)', borderColor: 'rgba(255,255,255,0.1)' }}>
-          {RESTAURANTS.map(r => <option key={r.id} value={r.id} style={{ background: '#13131e' }}>{r.name}</option>)}
+          {RESTAURANTS.map(r => <option key={r.id} value={r.id} style={{ background: 'var(--s2)' }}>{r.name}</option>)}
         </select>
 
         {/* Score breakdown */}
         <div className={cn('rounded-2xl border p-6', config.glow)} style={{ background: config.bg, borderColor: config.colorHex + '35' }}>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <div className="text-[10px] text-white/30 uppercase tracking-widest mb-1">Operasyon Nabız Skoru</div>
+              <div className="text-[10px] uppercase tracking-widest mb-1">Operasyon Nabız Skoru</div>
               <div className={cn('text-5xl font-bold font-mono', config.color)} style={{ textShadow: `0 0 30px ${config.colorHex}60` }}>
                 {pulse.score}
               </div>
               <div className={cn('text-sm font-semibold mt-1', config.color)}>{config.label}</div>
             </div>
             <div className="text-right">
-              <div className="text-[10px] text-white/30 mb-2">Formül</div>
-              <div className="text-xs text-white/40 font-mono">Σ (bileşen × ağırlık) × dış_faktör</div>
+              <div className="text-[10px] mb-2">Formül</div>
+              <div className="text-xs font-mono">Σ (bileşen × ağırlık) × dış_faktör</div>
             </div>
           </div>
 
@@ -79,21 +79,21 @@ export default function ExplainerPage() {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-white/70">{comp.label}</span>
-                          <span className="text-[10px] text-white/25">ağırlık %{comp.weight}</span>
-                          {isHovered && <Info className="w-3 h-3 text-white/30" />}
+                          <span className="text-xs font-medium">{comp.label}</span>
+                          <span className="text-[10px]">ağırlık %{comp.weight}</span>
+                          {isHovered && <Info className="w-3 h-3" />}
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="text-xs font-mono text-white/40">{rawScore.toFixed(0)} puan</span>
+                          <span className="text-xs font-mono">{rawScore.toFixed(0)} puan</span>
                           <span className="text-xs font-bold font-mono" style={{ color: barColor }}>+{weightedContribution} katkı</span>
                         </div>
                       </div>
-                      <div className="h-2 bg-white/[0.06] rounded-full overflow-hidden">
+                      <div className="h-2 rounded-full overflow-hidden">
                         <div className="h-full rounded-full transition-all duration-700"
                           style={{ width: `${rawScore}%`, background: barColor, boxShadow: rawScore >= 80 ? `0 0 8px ${barColor}60` : 'none' }} />
                       </div>
                       {isHovered && (
-                        <div className="text-[10px] text-white/35 mt-1">{comp.desc}</div>
+                        <div className="text-[10px] mt-1">{comp.desc}</div>
                       )}
                     </div>
                   </div>
@@ -105,8 +105,8 @@ export default function ExplainerPage() {
           {/* External factors */}
           <div className="mt-5 pt-4 border-t" style={{ borderColor: 'var(--bdr)' }}>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-white/40">Dış Faktör Çarpanı</span>
-              <div className="flex items-center gap-3 text-white/50">
+              <span >Dış Faktör Çarpanı</span>
+              <div className="flex items-center gap-3">
                 {snap.rain_intensity > 0 && <span>🌧️ Yağmur +{Math.round(snap.rain_intensity * 1.2)}%</span>}
                 {snap.campaign_active && <span>📢 Kampanya +8%</span>}
                 {!snap.rain_intensity && !snap.campaign_active && <span>1.0 (etkisiz)</span>}
@@ -117,7 +117,7 @@ export default function ExplainerPage() {
 
         {/* Input values */}
         <div className="card" style={{ padding: "20px" }}>
-          <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-4">Motor Girdi Değerleri</div>
+          <div className="text-xs uppercase tracking-widest font-medium mb-4">Motor Girdi Değerleri</div>
           <div className="grid grid-cols-3 gap-3">
             {[
               { label: 'Açık Sipariş', value: snap.open_orders, baseline: '15', unit: '' },
@@ -127,10 +127,10 @@ export default function ExplainerPage() {
               { label: 'Gecikme', value: `%${Math.round(snap.delay_rate * 100)}`, baseline: '%3', unit: '' },
               { label: 'İptal', value: `%${Math.round(snap.cancellation_rate * 100)}`, baseline: '%2', unit: '' },
             ].map(({ label, value, baseline, unit }) => (
-              <div key={label} className="rounded-xl border p-3" style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'var(--bdr)' }}>
-                <div className="text-[10px] text-white/25 uppercase tracking-wider mb-1">{label}</div>
+              <div key={label} className="card" style={{ padding: 12 }}>
+                <div className="text-[10px] uppercase tracking-wider mb-1">{label}</div>
                 <div className="text-lg font-bold font-mono text-white">{value}{unit}</div>
-                <div className="text-[10px] text-white/20 mt-0.5">baz: {baseline}{unit}</div>
+                <div className="text-[10px] mt-0.5">baz: {baseline}{unit}</div>
               </div>
             ))}
           </div>

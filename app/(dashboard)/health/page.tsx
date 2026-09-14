@@ -58,10 +58,10 @@ export default function HealthPage() {
                 {down > 0 ? 'Servis Kesintisi' : warn > 0 ? 'Uyarı Var' : 'Tüm Sistemler Aktif'}
               </span>
             </div>
-            <span className="text-xs text-white/25">Son kontrol: {lastFull}</span>
+            <span className="text-xs">Son kontrol: {lastFull}</span>
           </div>
           <button onClick={recheck} disabled={checking}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border text-xs text-white/60 transition-all hover:text-white/80"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border text-xs transition-all hover:"
             style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
             {checking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
             Yeniden Kontrol Et
@@ -70,9 +70,9 @@ export default function HealthPage() {
 
         <div className="grid grid-cols-3 gap-3">
           {[{ label: 'Aktif', count: ok, color: 'text-emerald-400' }, { label: 'Uyarı', count: warn, color: 'text-yellow-400' }, { label: 'Kesinti', count: down, color: 'text-red-400' }].map(({ label, count, color }) => (
-            <div key={label} className="rounded-xl border p-4 text-center" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
+            <div key={label} className="card" style={{ padding: 16 }}>
               <div className={cn('text-3xl font-bold font-mono', color)}>{count}</div>
-              <div className="text-[10px] text-white/30 mt-1 uppercase tracking-widest">{label}</div>
+              <div className="text-[10px] mt-1 uppercase tracking-widest">{label}</div>
             </div>
           ))}
         </div>
@@ -84,14 +84,14 @@ export default function HealthPage() {
                 <span className="text-xl shrink-0">{s.icon}</span>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-white/80">{s.name}</span>
+                    <span className="text-sm font-medium">{s.name}</span>
                     {s.status === 'warn' && <span className="text-[9px] bg-yellow-500/15 text-yellow-300 border border-yellow-500/20 px-1.5 py-0.5 rounded font-medium">UYARI</span>}
                   </div>
-                  <span className="text-xs text-white/35">{s.detail}</span>
+                  <span className="text-xs">{s.detail}</span>
                 </div>
                 <div className="text-right shrink-0">
-                  {s.latency && <div className="text-xs font-mono text-white/40 mb-1">{s.latency}ms</div>}
-                  <div className="text-[10px] text-white/20">{s.lastCheck}</div>
+                  {s.latency && <div className="text-xs font-mono mb-1">{s.latency}ms</div>}
+                  <div className="text-[10px]">{s.lastCheck}</div>
                 </div>
                 <StatusIcon status={s.status} />
               </div>

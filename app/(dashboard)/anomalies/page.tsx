@@ -173,33 +173,33 @@ function AnomalyCard({ anomaly, onAck }: { anomaly: Anomaly; onAck: (id: string)
         {/* Severity indicator */}
         <div className="flex items-center gap-2 shrink-0">
           {!acked && <SeverityDot severity={anomaly.severity} />}
-          {acked && <CheckCircle2 size={8} className="text-white/20" />}
+          {acked && <CheckCircle2 size={8} />}
           <span className="text-[9px] font-bold tracking-[0.18em]" style={{ color: acked ? 'var(--tx3)' : s.textColor }}>
             {s.label}
           </span>
         </div>
 
-        <span className="text-white/10 text-xs">·</span>
+        <span className="text-xs">·</span>
 
         {/* Type badge */}
         <div className="flex items-center gap-1.5 rounded-md px-2 py-0.5"
           style={{ background: 'var(--s2)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <TypeIcon size={9} className="text-white/30" />
-          <span className="text-[9px] text-white/35 font-medium">{t.label}</span>
+          <TypeIcon size={9} />
+          <span className="text-[9px] font-medium">{t.label}</span>
         </div>
 
         {/* Restaurant */}
         <div className="flex items-center gap-1.5 rounded-md px-2 py-0.5"
-          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+          style={{ background: 'var(--s2)', border: '1px solid rgba(255,255,255,0.05)' }}>
           <span className="text-[9px] font-semibold"
             style={{ color: anomaly.brand === 'POP' ? '#f97316' : '#60a5fa' }}>
             {anomaly.brand}
           </span>
-          <span className="text-[9px] text-white/30">{anomaly.restaurantName}</span>
+          <span className="text-[9px]">{anomaly.restaurantName}</span>
         </div>
 
         <div className="ml-auto flex items-center gap-2 shrink-0">
-          <Clock size={10} className="text-white/20" />
+          <Clock size={10} />
           <span className="text-[10px] num" style={{ color: 'var(--tx3)' }}>{anomaly.detectedAt}</span>
         </div>
       </div>
@@ -232,14 +232,14 @@ function AnomalyCard({ anomaly, onAck }: { anomaly: Anomaly; onAck: (id: string)
             <div className="flex items-center gap-4 flex-wrap">
               <div className="flex flex-col gap-0.5">
                 <span className="text-[9px] uppercase tracking-[0.14em]" style={{ color: 'var(--tx3)' }}>Metrik</span>
-                <span className="text-[11px] font-medium text-white/60">{anomaly.metric}</span>
+                <span className="text-[11px] font-medium">{anomaly.metric}</span>
               </div>
-              <div className="w-px h-6 bg-white/[0.05] shrink-0" />
+              <div className="w-px h-6 shrink-0" />
               <div className="flex flex-col gap-0.5">
                 <span className="text-[9px] uppercase tracking-[0.14em]" style={{ color: 'var(--tx3)' }}>Beklenen</span>
                 <span className="text-[11px] font-medium num" style={{ color: 'var(--tx2)' }}>{anomaly.expectedValue}</span>
               </div>
-              <div className="flex items-center text-white/15"><ArrowRight size={10} /></div>
+              <div className="flex items-center"><ArrowRight size={10} /></div>
               <div className="flex flex-col gap-0.5">
                 <span className="text-[9px] uppercase tracking-[0.14em]" style={{ color: 'var(--tx3)' }}>Gerçekleşen</span>
                 <span className="text-[12px] font-bold num" style={{ color: acked ? 'var(--tx3)' : s.textColor }}>
@@ -388,7 +388,7 @@ export default function AnomaliesPage() {
             </div>
             <button
               onClick={() => { setScanning(true); setTimeout(() => setScanning(false), 1500) }}
-              className="p-1.5 rounded-[7px] transition-all hover:bg-white/[0.05]"
+              className="p-1.5 rounded-[7px] transition-all hover:"
               style={{ border: '1px solid var(--bdr)' }}
             >
               <RefreshCw size={11} className={cn('text-white/25', scanning && 'animate-spin')} />

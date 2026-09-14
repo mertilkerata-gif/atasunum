@@ -19,7 +19,7 @@ export default function AuditPage() {
     <div className="dm">
       <Topbar title="Audit Log" subtitle="Kim · Ne zaman · Ne yaptı" />
       <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div className="flex items-center gap-2 text-xs text-white/30">
+        <div className="flex items-center gap-2 text-xs">
           <span>{AUDIT_LOG.length} kayıt</span>
           <span>·</span>
           <span>Son 7 gün</span>
@@ -27,9 +27,9 @@ export default function AuditPage() {
         <div className="card" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
           <table className="w-full">
             <thead>
-              <tr className="border-b" style={{ borderColor: 'var(--bdr)', background: 'rgba(255,255,255,0.02)' }}>
+              <tr className="border-b" style={{ borderColor: 'var(--bdr)', background: 'var(--s2)' }}>
                 {['Zaman', 'Kullanıcı', 'Aksiyon', 'Kaynak', 'Tür', 'Sonuç'].map(h => (
-                  <th key={h} className="px-5 py-3 text-left text-[10px] font-semibold text-white/25 uppercase tracking-widest">{h}</th>
+                  <th key={h} className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-widest">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -38,11 +38,11 @@ export default function AuditPage() {
                 const typeColor = TYPE_COLORS[entry.type] ?? '#fff'
                 const rc = RESULT_CONFIG[entry.result]
                 return (
-                  <tr key={entry.id} className="border-b transition-colors hover:bg-white/[0.02]" style={{ borderColor: 'var(--bdr)' }}>
-                    <td className="px-5 py-3 text-xs font-mono text-white/30">{entry.timestamp.split(' ')[1]}<div className="text-[9px] text-white/15">{entry.timestamp.split(' ')[0]}</div></td>
-                    <td className="px-5 py-3 text-xs text-white/60">{entry.user}</td>
-                    <td className="px-5 py-3 text-xs text-white/70 max-w-xs truncate">{entry.action}</td>
-                    <td className="px-5 py-3 text-xs text-white/40">{entry.resource}</td>
+                  <tr key={entry.id} className="border-b transition-colors hover:" style={{ borderColor: 'var(--bdr)' }}>
+                    <td className="px-5 py-3 text-xs font-mono">{entry.timestamp.split(' ')[1]}<div className="text-[9px]">{entry.timestamp.split(' ')[0]}</div></td>
+                    <td className="px-5 py-3 text-xs">{entry.user}</td>
+                    <td className="px-5 py-3 text-xs max-w-xs truncate">{entry.action}</td>
+                    <td className="px-5 py-3 text-xs">{entry.resource}</td>
                     <td className="px-5 py-3">
                       <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
                         style={{ background: typeColor + '15', color: typeColor, border: `1px solid ${typeColor}25` }}>{entry.type}</span>

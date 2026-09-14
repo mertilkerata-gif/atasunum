@@ -103,7 +103,7 @@ export default function LiveOperationsPage() {
       <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={20} className="text-white/20 animate-spin" />
+            <Loader2 size={20} className="animate-spin" />
           </div>
         ) : (
           <div className="space-y-2">
@@ -132,7 +132,7 @@ export default function LiveOperationsPage() {
 
                     {/* Restaurant name */}
                     <div className="w-36 shrink-0">
-                      <div className="text-[12px] font-medium text-white/80 truncate">{d.restaurant.name}</div>
+                      <div className="text-[12px] font-medium truncate">{d.restaurant.name}</div>
                       <div className="text-[9px] mt-px" style={{ color: 'var(--tx3)' }}>{d.restaurant.district}</div>
                     </div>
 
