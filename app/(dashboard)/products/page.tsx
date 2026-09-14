@@ -34,13 +34,13 @@ export default function ProductsPage() {
   const stationColors = { grill: '#f97316', fryer: '#eab308', packing: '#818cf8' }
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Ürün & Stok Analizi" subtitle="Ürün bazlı yoğunluk ve envanter risk takibi" />
-      <div className="p-6 space-y-5">
+      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* Kritik stok uyarıları */}
         {criticalStock.length > 0 && (
-          <div className="rounded-2xl border p-4" style={{ background: 'rgba(255,61,61,0.05)', borderColor: 'rgba(255,61,61,0.2)' }}>
+          <div className="card" style={{ padding: "16px" }}>
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="w-4 h-4 text-red-400" />
               <span className="text-xs font-semibold text-red-300">Kritik Stok Seviyesi — Acil Tedarik Gerekiyor</span>
@@ -71,7 +71,7 @@ export default function ProductsPage() {
               return (
                 <button key={r.id} onClick={() => setSelectedId(r.id)}
                   className={cn('w-full text-left rounded-xl border px-4 py-3 transition-all', isSelected ? `${c.bg} ${c.border}` : 'border-white/[0.06] hover:border-white/[0.1]')}
-                  style={{ background: isSelected ? undefined : 'var(--bg-surface)' }}>
+                  style={{ background: isSelected ? undefined : 'var(--s1)' }}>
                   <div className={cn('text-xs font-medium truncate', isSelected ? c.color : 'text-white/60')}>{r.name.replace('Burger King ', 'BK ').replace('Popeyes ', 'Pop.')}</div>
                   <div className="flex items-center gap-2 mt-1">
                     {snap.inventoryRiskScore > 50 && <AlertTriangle className="w-3 h-3 text-red-400" />}
@@ -85,7 +85,7 @@ export default function ProductsPage() {
           {/* Ürün bazlı analiz */}
           <div className="col-span-9 space-y-4">
             {/* Restoran başlık */}
-            <div className="rounded-2xl border p-5" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+            <div className="card" style={{ padding: "20px" }}>
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <div className="text-sm font-semibold text-white">{restaurant.name}</div>
@@ -115,7 +115,7 @@ export default function ProductsPage() {
                     <div key={product.id} className="flex items-center gap-4 rounded-xl border p-3"
                       style={{
                         background: product.demandIndex >= 150 ? 'rgba(255,61,61,0.04)' : 'rgba(255,255,255,0.02)',
-                        borderColor: product.demandIndex >= 150 ? 'rgba(255,61,61,0.15)' : 'rgba(255,255,255,0.05)',
+                        borderColor: product.demandIndex >= 150 ? 'rgba(255,61,61,0.15)' : 'var(--s2)',
                       }}>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -166,7 +166,7 @@ export default function ProductsPage() {
         </div>
 
         {/* Ağ geneli en yoğun ürünler */}
-        <div className="rounded-2xl border p-5" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="card" style={{ padding: "20px" }}>
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="w-4 h-4 text-orange-400" />
             <div className="text-xs text-white/40 uppercase tracking-widest font-medium">Ağ Geneli — En Yüksek Talep Endeksi</div>
@@ -176,8 +176,7 @@ export default function ProductsPage() {
               const stationColor = stationColors[p.station as keyof typeof stationColors] ?? '#fff'
               const demandColor = p.avgIndex >= 140 ? '#ff3d3d' : p.avgIndex >= 115 ? '#f97316' : '#eab308'
               return (
-                <div key={p.id} className="rounded-xl border p-4"
-                  style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)' }}>
+                <div key={p.id} className="card" style={{ padding: "16px" }}>
                   <div className="flex items-center gap-1.5 mb-2">
                     <Flame className="w-3.5 h-3.5" style={{ color: demandColor }} />
                     <span className="text-xs font-medium text-white/70">{p.name}</span>

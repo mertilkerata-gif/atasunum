@@ -120,19 +120,19 @@ export default function TiklaGelsinPage() {
   const filtered = MENU.filter(m => m.category === activeCategory)
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Tıkla Gelsin Demo" subtitle="Müşteri sipariş akışı + Mutfak paneli" />
-      <div className="p-6 grid grid-cols-12 gap-6">
+      <div className="scroll" style={{ padding: "22px 24px" }}>
         {/* Left: Menu */}
         <div className="col-span-8 space-y-4">
           {/* Restaurant + channel selector */}
           <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-4">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="text-xs text-white/40 mb-0.5">Restoran Seç</div>
+                <div className="text-xs  mb-0.5">Restoran Seç</div>
                 <select value={restaurantId} onChange={e => setRestaurantId(e.target.value)}
                   className="bg-white/[0.06] border border-white/[0.1] text-white text-sm rounded-lg px-3 py-1.5 outline-none">
-                  {RESTAURANTS.map(r => <option key={r.id} value={r.id} className="bg-[#1a1a2e]">{r.name}</option>)}
+                  {RESTAURANTS.map(r => <option key={r.id} value={r.id} className="">{r.name}</option>)}
                 </select>
               </div>
               <div className={cn('flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium', pulseConfig.bg, pulseConfig.border, pulseConfig.color)}>
@@ -144,7 +144,7 @@ export default function TiklaGelsinPage() {
               {[{ v: 'DELIVERY', label: '🛵 Paket Servis' }, { v: 'PICKUP', label: '🏪 Gel Al' }].map(({ v, label }) => (
                 <button key={v} onClick={() => setChannel(v as 'DELIVERY' | 'PICKUP')}
                   className={cn('flex-1 py-2 rounded-lg border text-sm font-medium transition-all',
-                    channel === v ? 'border-orange-500/50 bg-orange-500/15 text-orange-300' : 'border-white/[0.08] text-white/40 hover:text-white/60')}>
+                    channel === v ? 'border-orange-500/50 bg-orange-500/15 ' : 'border-white/[0.08]  hover:')}>
                   {label}
                 </button>
               ))}
@@ -156,7 +156,7 @@ export default function TiklaGelsinPage() {
             {CATEGORIES.map(cat => (
               <button key={cat.id} onClick={() => setActiveCategory(cat.id)}
                 className={cn('flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm whitespace-nowrap transition-all',
-                  activeCategory === cat.id ? 'border-orange-500/50 bg-orange-500/15 text-orange-300' : 'border-white/[0.08] text-white/40 hover:text-white/60')}>
+                  activeCategory === cat.id ? 'border-orange-500/50 bg-orange-500/15 ' : 'border-white/[0.08]  hover:')}>
                 <span>{cat.emoji}</span> {cat.label}
               </button>
             ))}
@@ -171,18 +171,18 @@ export default function TiklaGelsinPage() {
                   inCart ? 'border-orange-500/30 bg-orange-500/[0.05]' : 'border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06]')}>
                   <div className="flex items-start justify-between mb-2">
                     <div className="text-3xl">{item.emoji}</div>
-                    {item.popular && <span className="text-[10px] bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full font-medium">Popüler</span>}
+                    {item.popular && <span className="text-[10px] bg-orange-500/20  px-2 py-0.5 rounded-full font-medium">Popüler</span>}
                   </div>
                   <div className="text-sm font-semibold text-white mb-0.5">{item.name}</div>
-                  <div className="text-xs text-white/40 mb-3 line-clamp-2">{item.description}</div>
+                  <div className="text-xs  mb-3 line-clamp-2">{item.description}</div>
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-bold text-white">{item.price} ₺</div>
                     {inCart ? (
                       <div className="flex items-center gap-2">
-                        <button onClick={() => removeFromCart(item.id)} className="w-6 h-6 rounded-full bg-white/[0.08] flex items-center justify-center text-white/60 hover:bg-white/[0.15]">
+                        <button onClick={() => removeFromCart(item.id)} className="w-6 h-6 rounded-full bg-white/[0.08] flex items-center justify-center  hover:bg-white/[0.15]">
                           <Minus className="w-3 h-3" />
                         </button>
-                        <span className="text-sm font-bold text-orange-400 w-4 text-center">{inCart.qty}</span>
+                        <span className="text-sm font-bold  w-4 text-center">{inCart.qty}</span>
                         <button onClick={() => addToCart(item)} className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-white hover:bg-orange-400">
                           <Plus className="w-3 h-3" />
                         </button>
@@ -219,7 +219,7 @@ export default function TiklaGelsinPage() {
 
           <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06]">
-              <ShoppingCart className="w-4 h-4 text-orange-400" />
+              <ShoppingCart className="w-4 h-4 " />
               <span className="text-sm font-semibold text-white">Sepet</span>
               {cartCount > 0 && <span className="ml-auto text-xs bg-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-bold">{cartCount}</span>}
             </div>
@@ -232,7 +232,7 @@ export default function TiklaGelsinPage() {
                     <span className="text-lg">{item.emoji}</span>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium text-white truncate">{item.name}</div>
-                      <div className="text-xs text-white/40">{item.price} ₺</div>
+                      <div className="text-xs ">{item.price} ₺</div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button onClick={() => removeFromCart(item.id)} className="w-5 h-5 rounded bg-white/[0.06] flex items-center justify-center text-white/50"><Minus className="w-2.5 h-2.5" /></button>
@@ -260,14 +260,14 @@ export default function TiklaGelsinPage() {
 
           {orders.length > 0 && (
             <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-4">
-              <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-3">Son Siparişler</div>
+              <div className="text-xs  uppercase tracking-wide font-medium mb-3">Son Siparişler</div>
               <div className="space-y-2">
                 {[...orders].reverse().slice(0, 3).map(o => (
                   <button key={o.id} onClick={() => { setTrackingOrder(o); setView('tracking') }}
                     className="w-full flex items-center justify-between bg-white/[0.03] hover:bg-white/[0.06] rounded-lg px-3 py-2 transition-colors">
                     <div>
-                      <div className="text-xs font-bold text-orange-400">{o.id}</div>
-                      <div className="text-xs text-white/40">{STATUS_LABELS[o.status]}</div>
+                      <div className="text-xs font-bold ">{o.id}</div>
+                      <div className="text-xs ">{STATUS_LABELS[o.status]}</div>
                     </div>
                     <div className="text-xs text-white/50">{o.total} ₺</div>
                   </button>
@@ -297,19 +297,19 @@ interface CheckoutViewProps {
 
 function CheckoutView({ cart, total, channel, customerName, setCustomerName, address, setAddress, onBack, onPlace, setChannel }: CheckoutViewProps) {
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Sipariş Özeti" subtitle="Siparişinizi onaylayın" />
       <div className="p-6 max-w-2xl space-y-4">
-        <button onClick={onBack} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 text-sm transition-colors">
+        <button onClick={onBack} className="flex items-center gap-1.5  hover:text-white/70 text-sm transition-colors">
           <ArrowLeft className="w-4 h-4" /> Menüye Dön
         </button>
         <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-          <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-3">Teslimat Yöntemi</div>
+          <div className="text-xs  uppercase tracking-wide font-medium mb-3">Teslimat Yöntemi</div>
           <div className="grid grid-cols-2 gap-3 mb-4">
             {[{ v: 'DELIVERY' as const, label: '🛵 Paket Servis', desc: 'Adresinize teslim' }, { v: 'PICKUP' as const, label: '🏪 Gel Al', desc: 'Restorantan teslim' }].map(({ v, label, desc }) => (
               <button key={v} onClick={() => setChannel(v)}
                 className={cn('rounded-lg border p-3 text-left transition-all', channel === v ? 'border-orange-500/50 bg-orange-500/10' : 'border-white/[0.08]')}>
-                <div className={cn('text-sm font-medium mb-0.5', channel === v ? 'text-orange-300' : 'text-white/70')}>{label}</div>
+                <div className={cn('text-sm font-medium mb-0.5', channel === v ? '' : 'text-white/70')}>{label}</div>
                 <div className="text-xs text-white/30">{desc}</div>
               </button>
             ))}
@@ -322,7 +322,7 @@ function CheckoutView({ cart, total, channel, customerName, setCustomerName, add
                 className="w-full bg-white/[0.06] border border-white/[0.1] rounded-lg px-3 py-2 text-sm text-white placeholder-white/25 outline-none" />
             )}
           </div>
-          <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-2">Sipariş İçeriği</div>
+          <div className="text-xs  uppercase tracking-wide font-medium mb-2">Sipariş İçeriği</div>
           <div className="space-y-1.5 mb-4">
             {cart.map(({ item, qty }) => (
               <div key={item.id} className="flex items-center justify-between">
@@ -333,7 +333,7 @@ function CheckoutView({ cart, total, channel, customerName, setCustomerName, add
           </div>
           <div className="flex justify-between border-t border-white/[0.06] pt-3 mb-4">
             <span className="font-semibold text-white">Toplam</span>
-            <span className="font-bold text-xl text-orange-400">{total} ₺</span>
+            <span className="font-bold text-xl ">{total} ₺</span>
           </div>
           <button onClick={onPlace} className="w-full bg-orange-500 hover:bg-orange-400 text-white rounded-lg py-3 font-semibold text-sm transition-colors">
             ✓ Siparişi Onayla
@@ -351,18 +351,18 @@ function TrackingView({ order, onNewOrder, onKitchen }: { order: LiveOrder; onNe
   const steps = isDelivery ? STATUS_FLOW.slice(0, 9) : STATUS_FLOW.filter(s => !['COURIER_ARRIVED', 'PICKED_UP'].includes(s))
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Sipariş Takip" subtitle={order.id} />
       <div className="p-6 max-w-2xl space-y-4">
         <div className={cn('rounded-xl border p-5 text-center', isComplete ? 'border-emerald-500/30 bg-emerald-500/[0.06]' : 'border-orange-500/30 bg-orange-500/[0.05]')}>
           <div className="text-3xl mb-2">{isComplete ? '🎉' : '⏱️'}</div>
-          <div className={cn('text-xl font-bold mb-1', isComplete ? 'text-emerald-400' : 'text-orange-400')}>{STATUS_LABELS[order.status]}</div>
+          <div className={cn('text-xl font-bold mb-1', isComplete ? 'text-emerald-400' : '')}>{STATUS_LABELS[order.status]}</div>
           <div className="text-sm text-white/50">{STATUS_DESCRIPTIONS[order.status]}</div>
           <div className="text-xs text-white/30 mt-2">Sipariş No: <span className="font-bold text-white/50">{order.id}</span></div>
         </div>
 
         <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-          <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">Sipariş Durumu</div>
+          <div className="text-xs  uppercase tracking-wide font-medium mb-4">Sipariş Durumu</div>
           <div className="space-y-3">
             {steps.map((step) => {
               const stepIdx = STATUS_FLOW.indexOf(step)
@@ -383,7 +383,7 @@ function TrackingView({ order, onNewOrder, onKitchen }: { order: LiveOrder; onNe
                       </div>
                     )}
                   </div>
-                  {active && <div className="text-xs text-orange-400 animate-pulse">İşleniyor...</div>}
+                  {active && <div className="text-xs  animate-pulse">İşleniyor...</div>}
                 </div>
               )
             })}
@@ -391,22 +391,22 @@ function TrackingView({ order, onNewOrder, onKitchen }: { order: LiveOrder; onNe
         </div>
 
         <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-4">
-          <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-2">Sipariş Detayı</div>
+          <div className="text-xs  uppercase tracking-wide font-medium mb-2">Sipariş Detayı</div>
           <div className="space-y-1">
             {order.items.map(item => (
               <div key={item.menuItemId} className="flex justify-between text-sm">
-                <span className="text-white/60">{item.qty}x {item.name}</span>
+                <span className="">{item.qty}x {item.name}</span>
                 <span className="text-white/50">{item.price * item.qty} ₺</span>
               </div>
             ))}
             <div className="flex justify-between font-bold text-sm pt-2 border-t border-white/[0.06] mt-2">
               <span className="text-white">Toplam</span>
-              <span className="text-orange-400">{order.total} ₺</span>
+              <span className="">{order.total} ₺</span>
             </div>
           </div>
           {isDelivery && order.courierName && order.status !== 'ORDER_CREATED' && (
-            <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center gap-2 text-xs text-white/40">
-              <Truck className="w-3.5 h-3.5" /> Kuryeniz: <span className="text-white/60 font-medium">{order.courierName}</span>
+            <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center gap-2 text-xs ">
+              <Truck className="w-3.5 h-3.5" /> Kuryeniz: <span className=" font-medium">{order.courierName}</span>
             </div>
           )}
         </div>
@@ -444,11 +444,11 @@ function KitchenView({ orders, onAdvance, onBack, restaurantName, pulse, pulseCo
   ]
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Mutfak Paneli" subtitle={restaurantName} />
-      <div className="p-6 space-y-4">
+      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div className="flex items-center justify-between">
-          <button onClick={onBack} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 text-sm transition-colors">
+          <button onClick={onBack} className="flex items-center gap-1.5  hover:text-white/70 text-sm transition-colors">
             <ArrowLeft className="w-4 h-4" /> Sipariş Ekranına Dön
           </button>
           <div className={cn('flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium', pulseConfig.bg, pulseConfig.border, pulseConfig.color)}>
@@ -459,7 +459,7 @@ function KitchenView({ orders, onAdvance, onBack, restaurantName, pulse, pulseCo
         {active.length === 0 ? (
           <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-12 text-center">
             <div className="text-4xl mb-3">✅</div>
-            <div className="text-white/40 text-sm">Aktif sipariş yok</div>
+            <div className=" text-sm">Aktif sipariş yok</div>
             <div className="text-white/20 text-xs mt-1">Müşteri tarafından sipariş verildiğinde burada görünür</div>
           </div>
         ) : (
@@ -475,13 +475,13 @@ function KitchenView({ orders, onAdvance, onBack, restaurantName, pulse, pulseCo
                       <div key={order.id} className={cn('rounded-xl border p-4',
                         elapsed > 10 ? 'border-red-500/30 bg-red-500/[0.05]' : elapsed > 6 ? 'border-orange-500/30 bg-orange-500/[0.05]' : 'border-white/[0.08] bg-white/[0.04]')}>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-bold text-orange-400">{order.id}</span>
-                          <span className={cn('text-xs font-bold tabular-nums', elapsed > 10 ? 'text-red-400' : elapsed > 6 ? 'text-orange-400' : 'text-white/40')}>{elapsed}dk</span>
+                          <span className="text-xs font-bold ">{order.id}</span>
+                          <span className={cn('text-xs font-bold tabular-nums', elapsed > 10 ? 'text-red-400' : elapsed > 6 ? '' : '')}>{elapsed}dk</span>
                         </div>
                         <div className="text-xs text-white/30 mb-1">{order.channel === 'DELIVERY' ? '🛵 Paket' : '🏪 Gel Al'} · {order.customerName}</div>
                         <div className="space-y-0.5 mb-3">
                           {order.items.map(item => (
-                            <div key={item.menuItemId} className="text-xs text-white/60">{item.qty}x {item.name}</div>
+                            <div key={item.menuItemId} className="text-xs ">{item.qty}x {item.name}</div>
                           ))}
                         </div>
                         <div className="text-[10px] text-white/30 mb-2">{STATUS_LABELS[order.status]}</div>

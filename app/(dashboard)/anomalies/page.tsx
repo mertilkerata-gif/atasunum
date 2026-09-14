@@ -162,19 +162,19 @@ function AnomalyCard({ anomaly, onAck }: { anomaly: Anomaly; onAck: (id: string)
     <div
       className={cn('rounded-[14px] border transition-all duration-200', acked && 'opacity-40')}
       style={{
-        background: acked ? 'var(--bg-surface)' : s.bg,
-        borderColor: acked ? 'var(--border-hair)' : s.borderColor,
+        background: acked ? 'var(--s1)' : s.bg,
+        borderColor: acked ? 'var(--bdr)' : s.borderColor,
       }}
     >
       {/* Header bar */}
       <div className="flex items-center gap-3 px-5 pt-4 pb-3"
-        style={{ borderBottom: `1px solid ${acked ? 'var(--border-hair)' : s.rowBorder}` }}>
+        style={{ borderBottom: `1px solid ${acked ? 'var(--bdr)' : s.rowBorder}` }}>
         
         {/* Severity indicator */}
         <div className="flex items-center gap-2 shrink-0">
           {!acked && <SeverityDot severity={anomaly.severity} />}
           {acked && <CheckCircle2 size={8} className="text-white/20" />}
-          <span className="text-[9px] font-bold tracking-[0.18em]" style={{ color: acked ? 'var(--text-ghost)' : s.textColor }}>
+          <span className="text-[9px] font-bold tracking-[0.18em]" style={{ color: acked ? 'var(--tx3)' : s.textColor }}>
             {s.label}
           </span>
         </div>
@@ -183,7 +183,7 @@ function AnomalyCard({ anomaly, onAck }: { anomaly: Anomaly; onAck: (id: string)
 
         {/* Type badge */}
         <div className="flex items-center gap-1.5 rounded-md px-2 py-0.5"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          style={{ background: 'var(--s2)', border: '1px solid rgba(255,255,255,0.06)' }}>
           <TypeIcon size={9} className="text-white/30" />
           <span className="text-[9px] text-white/35 font-medium">{t.label}</span>
         </div>
@@ -200,7 +200,7 @@ function AnomalyCard({ anomaly, onAck }: { anomaly: Anomaly; onAck: (id: string)
 
         <div className="ml-auto flex items-center gap-2 shrink-0">
           <Clock size={10} className="text-white/20" />
-          <span className="text-[10px] num" style={{ color: 'var(--text-ghost)' }}>{anomaly.detectedAt}</span>
+          <span className="text-[10px] num" style={{ color: 'var(--tx3)' }}>{anomaly.detectedAt}</span>
         </div>
       </div>
 
@@ -210,10 +210,10 @@ function AnomalyCard({ anomaly, onAck }: { anomaly: Anomaly; onAck: (id: string)
           {/* Icon */}
           <div className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 mt-0.5"
             style={{
-              background: acked ? 'rgba(255,255,255,0.03)' : `${s.bg}`,
-              border: `1px solid ${acked ? 'var(--border-hair)' : s.borderColor}`,
+              background: acked ? 'var(--s2)' : `${s.bg}`,
+              border: `1px solid ${acked ? 'var(--bdr)' : s.borderColor}`,
             }}>
-            <TypeIcon size={15} style={{ color: acked ? 'var(--text-ghost)' : s.textColor }} />
+            <TypeIcon size={15} style={{ color: acked ? 'var(--tx3)' : s.textColor }} />
           </div>
 
           <div className="flex-1 min-w-0">
@@ -224,30 +224,30 @@ function AnomalyCard({ anomaly, onAck }: { anomaly: Anomaly; onAck: (id: string)
             </h3>
 
             {/* Description */}
-            <p className="text-[11.5px] leading-relaxed mb-3" style={{ color: 'var(--text-muted)' }}>
+            <p className="text-[11.5px] leading-relaxed mb-3" style={{ color: 'var(--tx3)' }}>
               {anomaly.description}
             </p>
 
             {/* Metrics row */}
             <div className="flex items-center gap-4 flex-wrap">
               <div className="flex flex-col gap-0.5">
-                <span className="text-[9px] uppercase tracking-[0.14em]" style={{ color: 'var(--text-ghost)' }}>Metrik</span>
+                <span className="text-[9px] uppercase tracking-[0.14em]" style={{ color: 'var(--tx3)' }}>Metrik</span>
                 <span className="text-[11px] font-medium text-white/60">{anomaly.metric}</span>
               </div>
               <div className="w-px h-6 bg-white/[0.05] shrink-0" />
               <div className="flex flex-col gap-0.5">
-                <span className="text-[9px] uppercase tracking-[0.14em]" style={{ color: 'var(--text-ghost)' }}>Beklenen</span>
-                <span className="text-[11px] font-medium num" style={{ color: 'var(--text-secondary)' }}>{anomaly.expectedValue}</span>
+                <span className="text-[9px] uppercase tracking-[0.14em]" style={{ color: 'var(--tx3)' }}>Beklenen</span>
+                <span className="text-[11px] font-medium num" style={{ color: 'var(--tx2)' }}>{anomaly.expectedValue}</span>
               </div>
               <div className="flex items-center text-white/15"><ArrowRight size={10} /></div>
               <div className="flex flex-col gap-0.5">
-                <span className="text-[9px] uppercase tracking-[0.14em]" style={{ color: 'var(--text-ghost)' }}>Gerçekleşen</span>
-                <span className="text-[12px] font-bold num" style={{ color: acked ? 'var(--text-ghost)' : s.textColor }}>
+                <span className="text-[9px] uppercase tracking-[0.14em]" style={{ color: 'var(--tx3)' }}>Gerçekleşen</span>
+                <span className="text-[12px] font-bold num" style={{ color: acked ? 'var(--tx3)' : s.textColor }}>
                   {anomaly.actualValue}
                 </span>
               </div>
               <div className="flex flex-col gap-0.5">
-                <span className="text-[9px] uppercase tracking-[0.14em]" style={{ color: 'var(--text-ghost)' }}>Sapma</span>
+                <span className="text-[9px] uppercase tracking-[0.14em]" style={{ color: 'var(--tx3)' }}>Sapma</span>
                 <MetricDelta value={anomaly.deviation} />
               </div>
             </div>
@@ -269,7 +269,7 @@ function AnomalyCard({ anomaly, onAck }: { anomaly: Anomaly; onAck: (id: string)
                 onClick={() => onAck(anomaly.id)}
                 className="flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 text-[10px] font-medium transition-all hover:opacity-80"
                 style={{
-                  background: 'rgba(255,255,255,0.04)',
+                  background: 'var(--s2)',
                   border: '1px solid rgba(255,255,255,0.08)',
                   color: 'rgba(245,245,245,0.45)',
                 }}
@@ -282,7 +282,7 @@ function AnomalyCard({ anomaly, onAck }: { anomaly: Anomaly; onAck: (id: string)
               href={`/restaurants/${anomaly.restaurantId}`}
               className="flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 text-[10px] font-medium transition-all hover:opacity-80"
               style={{
-                background: 'rgba(255,255,255,0.03)',
+                background: 'var(--s2)',
                 border: '1px solid rgba(255,255,255,0.06)',
                 color: 'rgba(245,245,245,0.35)',
               }}
@@ -335,7 +335,7 @@ export default function AnomaliesPage() {
   ]
 
   return (
-    <div className="animate-fade-in">
+    <div className="dm">
       <Topbar
         title="Anomali Dedektörü"
         subtitle="Sistem otomatik anomali tespiti — gerçek zamanlı"
@@ -355,11 +355,11 @@ export default function AnomaliesPage() {
         }
       />
 
-      <div className="p-6 space-y-5 max-w-[900px]">
+      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* Status bar */}
         <div className="flex items-center justify-between rounded-[12px] px-4 py-3"
-          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-faint)' }}>
+          style={{ background: 'var(--s1)', border: '1px solid var(--bdr)' }}>
           <div className="flex items-center gap-5">
             <div className="flex items-center gap-2">
               <div className="relative w-2 h-2">
@@ -369,27 +369,27 @@ export default function AnomaliesPage() {
                 }
                 <div className={cn('relative w-2 h-2 rounded-full', scanning ? 'bg-amber-400' : 'bg-emerald-400')} />
               </div>
-              <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+              <span className="text-[11px]" style={{ color: 'var(--tx2)' }}>
                 {scanning ? 'Taranıyor…' : 'Aktif İzleme'}
               </span>
             </div>
-            <div className="hidden md:flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-ghost)' }}>
+            <div className="hidden md:flex items-center gap-1 text-[10px]" style={{ color: 'var(--tx3)' }}>
               <Clock size={10} className="shrink-0" />
               <span className="num">{lastScan.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
             </div>
-            <div className="hidden md:block text-[10px]" style={{ color: 'var(--text-ghost)' }}>
+            <div className="hidden md:block text-[10px]" style={{ color: 'var(--tx3)' }}>
               10 restoran · 47 metrik
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="text-[10px]" style={{ color: 'var(--text-ghost)' }}>
+            <div className="text-[10px]" style={{ color: 'var(--tx3)' }}>
               {counts.unacked} onaysız
             </div>
             <button
               onClick={() => { setScanning(true); setTimeout(() => setScanning(false), 1500) }}
               className="p-1.5 rounded-[7px] transition-all hover:bg-white/[0.05]"
-              style={{ border: '1px solid var(--border-faint)' }}
+              style={{ border: '1px solid var(--bdr)' }}
             >
               <RefreshCw size={11} className={cn('text-white/25', scanning && 'animate-spin')} />
             </button>
@@ -410,9 +410,9 @@ export default function AnomaliesPage() {
                   active ? 'text-white' : 'hover:bg-white/[0.04]'
                 )}
                 style={{
-                  background: active ? 'rgba(255,255,255,0.07)' : 'var(--bg-surface)',
-                  border: active ? '1px solid rgba(255,255,255,0.12)' : '1px solid var(--border-faint)',
-                  color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+                  background: active ? 'var(--bdr)' : 'var(--s1)',
+                  border: active ? '1px solid rgba(255,255,255,0.12)' : '1px solid var(--bdr)',
+                  color: active ? 'var(--tx)' : 'var(--tx3)',
                 }}
               >
                 {dotColor && (
@@ -422,8 +422,8 @@ export default function AnomaliesPage() {
                 {f.label}
                 <span className="text-[10px] num px-1.5 py-px rounded-[5px]"
                   style={{
-                    background: active ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.04)',
-                    color: active ? 'var(--text-secondary)' : 'var(--text-ghost)',
+                    background: active ? 'var(--bdr)' : 'var(--s2)',
+                    color: active ? 'var(--tx2)' : 'var(--tx3)',
                   }}>
                   {f.count}
                 </span>
@@ -441,12 +441,12 @@ export default function AnomaliesPage() {
           ))}
           {filtered.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-center rounded-[14px]"
-              style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-faint)' }}>
+              style={{ background: 'var(--s1)', border: '1px solid var(--bdr)' }}>
               <CheckCircle2 size={28} className="text-emerald-400 mb-3" style={{ opacity: 0.5 }} />
-              <div className="text-[13px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+              <div className="text-[13px] font-medium" style={{ color: 'var(--tx2)' }}>
                 Bu seviyede anomali yok
               </div>
-              <div className="text-[11px] mt-1" style={{ color: 'var(--text-ghost)' }}>
+              <div className="text-[11px] mt-1" style={{ color: 'var(--tx3)' }}>
                 Sistem normal çalışıyor
               </div>
             </div>
@@ -455,7 +455,7 @@ export default function AnomaliesPage() {
 
         {/* İzlenen metrikler */}
         <div>
-          <div className="text-[9px] uppercase tracking-[0.18em] mb-3" style={{ color: 'var(--text-ghost)' }}>
+          <div className="text-[9px] uppercase tracking-[0.18em] mb-3" style={{ color: 'var(--tx3)' }}>
             İzlenen Metrikler
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -467,7 +467,7 @@ export default function AnomaliesPage() {
             ].map(m => (
               <div key={m.label}
                 className="flex items-start gap-3 rounded-[10px] px-3 py-2.5"
-                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-faint)' }}>
+                style={{ background: 'var(--s1)', border: '1px solid var(--bdr)' }}>
                 <div className="mt-0.5 w-1.5 h-1.5 rounded-full shrink-0"
                   style={{
                     background: m.ok ? 'var(--success)' : 'var(--danger)',
@@ -475,8 +475,8 @@ export default function AnomaliesPage() {
                     marginTop: 4,
                   }} />
                 <div>
-                  <div className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>{m.label}</div>
-                  <div className="text-[9px] mt-0.5" style={{ color: 'var(--text-ghost)' }}>{m.sub}</div>
+                  <div className="text-[11px] font-medium" style={{ color: 'var(--tx2)' }}>{m.label}</div>
+                  <div className="text-[9px] mt-0.5" style={{ color: 'var(--tx3)' }}>{m.sub}</div>
                 </div>
               </div>
             ))}

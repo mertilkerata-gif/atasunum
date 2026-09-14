@@ -45,7 +45,7 @@ export default function HealthPage() {
     <XCircle className="w-5 h-5 text-red-400" />
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Sistem Sağlığı" subtitle="Entegrasyon ve servis durumu" />
       <div className="p-6 space-y-5 max-w-3xl">
         <div className="flex items-center justify-between">
@@ -62,7 +62,7 @@ export default function HealthPage() {
           </div>
           <button onClick={recheck} disabled={checking}
             className="flex items-center gap-2 px-4 py-2 rounded-xl border text-xs text-white/60 transition-all hover:text-white/80"
-            style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.09)' }}>
+            style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
             {checking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
             Yeniden Kontrol Et
           </button>
@@ -70,15 +70,15 @@ export default function HealthPage() {
 
         <div className="grid grid-cols-3 gap-3">
           {[{ label: 'Aktif', count: ok, color: 'text-emerald-400' }, { label: 'Uyarı', count: warn, color: 'text-yellow-400' }, { label: 'Kesinti', count: down, color: 'text-red-400' }].map(({ label, count, color }) => (
-            <div key={label} className="rounded-xl border p-4 text-center" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+            <div key={label} className="rounded-xl border p-4 text-center" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
               <div className={cn('text-3xl font-bold font-mono', color)}>{count}</div>
               <div className="text-[10px] text-white/30 mt-1 uppercase tracking-widest">{label}</div>
             </div>
           ))}
         </div>
 
-        <div className="rounded-2xl border overflow-hidden" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
-          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+        <div className="card" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
+          <div className="divide-y" style={{ borderColor: 'var(--bdr)' }}>
             {services.map(s => (
               <div key={s.name} className="flex items-center gap-4 px-6 py-4">
                 <span className="text-xl shrink-0">{s.icon}</span>

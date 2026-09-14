@@ -39,11 +39,11 @@ export default function RestaurantsPage() {
   useEffect(() => { fetchData() }, [fetchData])
 
   return (
-    <div className="animate-fade-in">
+    <div className="dm">
       <Topbar title="Restoranlar" subtitle="Aktif lokasyonlar ve anlık durum"
         action={
           <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
-            style={{ background: isLive ? 'rgba(34,197,94,0.07)' : 'rgba(255,255,255,0.04)', border: isLive ? '1px solid rgba(34,197,94,0.18)' : '1px solid rgba(255,255,255,0.08)' }}>
+            style={{ background: isLive ? 'rgba(34,197,94,0.07)' : 'var(--s2)', border: isLive ? '1px solid rgba(34,197,94,0.18)' : '1px solid rgba(255,255,255,0.08)' }}>
             <Wifi size={10} className={isLive ? 'text-emerald-400' : 'text-white/20'} />
             <span className="text-[9px]" style={{ color: isLive ? 'rgba(34,197,94,0.8)' : 'rgba(245,245,245,0.25)' }}>
               {isLive ? 'Supabase' : 'Demo'}
@@ -52,17 +52,17 @@ export default function RestaurantsPage() {
         }
       />
 
-      <div className="p-6 space-y-4">
+      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
           {[
-            { label: 'Toplam', value: restaurants.length, color: 'var(--text-primary)' },
+            { label: 'Toplam', value: restaurants.length, color: 'var(--tx)' },
             { label: 'BK', value: restaurants.filter(r => r.brand === 'BURGER_KING').length, color: '#60a5fa' },
             { label: 'Popeyes', value: restaurants.filter(r => r.brand === 'POPEYES').length, color: '#fb923c' },
             { label: 'Kritik', value: restaurants.filter(r => r.risk_level === 'KRITIK').length, color: '#ef4444' },
           ].map(s => (
             <div key={s.label} className="rounded-[11px] px-4 py-3"
-              style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-faint)' }}>
-              <div className="text-[9px] uppercase tracking-[0.14em] mb-1" style={{ color: 'var(--text-ghost)' }}>{s.label}</div>
+              style={{ background: 'var(--s1)', border: '1px solid var(--bdr)' }}>
+              <div className="text-[9px] uppercase tracking-[0.14em] mb-1" style={{ color: 'var(--tx3)' }}>{s.label}</div>
               <div className="text-[20px] font-bold num" style={{ color: s.color, letterSpacing: '-0.04em' }}>
                 {loading ? '—' : s.value}
               </div>
@@ -81,7 +81,7 @@ export default function RestaurantsPage() {
               return (
                 <Link href={`/restaurants/${r.id}`} key={r.id}
                   className="flex items-center gap-4 rounded-[11px] px-4 py-3 border transition-all hover:border-white/10 animate-fade-in"
-                  style={{ animationDelay: `${i * 25}ms`, background: 'var(--bg-surface)', borderColor: 'var(--border-faint)' }}>
+                  style={{ animationDelay: `${i * 25}ms`, background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
 
                   <div className="w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0"
                     style={{ background: r.brand === 'BURGER_KING' ? 'rgba(96,165,250,0.08)' : 'rgba(249,115,22,0.08)', border: `1px solid ${r.brand === 'BURGER_KING' ? 'rgba(96,165,250,0.15)' : 'rgba(249,115,22,0.15)'}` }}>
@@ -89,20 +89,20 @@ export default function RestaurantsPage() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="text-[12.5px] font-medium truncate" style={{ color: 'var(--text-primary)' }}>{r.name}</div>
+                    <div className="text-[12.5px] font-medium truncate" style={{ color: 'var(--tx)' }}>{r.name}</div>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <MapPin size={9} className="text-white/20 shrink-0" />
-                      <span className="text-[10px]" style={{ color: 'var(--text-ghost)' }}>{r.district} · {r.region}</span>
+                      <span className="text-[10px]" style={{ color: 'var(--tx3)' }}>{r.district} · {r.region}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4 shrink-0">
                     <div className="text-center hidden md:block">
-                      <div className="text-[10px]" style={{ color: 'var(--text-ghost)' }}>Açık sipariş</div>
-                      <div className="text-[14px] font-bold num" style={{ color: 'var(--text-primary)' }}>{r.open_orders}</div>
+                      <div className="text-[10px]" style={{ color: 'var(--tx3)' }}>Açık sipariş</div>
+                      <div className="text-[14px] font-bold num" style={{ color: 'var(--tx)' }}>{r.open_orders}</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-[10px]" style={{ color: 'var(--text-ghost)' }}>Nabız</div>
+                      <div className="text-[10px]" style={{ color: 'var(--tx3)' }}>Nabız</div>
                       <div className="text-[18px] font-bold num" style={{ color: rc.color, letterSpacing: '-0.04em' }}>{r.score}</div>
                     </div>
                     <div className="text-[9px] font-semibold px-2 py-1 rounded-[6px]"

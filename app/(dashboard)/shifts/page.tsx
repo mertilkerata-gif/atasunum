@@ -62,9 +62,9 @@ export default function ShiftsPage() {
   ]
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Vardiya Planlama AI" subtitle="Dış olaylar + tarihsel veri ile optimize vardiya önerisi" />
-      <div className="p-6 space-y-5">
+      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* Restoran + tarih seçici */}
         <div className="grid grid-cols-12 gap-4">
@@ -72,7 +72,7 @@ export default function ShiftsPage() {
             <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-2">Restoran</label>
             <select value={restaurantId} onChange={e => setRestaurantId(e.target.value)}
               className="w-full rounded-xl border px-4 py-2.5 text-sm text-white outline-none"
-              style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.1)' }}>
+              style={{ background: 'var(--s1)', borderColor: 'rgba(255,255,255,0.1)' }}>
               {RESTAURANTS.map(r => <option key={r.id} value={r.id} style={{ background: '#13131e' }}>{r.name}</option>)}
             </select>
           </div>
@@ -87,8 +87,8 @@ export default function ShiftsPage() {
                   <button key={plan.date} onClick={() => setSelectedDate(plan.date)}
                     className="shrink-0 rounded-xl border px-4 py-2.5 text-left transition-all"
                     style={{
-                      background: isSelected ? dc.bg : 'var(--bg-surface)',
-                      borderColor: isSelected ? dc.border : 'rgba(255,255,255,0.07)',
+                      background: isSelected ? dc.bg : 'var(--s1)',
+                      borderColor: isSelected ? dc.border : 'var(--bdr)',
                       minWidth: '90px',
                     }}>
                     <div className="text-[10px] text-white/30 mb-0.5">{plan.dayOfWeek.slice(0, 3)}</div>
@@ -116,7 +116,7 @@ export default function ShiftsPage() {
               <div className="flex flex-wrap gap-3">
                 {currentPlan.externalEvents.map((e, i) => (
                   <div key={i} className="flex items-center gap-2 rounded-lg border px-3 py-1.5"
-                    style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }}>
+                    style={{ background: 'var(--s2)', borderColor: 'var(--bdr)' }}>
                     <span className="text-sm">{e.icon}</span>
                     <span className="text-xs text-white/70">{e.name}</span>
                     <span className={cn('text-xs font-bold', e.impact > 0.3 ? 'text-orange-400' : 'text-yellow-400')}>
@@ -133,8 +133,7 @@ export default function ShiftsPage() {
           {/* AI Plan */}
           <div className="col-span-7 space-y-4">
             {/* Talep tahmini */}
-            <div className="rounded-2xl border p-5"
-              style={{ background: demandConfig.bg, borderColor: demandConfig.border }}>
+            <div className="card" style={{ padding: "20px" }} data-dup={{ background: demandConfig.bg, borderColor: demandConfig.border }}>
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <div className="text-[10px] text-white/30 uppercase tracking-widest mb-1">AI Talep Tahmini</div>
@@ -155,7 +154,7 @@ export default function ShiftsPage() {
             </div>
 
             {/* Personel karşılaştırma */}
-            <div className="rounded-2xl border p-5" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+            <div className="card" style={{ padding: "20px" }} data-dup={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
               <div className="flex items-center justify-between mb-4">
                 <div className="text-xs text-white/40 uppercase tracking-widest font-medium">Personel Planı</div>
                 <div className="flex items-center gap-4 text-[10px] text-white/30">
@@ -210,7 +209,7 @@ export default function ShiftsPage() {
               </div>
 
               {/* Toplam */}
-              <div className="flex items-center justify-between mt-4 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+              <div className="flex items-center justify-between mt-4 pt-4 border-t" style={{ borderColor: 'var(--bdr)' }}>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-white/30" />
@@ -253,7 +252,7 @@ export default function ShiftsPage() {
 
             {/* Risk faktörleri */}
             {currentPlan.riskFactors.length > 0 && (
-              <div className="rounded-2xl border p-5" style={{ background: 'rgba(249,115,22,0.04)', borderColor: 'rgba(249,115,22,0.15)' }}>
+              <div className="card" style={{ padding: "20px" }} data-dup={{ background: 'rgba(249,115,22,0.04)', borderColor: 'rgba(249,115,22,0.15)' }}>
                 <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-3">Risk Faktörleri</div>
                 <div className="space-y-2">
                   {currentPlan.riskFactors.map((rf, i) => (
@@ -270,7 +269,7 @@ export default function ShiftsPage() {
           {/* Sağ panel: tarihsel performans + peak saatler */}
           <div className="col-span-5 space-y-4">
             {/* Peak saatler */}
-            <div className="rounded-2xl border p-5" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+            <div className="card" style={{ padding: "20px" }} data-dup={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
               <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-4">Peak Saatler</div>
               <div className="space-y-3">
                 {currentPlan.peakHours.map((ph, i) => (
@@ -291,11 +290,11 @@ export default function ShiftsPage() {
             </div>
 
             {/* Geçmiş performans */}
-            <div className="rounded-2xl border p-5" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+            <div className="card" style={{ padding: "20px" }} data-dup={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
               <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-4">Geçen Hafta Performansı</div>
               <ResponsiveContainer width="100%" height={140}>
                 <BarChart data={HISTORICAL_PERFORMANCE}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
                   <XAxis dataKey="dayOfWeek" tickFormatter={v => v.slice(0,3)} tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
                   <YAxis hide />
                   <Tooltip content={<CustomTooltip />} />

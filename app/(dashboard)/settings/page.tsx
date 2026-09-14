@@ -53,7 +53,7 @@ export default function SettingsPage() {
   ]
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Ayarlar" subtitle="Sistem konfigürasyonu" />
       <div className="p-6 max-w-3xl space-y-5">
 

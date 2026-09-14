@@ -103,7 +103,7 @@ export default function ReportsPage() {
   const criticalMinutes = HOURLY_DATA.filter(d => d.pulse >= 80).length * 60
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Raporlar" subtitle="Operasyon ve performans analizi" />
       <div className="flex h-[calc(100vh-56px)]">
 
@@ -180,7 +180,7 @@ export default function ReportsPage() {
                         <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
                     <XAxis dataKey="hour" tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10 }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10 }} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip />} />
@@ -227,7 +227,7 @@ export default function ReportsPage() {
                 <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">7 Günlük Sipariş Trendi</div>
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={WEEKLY_DATA}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
                     <XAxis dataKey="day" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip />} />
@@ -239,7 +239,7 @@ export default function ReportsPage() {
                 <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">Ortalama Nabız Skoru</div>
                 <ResponsiveContainer width="100%" height={180}>
                   <LineChart data={WEEKLY_DATA}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
                     <XAxis dataKey="day" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
                     <YAxis domain={[0, 100]} tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip />} />
@@ -279,7 +279,7 @@ export default function ReportsPage() {
                   <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">Kanal Bazlı Saatlik Dağılım</div>
                   <ResponsiveContainer width="100%" height={220}>
                     <BarChart data={HOURLY_DATA.filter((_, i) => i % 2 === 0)}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
                       <XAxis dataKey="hour" tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10 }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10 }} axisLine={false} tickLine={false} />
                       <Tooltip content={<CustomTooltip />} />
@@ -311,7 +311,7 @@ export default function ReportsPage() {
                 <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">İstasyon Yük Karşılaştırması</div>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={KITCHEN_DATA} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
                     <XAxis type="number" domain={[0, 100]} tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10 }} axisLine={false} tickLine={false} />
                     <YAxis dataKey="station" type="category" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }} axisLine={false} tickLine={false} width={60} />
                     <Tooltip content={<CustomTooltip />} />
@@ -331,7 +331,7 @@ export default function ReportsPage() {
                 <div className="text-xs text-white/30 mb-4">Baz: Güneşli gün = 100 endeks</div>
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={WEATHER_DATA}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
                     <XAxis dataKey="condition" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip />} />

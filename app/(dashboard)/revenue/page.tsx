@@ -47,9 +47,9 @@ export default function RevenuePage() {
   }).sort((a, b) => b.lost - a.lost)
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Satış & Ciro Analizi" subtitle="Kayıp ciro, fırsat analizi ve satış planlama" />
-      <div className="p-6 space-y-5">
+      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* Network summary */}
         <div className="grid grid-cols-4 gap-4">
@@ -59,8 +59,7 @@ export default function RevenuePage() {
             { label: 'Fırsat Kaybı', value: network.totalMissed, suffix: ' ₺', color: 'text-orange-400', icon: <AlertTriangle className="w-4 h-4" />, sub: 'Kapasite dolsaydı' },
             { label: 'Ort. Sipariş Değeri', value: network.avgOrderValue, suffix: ' ₺', color: 'text-emerald-400', icon: <Target className="w-4 h-4" /> },
           ].map(({ label, value, suffix, color, icon, sub }) => (
-            <div key={label} className="rounded-2xl border p-5 relative overflow-hidden"
-              style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+            <div key={label} className="card" style={{ padding: "20px" }} data-dup={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[10px] text-white/30 uppercase tracking-widest">{label}</span>
                 <span className={cn('opacity-40', color)}>{icon}</span>
@@ -75,7 +74,7 @@ export default function RevenuePage() {
 
         {/* Kayıp ciro dağılımı */}
         <div className="grid grid-cols-12 gap-5">
-          <div className="col-span-4 rounded-2xl border p-5" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+          <div className="col-span-4 rounded-2xl border p-5" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
             <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-4">Kayıp Ciro — Neden?</div>
             <ResponsiveContainer width="100%" height={160}>
               <PieChart>
@@ -97,11 +96,11 @@ export default function RevenuePage() {
           </div>
 
           {/* Restoran bazlı kayıp */}
-          <div className="col-span-8 rounded-2xl border p-5" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+          <div className="col-span-8 rounded-2xl border p-5" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
             <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-4">Restoran Bazlı Ciro Analizi</div>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={barData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
                 <XAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 9 }} axisLine={false} tickLine={false} angle={-20} textAnchor="end" height={40} />
                 <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `${(v/1000).toFixed(0)}K`} />
                 <Tooltip content={<CustomTooltip />} />
@@ -114,13 +113,13 @@ export default function RevenuePage() {
         </div>
 
         {/* Restoran detay tablosu */}
-        <div className="rounded-2xl border overflow-hidden" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
-          <div className="px-6 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+        <div className="card" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
+          <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--bdr)' }}>
             <div className="text-xs text-white/40 uppercase tracking-widest font-medium">Detaylı Analiz</div>
           </div>
           <table className="w-full">
             <thead>
-              <tr className="border-b" style={{ borderColor: 'rgba(255,255,255,0.04)', background: 'rgba(255,255,255,0.02)' }}>
+              <tr className="border-b" style={{ borderColor: 'var(--bdr)', background: 'rgba(255,255,255,0.02)' }}>
                 {['Restoran', 'Nabız', 'Gerçekleşen Ciro', 'Kayıp Ciro', 'Fırsat Kaybı', 'Kapasite', 'Büyüme'].map(h => (
                   <th key={h} className="px-5 py-3 text-left text-[10px] font-semibold text-white/25 uppercase tracking-widest">{h}</th>
                 ))}
@@ -133,7 +132,7 @@ export default function RevenuePage() {
                 const config = getRiskConfig(pulse.risk_level)
                 return (
                   <tr key={r.id} className="border-b transition-colors hover:bg-white/[0.02]"
-                    style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
+                    style={{ borderColor: 'var(--bdr)' }}>
                     <td className="px-5 py-3">
                       <div className="text-xs font-medium text-white/70">{r.name}</div>
                       <div className="text-[10px] text-white/25">{r.district}</div>
@@ -178,7 +177,7 @@ export default function RevenuePage() {
         </div>
 
         {/* AI insight */}
-        <div className="rounded-2xl border p-5" style={{ background: 'rgba(129,140,248,0.04)', borderColor: 'rgba(129,140,248,0.15)' }}>
+        <div className="card" style={{ padding: "20px" }} data-dup={{ background: 'rgba(129,140,248,0.04)', borderColor: 'rgba(129,140,248,0.15)' }}>
           <div className="flex items-start gap-3">
             <div className="text-indigo-400 shrink-0 mt-0.5">💡</div>
             <div>

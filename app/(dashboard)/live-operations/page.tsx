@@ -75,7 +75,7 @@ export default function LiveOperationsPage() {
   const criticalCount = data.filter(d => d.pulse.risk_level === 'KRITIK').length
 
   return (
-    <div className="animate-fade-in">
+    <div className="dm">
       <Topbar title="Canlı Operasyon" subtitle="Anlık sipariş ve istasyon durumu — 5sn güncelleme"
         action={
           <div className="flex items-center gap-2">
@@ -88,7 +88,7 @@ export default function LiveOperationsPage() {
             )}
             <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
               style={{
-                background: isLive ? 'rgba(34,197,94,0.07)' : 'rgba(255,255,255,0.04)',
+                background: isLive ? 'rgba(34,197,94,0.07)' : 'var(--s2)',
                 border: isLive ? '1px solid rgba(34,197,94,0.18)' : '1px solid rgba(255,255,255,0.08)',
               }}>
               <Wifi size={10} className={isLive ? 'text-emerald-400' : 'text-white/20'} />
@@ -100,7 +100,7 @@ export default function LiveOperationsPage() {
         }
       />
 
-      <div className="p-6 space-y-4">
+      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 size={20} className="text-white/20 animate-spin" />
@@ -114,8 +114,8 @@ export default function LiveOperationsPage() {
                 <div key={d.restaurant.id}
                   className="rounded-[12px] border px-4 py-3 transition-all duration-300"
                   style={{
-                    background: 'var(--bg-surface)',
-                    borderColor: d.pulse.risk_level === 'KRITIK' ? 'rgba(239,68,68,0.18)' : 'var(--border-faint)',
+                    background: 'var(--s1)',
+                    borderColor: d.pulse.risk_level === 'KRITIK' ? 'rgba(239,68,68,0.18)' : 'var(--bdr)',
                   }}>
                   <div className="flex items-center gap-4">
                     {/* Score */}
@@ -128,26 +128,26 @@ export default function LiveOperationsPage() {
                       </div>
                     </div>
 
-                    <div className="w-px h-8 shrink-0" style={{ background: 'var(--border-faint)' }} />
+                    <div className="w-px h-8 shrink-0" style={{ background: 'var(--bdr)' }} />
 
                     {/* Restaurant name */}
                     <div className="w-36 shrink-0">
                       <div className="text-[12px] font-medium text-white/80 truncate">{d.restaurant.name}</div>
-                      <div className="text-[9px] mt-px" style={{ color: 'var(--text-ghost)' }}>{d.restaurant.district}</div>
+                      <div className="text-[9px] mt-px" style={{ color: 'var(--tx3)' }}>{d.restaurant.district}</div>
                     </div>
 
                     {/* Orders */}
                     <div className="w-16 shrink-0 text-center">
-                      <div className="text-[15px] font-bold num" style={{ color: 'var(--text-primary)' }}>{d.activeOrders}</div>
-                      <div className="text-[9px]" style={{ color: 'var(--text-ghost)' }}>açık</div>
+                      <div className="text-[15px] font-bold num" style={{ color: 'var(--tx)' }}>{d.activeOrders}</div>
+                      <div className="text-[9px]" style={{ color: 'var(--tx3)' }}>açık</div>
                     </div>
 
                     {/* Prep time */}
                     <div className="w-16 shrink-0 text-center hidden md:block">
-                      <div className="text-[13px] font-semibold num" style={{ color: 'var(--text-secondary)' }}>
+                      <div className="text-[13px] font-semibold num" style={{ color: 'var(--tx2)' }}>
                         {d.snapshot?.avg_preparation_time?.toFixed(1) ?? d.pulse.avg_prep_time?.toFixed(1) ?? '—'} dk
                       </div>
-                      <div className="text-[9px]" style={{ color: 'var(--text-ghost)' }}>hazırlama</div>
+                      <div className="text-[9px]" style={{ color: 'var(--tx3)' }}>hazırlama</div>
                     </div>
 
                     {/* Station bars */}
@@ -157,8 +157,8 @@ export default function LiveOperationsPage() {
                         const barColor = val > 80 ? '#ef4444' : val > 60 ? '#f97316' : '#22c55e'
                         return (
                           <div key={st} className="flex-1">
-                            <div className="text-[8px] uppercase mb-1" style={{ color: 'var(--text-ghost)' }}>{st}</div>
-                            <div className="h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                            <div className="text-[8px] uppercase mb-1" style={{ color: 'var(--tx3)' }}>{st}</div>
+                            <div className="h-1 rounded-full" style={{ background: 'var(--s2)' }}>
                               <div className="h-full rounded-full transition-all duration-700"
                                 style={{ width: `${val}%`, background: barColor }} />
                             </div>
@@ -170,7 +170,7 @@ export default function LiveOperationsPage() {
 
                     {/* Nabız bar */}
                     <div className="w-24 shrink-0 hidden xl:block">
-                      <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                      <div className="h-1.5 rounded-full" style={{ background: 'var(--s2)' }}>
                         <div className="h-full rounded-full transition-all duration-1000"
                           style={{ width: `${d.pulse.score}%`, background: rc.color, opacity: 0.8 }} />
                       </div>

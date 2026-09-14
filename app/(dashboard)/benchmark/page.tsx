@@ -95,9 +95,9 @@ export default function BenchmarkPage() {
   })
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Benchmark & Rozetler" subtitle="Şube karşılaştırması · Performans sıralaması" />
-      <div className="p-6 space-y-5">
+      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* Badge wall */}
         <div className="grid grid-cols-6 gap-3">
@@ -125,16 +125,16 @@ export default function BenchmarkPage() {
                 <button key={key} onClick={() => setMetric(key as any)}
                   className={cn('px-3 py-1.5 rounded-lg border text-xs font-medium transition-all',
                     metric === key ? 'border-orange-500/30 bg-orange-500/10 text-orange-300' : 'border-white/[0.07] text-white/40 hover:text-white/60')}
-                  style={{ background: metric === key ? undefined : 'var(--bg-surface)' }}>
+                  style={{ background: metric === key ? undefined : 'var(--s1)' }}>
                   {mc.label}
                 </button>
               ))}
             </div>
 
-            <div className="rounded-2xl border overflow-hidden" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+            <div className="card" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
               {/* Header */}
               <div className="px-5 py-3 border-b flex items-center justify-between"
-                style={{ borderColor: 'rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+                style={{ borderColor: 'var(--bdr)', background: 'rgba(255,255,255,0.02)' }}>
                 <span className="text-xs text-white/40 uppercase tracking-widest">{mc.label} Sıralaması</span>
                 <span className="text-xs text-white/25">Ağ Ort: <span className="font-mono text-white/50">{(avg[metric]).toLocaleString('tr-TR')}{mc.unit}</span></span>
               </div>
@@ -148,7 +148,7 @@ export default function BenchmarkPage() {
                 const medals = ['🥇', '🥈', '🥉']
                 return (
                   <div key={d.restaurant.id} className={cn('flex items-center gap-4 px-5 py-3.5 border-b transition-all hover:bg-white/[0.02]', i === 0 && 'bg-white/[0.02]')}
-                    style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
+                    style={{ borderColor: 'var(--bdr)' }}>
                     <div className="w-8 text-center">
                       {i < 3 ? <span className="text-lg">{medals[i]}</span> : <span className="text-sm font-mono text-white/20">{i + 1}</span>}
                     </div>
@@ -190,12 +190,12 @@ export default function BenchmarkPage() {
           </div>
 
           {/* Radar chart */}
-          <div className="col-span-5 rounded-2xl border p-5" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+          <div className="col-span-5 rounded-2xl border p-5" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
             <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-1">Top 3 Karşılaştırma</div>
             <div className="text-[10px] text-white/20 mb-4">Yüksek = daha iyi performans</div>
             <ResponsiveContainer width="100%" height={260}>
               <RadarChart data={radarData}>
-                <PolarGrid stroke="rgba(255,255,255,0.08)" />
+                <PolarGrid stroke="var(--bdr)" />
                 <PolarAngleAxis dataKey="metric" tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 11 }} />
                 {ranked.slice(0, 3).map((d, i) => {
                   const colors = ['#f97316', '#818cf8', '#22c55e']

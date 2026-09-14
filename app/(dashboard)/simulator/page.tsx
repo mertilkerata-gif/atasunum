@@ -84,7 +84,7 @@ export default function SimulatorPage() {
   const simConfig = result ? getRiskConfig(result.simulated.risk_level) : null
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="What-If Simülatör" subtitle="Server-side Pulse Engine · Senaryo bazlı tahmin" />
       <div className="p-6 max-w-5xl space-y-6">
 

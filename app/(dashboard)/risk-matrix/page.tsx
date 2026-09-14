@@ -30,12 +30,12 @@ export default function RiskMatrixPage() {
   const W = 600, H = 400
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Operasyonel Risk Matrisi" subtitle="Olasılık × Etki büyüklüğü analizi" />
-      <div className="p-6 space-y-5">
+      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div className="grid grid-cols-12 gap-5">
           {/* Matrix */}
-          <div className="col-span-8 rounded-2xl border p-6" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+          <div className="col-span-8 rounded-2xl border p-6" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
             <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-4">Risk Matrisi</div>
             <div className="relative" style={{ paddingLeft: '32px', paddingBottom: '28px' }}>
               {/* Y axis label */}
@@ -57,8 +57,8 @@ export default function RiskMatrixPage() {
                 ))}
 
                 {/* Center lines */}
-                <line x1={W/2} y1={0} x2={W/2} y2={H} stroke="rgba(255,255,255,0.08)" strokeWidth="1" strokeDasharray="4 4" />
-                <line x1={0} y1={H/2} x2={W} y2={H/2} stroke="rgba(255,255,255,0.08)" strokeWidth="1" strokeDasharray="4 4" />
+                <line x1={W/2} y1={0} x2={W/2} y2={H} stroke="var(--bdr)" strokeWidth="1" strokeDasharray="4 4" />
+                <line x1={0} y1={H/2} x2={W} y2={H/2} stroke="var(--bdr)" strokeWidth="1" strokeDasharray="4 4" />
 
                 {/* Axis labels */}
                 {[0, 0.25, 0.5, 0.75, 1].map(v => (
@@ -113,7 +113,7 @@ export default function RiskMatrixPage() {
 
           {/* Legend + table */}
           <div className="col-span-4 space-y-4">
-            <div className="rounded-2xl border p-4" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+            <div className="card" style={{ padding: "16px" }} data-dup={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
               <div className="text-[10px] text-white/30 uppercase tracking-widest mb-3">Kadrant Eylemleri</div>
               {[
                 { label: '🔴 Acil Aksiyon', desc: 'Hemen müdahale et', color: '#ff3d3d' },
@@ -132,14 +132,14 @@ export default function RiskMatrixPage() {
             </div>
 
             {/* Top risks */}
-            <div className="rounded-2xl border overflow-hidden" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+            <div className="card" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
               <div className="px-4 py-3 border-b text-[10px] text-white/30 uppercase tracking-widest"
-                style={{ borderColor: 'rgba(255,255,255,0.05)' }}>Öncelikli Riskler</div>
+                style={{ borderColor: 'var(--bdr)' }}>Öncelikli Riskler</div>
               {data.sort((a, b) => (b.probability + b.impact) - (a.probability + a.impact)).slice(0, 5).map(d => {
                 const config = getRiskConfig(d.pulse.risk_level)
                 return (
                   <div key={d.restaurant.id} className="flex items-center gap-3 px-4 py-2.5 border-b"
-                    style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
+                    style={{ borderColor: 'var(--bdr)' }}>
                     <div className="w-2 h-2 rounded-full shrink-0" style={{ background: config.colorHex }} />
                     <span className="text-xs text-white/60 flex-1 truncate">{d.restaurant.name.replace('Burger King ','BK ').replace('Popeyes ','Pop.')}</span>
                     <span className={cn('text-xs font-bold font-mono', config.color)}>{d.pulse.score}</span>

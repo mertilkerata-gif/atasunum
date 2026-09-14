@@ -36,13 +36,13 @@ export default function ExplainerPage() {
   const compScores = result.component_scores
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Explainable AI" subtitle="Nabız skoru neden bu değeri aldı?" />
       <div className="p-6 space-y-5 max-w-4xl">
 
         <select value={restaurantId} onChange={e => setRestaurantId(e.target.value)}
           className="rounded-xl border px-4 py-2.5 text-sm text-white outline-none"
-          style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.1)' }}>
+          style={{ background: 'var(--s1)', borderColor: 'rgba(255,255,255,0.1)' }}>
           {RESTAURANTS.map(r => <option key={r.id} value={r.id} style={{ background: '#13131e' }}>{r.name}</option>)}
         </select>
 
@@ -103,7 +103,7 @@ export default function ExplainerPage() {
           </div>
 
           {/* External factors */}
-          <div className="mt-5 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div className="mt-5 pt-4 border-t" style={{ borderColor: 'var(--bdr)' }}>
             <div className="flex items-center justify-between text-xs">
               <span className="text-white/40">Dış Faktör Çarpanı</span>
               <div className="flex items-center gap-3 text-white/50">
@@ -116,7 +116,7 @@ export default function ExplainerPage() {
         </div>
 
         {/* Input values */}
-        <div className="rounded-2xl border p-5" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="card" style={{ padding: "20px" }}>
           <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-4">Motor Girdi Değerleri</div>
           <div className="grid grid-cols-3 gap-3">
             {[
@@ -127,7 +127,7 @@ export default function ExplainerPage() {
               { label: 'Gecikme', value: `%${Math.round(snap.delay_rate * 100)}`, baseline: '%3', unit: '' },
               { label: 'İptal', value: `%${Math.round(snap.cancellation_rate * 100)}`, baseline: '%2', unit: '' },
             ].map(({ label, value, baseline, unit }) => (
-              <div key={label} className="rounded-xl border p-3" style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)' }}>
+              <div key={label} className="rounded-xl border p-3" style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'var(--bdr)' }}>
                 <div className="text-[10px] text-white/25 uppercase tracking-wider mb-1">{label}</div>
                 <div className="text-lg font-bold font-mono text-white">{value}{unit}</div>
                 <div className="text-[10px] text-white/20 mt-0.5">baz: {baseline}{unit}</div>

@@ -67,9 +67,9 @@ export default function ForecastAccuracyPage() {
   const accuracy = (100 - parseFloat(mape)).toFixed(1)
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Tahmin Doğruluğu" subtitle="MAE · MAPE · Gerçekleşen vs Tahmin" />
-      <div className="p-6 space-y-5">
+      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* Period tabs */}
         <div className="flex items-center gap-2">
@@ -110,7 +110,7 @@ export default function ForecastAccuracyPage() {
           <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">Tahmin vs Gerçekleşen — Saatlik</div>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={ACCURACY_DATA}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
               <XAxis dataKey="hour" tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTooltip />} />
@@ -127,7 +127,7 @@ export default function ForecastAccuracyPage() {
             <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">Haftalık Doğruluk Trendi</div>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={WEEKLY_ACCURACY}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
                 <XAxis dataKey="day" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis domain={[80, 100]} tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
@@ -168,7 +168,7 @@ export default function ForecastAccuracyPage() {
           <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">Hata Dağılımı (Tahmin − Gerçek)</div>
           <ResponsiveContainer width="100%" height={140}>
             <BarChart data={ACCURACY_DATA}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
               <XAxis dataKey="hour" tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10 }} axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTooltip />} />

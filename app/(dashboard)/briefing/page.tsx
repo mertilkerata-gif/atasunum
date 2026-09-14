@@ -35,7 +35,7 @@ export default function BriefingPage() {
   }
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Sabah Briefing" subtitle={`${new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })} — Günlük yönetici özeti`} />
       <div className="p-6 space-y-5 max-w-4xl">
 
@@ -75,7 +75,7 @@ export default function BriefingPage() {
             { label: 'Kayıp Ciro', value: `${(revenue.totalLost/1000).toFixed(0)}K ₺`, sub: 'önlenebilir', color: 'text-red-400' },
             { label: 'Şikayet', value: totalComplaints, sub: 'toplam', color: totalComplaints > 50 ? 'text-orange-400' : 'text-white/60' },
           ].map(({ label, value, sub, color }) => (
-            <div key={label} className="rounded-2xl border p-4" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+            <div key={label} className="card" style={{ padding: "16px" }}>
               <div className="text-[10px] text-white/30 uppercase tracking-widest mb-2">{label}</div>
               <div className={cn('text-2xl font-bold font-mono', color)}>{value}</div>
               <div className="text-[11px] text-white/25 mt-1">{sub}</div>
@@ -85,7 +85,7 @@ export default function BriefingPage() {
 
         {/* Bugünün olayları */}
         {todayEvents.length > 0 && (
-          <div className="rounded-2xl border p-5" style={{ background: 'rgba(129,140,248,0.04)', borderColor: 'rgba(129,140,248,0.15)' }}>
+          <div className="card" style={{ padding: "20px" }}>
             <div className="flex items-center gap-2 mb-3">
               <Calendar className="w-4 h-4 text-indigo-400" />
               <span className="text-sm font-semibold text-indigo-300">Bugünün Dış Faktörleri</span>
@@ -93,7 +93,7 @@ export default function BriefingPage() {
             <div className="flex flex-wrap gap-3">
               {todayEvents.map((e, i) => (
                 <div key={i} className="flex items-center gap-2 rounded-xl border px-4 py-2.5"
-                  style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }}>
+                  style={{ background: 'var(--s2)', borderColor: 'var(--bdr)' }}>
                   <span className="text-lg">{e.icon}</span>
                   <div>
                     <div className="text-xs font-medium text-white/80">{e.name}</div>
@@ -106,11 +106,11 @@ export default function BriefingPage() {
         )}
 
         {/* 3 Öncelikli Aksiyon */}
-        <div className="rounded-2xl border overflow-hidden" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
-          <div className="px-6 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+        <div className="card" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
+          <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--bdr)' }}>
             <div className="text-sm font-semibold text-white">Bugünün 3 Önceliği</div>
           </div>
-          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
+          <div className="divide-y" style={{ borderColor: 'var(--bdr)' }}>
             {actions.map(action => (
               <div key={action.priority} className={cn('flex items-start gap-4 px-6 py-4', action.done && 'opacity-50')}>
                 <div className="text-2xl shrink-0 mt-0.5">{action.icon}</div>
@@ -129,7 +129,7 @@ export default function BriefingPage() {
         </div>
 
         {/* Bugünkü vardiya özeti */}
-        <div className="rounded-2xl border p-5" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="card" style={{ padding: "20px" }}>
           <div className="flex items-center justify-between mb-4">
             <div className="text-sm font-semibold text-white">Bugünkü Vardiya Durumu</div>
             <a href="/shifts" className="text-xs text-orange-400 hover:text-orange-300 flex items-center gap-1 transition-colors">
@@ -142,7 +142,7 @@ export default function BriefingPage() {
               const gap = plan.recommendedStaff.total - plan.currentStaff.total
               return (
                 <div key={r.id} className="rounded-xl border p-3"
-                  style={{ background: gap > 0 ? 'rgba(249,115,22,0.05)' : 'rgba(255,255,255,0.02)', borderColor: gap > 0 ? 'rgba(249,115,22,0.15)' : 'rgba(255,255,255,0.06)' }}>
+                  style={{ background: gap > 0 ? 'rgba(249,115,22,0.05)' : 'rgba(255,255,255,0.02)', borderColor: gap > 0 ? 'rgba(249,115,22,0.15)' : 'var(--s2)' }}>
                   <div className="text-xs font-medium text-white/70 truncate mb-1">{r.name.replace('Burger King ','BK ')}</div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-white/40">{plan.currentStaff.total} kişi</span>
@@ -157,7 +157,7 @@ export default function BriefingPage() {
         </div>
 
         {/* AI Değerlendirmesi */}
-        <div className="rounded-2xl border p-5" style={{ background: 'rgba(129,140,248,0.04)', borderColor: 'rgba(129,140,248,0.15)' }}>
+        <div className="card" style={{ padding: "20px" }}>
           <div className="flex items-center gap-2 mb-3">
             <Zap className="w-4 h-4 text-indigo-400" />
             <span className="text-sm font-semibold text-indigo-300">AI Günlük Değerlendirmesi</span>

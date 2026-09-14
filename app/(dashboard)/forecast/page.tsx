@@ -44,9 +44,9 @@ export default function ForecastPage() {
   const remainingForecast = forecast.filter(f => parseInt(f.hour.split(':')[0]) >= currentHour)
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Tahmin" subtitle="İleriye dönük operasyon tahmini" />
-      <div className="p-6 space-y-5">
+      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* Restaurant selector */}
         <div className="flex items-center gap-3 flex-wrap">
@@ -107,7 +107,7 @@ export default function ForecastPage() {
                     <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
                 <XAxis dataKey="hour" tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />

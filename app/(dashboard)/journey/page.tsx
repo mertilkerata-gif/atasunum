@@ -39,14 +39,14 @@ export default function JourneyPage() {
   const maxMinutes = Math.max(...journeyData.map(d => d.avgMinutes))
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Müşteri Yolculuğu" subtitle="Sipariş → Teslimat — her adımın ortalama süresi" />
       <div className="p-6 space-y-5 max-w-5xl">
 
         <div className="flex items-center gap-4">
           <select value={restaurantId} onChange={e => setRestaurantId(e.target.value)}
             className="rounded-xl border px-4 py-2.5 text-sm text-white outline-none"
-            style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.1)' }}>
+            style={{ background: 'var(--s1)', borderColor: 'rgba(255,255,255,0.1)' }}>
             {RESTAURANTS.map(r => <option key={r.id} value={r.id} style={{ background: '#13131e' }}>{r.name}</option>)}
           </select>
           <div className="text-sm text-white/40">Toplam ortalama: <span className="text-white font-bold font-mono">{totalMinutes.toFixed(1)} dk</span></div>
@@ -56,10 +56,10 @@ export default function JourneyPage() {
         </div>
 
         {/* Journey visualization */}
-        <div className="rounded-2xl border p-8" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="rounded-2xl border p-8" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
           <div className="relative">
             {/* Connecting line */}
-            <div className="absolute top-10 left-10 right-10 h-0.5" style={{ background: 'rgba(255,255,255,0.06)' }} />
+            <div className="absolute top-10 left-10 right-10 h-0.5" style={{ background: 'var(--s2)' }} />
 
             <div className="flex items-start justify-between relative">
               {STEPS.map((step, i) => {
@@ -110,7 +110,7 @@ export default function JourneyPage() {
 
         {/* Bottleneck analysis */}
         {bottlenecks.length > 0 && (
-          <div className="rounded-2xl border p-5" style={{ background: 'rgba(255,61,61,0.04)', borderColor: 'rgba(255,61,61,0.18)' }}>
+          <div className="card" style={{ padding: "20px" }}>
             <div className="text-sm font-semibold text-red-300 mb-3">Tespit Edilen Darboğazlar</div>
             <div className="space-y-2">
               {bottlenecks.map(b => {
@@ -129,11 +129,11 @@ export default function JourneyPage() {
         )}
 
         {/* Comparison table */}
-        <div className="rounded-2xl border overflow-hidden" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
-          <div className="px-6 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+        <div className="card" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
+          <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--bdr)' }}>
             <div className="text-xs text-white/40 uppercase tracking-widest font-medium">Tüm Restoranlar — Toplam Süre Karşılaştırması</div>
           </div>
-          <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
+          <div className="divide-y" style={{ borderColor: 'var(--bdr)' }}>
             {RESTAURANTS.map(r => {
               const jd = getJourneyData(r.id)
               const total = jd.reduce((s, d) => s + d.avgMinutes, 0)

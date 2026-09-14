@@ -16,18 +16,18 @@ const RESULT_CONFIG = { success: { color: 'text-emerald-400', label: '✓' }, er
 
 export default function AuditPage() {
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Audit Log" subtitle="Kim · Ne zaman · Ne yaptı" />
-      <div className="p-6 space-y-4">
+      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div className="flex items-center gap-2 text-xs text-white/30">
           <span>{AUDIT_LOG.length} kayıt</span>
           <span>·</span>
           <span>Son 7 gün</span>
         </div>
-        <div className="rounded-2xl border overflow-hidden" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="card" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
           <table className="w-full">
             <thead>
-              <tr className="border-b" style={{ borderColor: 'rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+              <tr className="border-b" style={{ borderColor: 'var(--bdr)', background: 'rgba(255,255,255,0.02)' }}>
                 {['Zaman', 'Kullanıcı', 'Aksiyon', 'Kaynak', 'Tür', 'Sonuç'].map(h => (
                   <th key={h} className="px-5 py-3 text-left text-[10px] font-semibold text-white/25 uppercase tracking-widest">{h}</th>
                 ))}
@@ -38,7 +38,7 @@ export default function AuditPage() {
                 const typeColor = TYPE_COLORS[entry.type] ?? '#fff'
                 const rc = RESULT_CONFIG[entry.result]
                 return (
-                  <tr key={entry.id} className="border-b transition-colors hover:bg-white/[0.02]" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
+                  <tr key={entry.id} className="border-b transition-colors hover:bg-white/[0.02]" style={{ borderColor: 'var(--bdr)' }}>
                     <td className="px-5 py-3 text-xs font-mono text-white/30">{entry.timestamp.split(' ')[1]}<div className="text-[9px] text-white/15">{entry.timestamp.split(' ')[0]}</div></td>
                     <td className="px-5 py-3 text-xs text-white/60">{entry.user}</td>
                     <td className="px-5 py-3 text-xs text-white/70 max-w-xs truncate">{entry.action}</td>

@@ -25,9 +25,9 @@ export default function MemoryPage() {
   const totalPulseReduced = MEMORY_ENTRIES.reduce((s, m) => s + (m.pulseBefore - m.pulseAfter), 0)
 
   return (
-    <div>
+    <div className="dm">
       <Topbar title="Operasyonel Hafıza" subtitle="Uygulanan aksiyonlar · Öğrenilen örüntüler · KPI sonuçları" />
-      <div className="p-6 space-y-5">
+      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4">
@@ -37,7 +37,7 @@ export default function MemoryPage() {
             { label: 'AI Önerisi', value: `%${Math.round(aiRecommendedCount/MEMORY_ENTRIES.length*100)}`, unit: `${aiRecommendedCount} aksiyondan`, color: 'text-indigo-400', icon: <Zap className="w-4 h-4" /> },
             { label: 'Öğrenilen Örüntü', value: LEARNED_PATTERNS.length, unit: 'aktif pattern', color: 'text-orange-400', icon: <Brain className="w-4 h-4" /> },
           ].map(({ label, value, unit, color, icon }) => (
-            <div key={label} className="rounded-2xl border p-5" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+            <div key={label} className="card" style={{ padding: "20px" }}>
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[10px] text-white/30 uppercase tracking-widest">{label}</span>
                 <span className={cn('opacity-40', color)}>{icon}</span>
@@ -66,13 +66,12 @@ export default function MemoryPage() {
               const color = ACTION_COLORS[entry.actionType] ?? '#fff'
               const scoreImprovement = entry.pulseBefore - entry.pulseAfter
               return (
-                <div key={entry.id} className="rounded-2xl border p-5"
-                  style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+                <div key={entry.id} className="card" style={{ padding: "20px" }}>
                   <div className="flex items-start gap-4">
                     {/* Timeline dot */}
                     <div className="flex flex-col items-center gap-1 shrink-0 pt-1">
                       <div className="w-3 h-3 rounded-full" style={{ background: color, boxShadow: `0 0 8px ${color}60` }} />
-                      <div className="w-px flex-1 min-h-[40px]" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                      <div className="w-px flex-1 min-h-[40px]" style={{ background: 'var(--s2)' }} />
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -146,7 +145,7 @@ export default function MemoryPage() {
         {tab === 'patterns' && (
           <div className="space-y-4">
             {LEARNED_PATTERNS.map(p => (
-              <div key={p.id} className="rounded-2xl border p-6" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
+              <div key={p.id} className="rounded-2xl border p-6" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
