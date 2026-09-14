@@ -1,17 +1,16 @@
 /**
- * Supabase Service
- * Server-side only — tüm env değişkenleri NEXT_PUBLIC_ prefix'siz
- * Vercel Dashboard > Settings > Environment Variables'dan ekle:
- *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+ * Supabase Service — canlı bağlantı aktif
+ * Proje: exkhzmpowcoxdzzvzisv (TAB Gıda / Mutfak Nabzı)
  */
 
 import { PulseScore, OperationSnapshot } from '@/types'
 import { getPulseScore, getSnapshot } from '@/data/seed/mock-data'
 
-const SUPABASE_URL = process.env.SUPABASE_URL
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+// Canlı Supabase — env yoksa fallback URL kullan
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://exkhzmpowcoxdzzvzisv.supabase.co'
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4a2h6bXBvd2NveGR6enZ6aXN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg5OTUsImV4cCI6MjEwMzQxNDk5NX0.bysVio77j6ncmzYjt3T2saDPCmV3NnqbOyWFS987YIQ'
 
-const isDemoMode = !SUPABASE_URL || SUPABASE_URL === 'your_supabase_project_url' || !SUPABASE_KEY
+const isDemoMode = false // Supabase canlı — her zaman bağlı
 
 // Lazy-load Supabase client (sadece prod'da bağlanır)
 async function getClient() {
