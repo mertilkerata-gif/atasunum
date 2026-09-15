@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import {
-  LayoutDashboard, LogOut, Radio, Monitor, AlertCircle, Sun, TrendingUp,
+  LayoutDashboard, LogOut, Clapperboard, Radio, Monitor, AlertCircle, Sun, TrendingUp,
   Users, Map, Zap, Bot, Lightbulb, Truck, UtensilsCrossed,
   Archive, MessageCircle, BarChart3, Activity, Target,
   FlaskConical, FileText, Heart, ScrollText, Webhook,
