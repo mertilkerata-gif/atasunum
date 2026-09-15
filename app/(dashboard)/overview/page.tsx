@@ -8,6 +8,7 @@ import { RESTAURANTS } from '@/data/seed/restaurants'
 import { RestaurantDashboard, RiskLevel } from '@/types'
 import { RefreshCw, Wifi, WifiOff, AlertCircle, TrendingUp, UtensilsCrossed, Activity, Brain, FileText, CheckCircle2, X, Zap, TriangleAlert } from 'lucide-react'
 import { getOpenAIKey } from '@/lib/config-store'
+import { AIAutopilot } from '@/components/ai-autopilot'
 
 const RISK_ORDER: Record<RiskLevel, number> = { KRITIK:0, RISKLI:1, YOGUN:2, NORMAL:3 }
 type Filter = RiskLevel | 'ALL'
@@ -151,6 +152,9 @@ export default function OverviewPage() {
       />
 
       <div className="scroll" style={{ padding:'clamp(14px,3vw,24px)', display:'flex', flexDirection:'column', gap:16 }}>
+
+        {/* AI Otopilot */}
+        <AIAutopilot interval={30}/>
 
         {/* AI Error */}
         {aiError && (
