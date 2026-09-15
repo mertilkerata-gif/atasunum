@@ -125,7 +125,12 @@ export function AIAutopilot({ interval = 30 }: Props) {
   const scan = useCallback(async () => {
     if (status === 'speaking' || status === 'listening') return
     const apiKey = getOpenAIKey()
-    if (!apiKey) { addLog('❌ OpenAI key yok — Ayarlar > API Anahtarları'); return }
+    if (!apiKey) {
+      addLog('❌ OpenAI key bulunamadı')
+      addLog('→ Ayarlar > API Anahtarları > OpenAI API Key girin ve Kaydet\'e basın')
+      setRunning(false)
+      return
+    }
 
     setStatus('scanning')
     addLog('🔍 Supabase taranıyor…')

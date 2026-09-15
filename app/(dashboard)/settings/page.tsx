@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { Topbar } from '@/components/layout/topbar'
-import { getConfig, saveConfig as setConfig, hasRequiredConfig } from '@/lib/config-store'
+import { getConfig, saveConfig, hasRequiredConfig } from '@/lib/config-store'
 import { Save, Eye, EyeOff, AlertTriangle, CheckCircle2, Sliders, Bell, Shield, Key } from 'lucide-react'
 
 const SECTIONS = [
@@ -28,7 +28,7 @@ export default function SettingsPage() {
   const { missing } = hasRequiredConfig()
 
   const save = () => {
-    setConfig(config)
+    saveConfig(config)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
@@ -100,10 +100,10 @@ export default function SettingsPage() {
                 <div className="card-h"><span className="card-title">API Anahtarları</span></div>
                 <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {[
-                    { key: 'openaiApiKey', label: 'OpenAI API Key', placeholder: 'sk-...', secret: true },
-                    { key: 'tiklagelsinApiKey', label: 'Tıkla Gelsin API Key', placeholder: 'tg_...', secret: true },
-                    { key: 'supabaseUrl', label: 'Supabase URL', placeholder: 'https://xxx.supabase.co', secret: false },
-                    { key: 'supabaseAnonKey', label: 'Supabase Anon Key', placeholder: 'eyJ...', secret: true },
+                    { key: 'openai_api_key', label: 'OpenAI API Key', placeholder: 'sk-...', secret: true },
+                    { key: 'tiklagelsin_api_key', label: 'Tıkla Gelsin API Key', placeholder: 'tg_...', secret: true },
+                    { key: 'supabase_url', label: 'Supabase URL', placeholder: 'https://xxx.supabase.co', secret: false },
+                    { key: 'supabase_anon_key', label: 'Supabase Anon Key', placeholder: 'eyJ...', secret: true },
                   ].map(({ key, label, placeholder, secret }) => (
                     <div key={key}>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--tx2)', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.06em' }}>{label}</label>
