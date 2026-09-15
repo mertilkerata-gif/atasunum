@@ -26,7 +26,7 @@ export default function OverviewPage() {
       ])
       const pm: Record<string, unknown> = Object.fromEntries(pulseRows.map(p => [p.restaurant_id, p]))
       const sm: Record<string, unknown> = Object.fromEntries(snapRows.map(s => [s.restaurant_id, s]))
-      const allRests = restRows.length > 0 ? restRows : RESTAURANTS
+      const allRests: any[] = restRows.length > 0 ? restRows : RESTAURANTS
       const result: RestaurantDashboard[] = allRests.map(r => ({
         restaurant: r as RestaurantDashboard['restaurant'],
         pulse: (pm[r.id] ?? getPulseScore(r.id)) as RestaurantDashboard['pulse'],

@@ -1,322 +1,122 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Topbar } from '@/components/layout/topbar'
-import { RESTAURANTS } from '@/data/seed/restaurants'
-import { generateShiftPlan, getWeeklyShiftPlans, HISTORICAL_PERFORMANCE, UPCOMING_EVENTS } from '@/data/seed/shifts'
-import { getPulseScore } from '@/data/seed/mock-data'
-import { getRiskConfig, cn } from '@/lib/utils'
-import { Users, TrendingUp, AlertTriangle, CheckCircle, Calendar, Zap, ChevronRight, Loader2 } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { fetchShifts, fetchRestaurants, updateShiftStatus, insertShift, insertAuditLog } from '@/lib/supabase-client'
+import { Users, Plus, Clock } from 'lucide-react'
 
-const DEMAND_CONFIG = {
-  LOW:       { label: 'Düşük',     color: 'text-emerald-400', bg: 'rgba(34,197,94,0.08)',    border: 'rgba(34,197,94,0.2)'    },
-  MEDIUM:    { label: 'Orta',      color: 'text-yellow-400',  bg: 'rgba(234,179,8,0.08)',    border: 'rgba(234,179,8,0.2)'    },
-  HIGH:      { label: 'Yüksek',    color: 'text-orange-400',  bg: 'rgba(249,115,22,0.08)',   border: 'rgba(249,115,22,0.2)'   },
-  VERY_HIGH: { label: 'Çok Yüksek',color: 'text-red-400',     bg: 'rgba(255,61,61,0.08)',    border: 'rgba(255,61,61,0.2)'    },
+const ROLES = ['GRILL','FRYER','PACKING','CASHIER','MANAGER']
+const ROLE_COLORS: Record<string,string> = {
+  GRILL:'var(--amber)', FRYER:'var(--red)', PACKING:'var(--ac)', CASHIER:'var(--blue)', MANAGER:'var(--green)'
 }
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="rounded-xl border px-3 py-2 text-xs" style={{ background: 'var(--s2)', borderColor: 'rgba(255,255,255,0.1)' }}>
-      <div className="mb-1">{label}</div>
-      {payload.map((p: any) => (
-        <div key={p.name} className="flex gap-2 mt-0.5">
-          <span style={{ color: p.color }}>●</span>
-          <span className="text-white font-semibold">{p.value}</span>
-        </div>
-      ))}
-    </div>
-  )
+const STATUS_BADGE: Record<string,string> = {
+  SCHEDULED:'badge-muted', ACTIVE:'badge-green', COMPLETED:'badge-ac', ABSENT:'badge-red'
 }
 
 export default function ShiftsPage() {
-  const [restaurantId, setRestaurantId] = useState('r1')
-  const [selectedDate, setSelectedDate] = useState(Object.keys(UPCOMING_EVENTS)[0])
-  const [approvedDates, setApprovedDates] = useState<Set<string>>(new Set())
-  const [generating, setGenerating] = useState(false)
+  const [shifts, setShifts] = useState<any[]>([])
+  const [restaurants, setRestaurants] = useState<any[]>([])
+  const [selectedId, setSelectedId] = useState('r1')
+  const [loading, setLoading] = useState(true)
+  const [showAdd, setShowAdd] = useState(false)
+  const [form, setForm] = useState({ staff_name:'', role:'GRILL', shift_start:'', shift_end:'' })
 
-  const weeklyPlans = getWeeklyShiftPlans(restaurantId)
-  const currentPlan = generateShiftPlan(restaurantId, selectedDate)
-  const restaurant = RESTAURANTS.find(r => r.id === restaurantId)!
-  const demandConfig = DEMAND_CONFIG[currentPlan.predictedDemand]
-  const staffGap = currentPlan.recommendedStaff.total - currentPlan.currentStaff.total
-  const isApproved = approvedDates.has(selectedDate + restaurantId)
+  const load = useCallback(async () => {
+    const [s,r] = await Promise.all([fetchShifts(selectedId), fetchRestaurants()])
+    setShifts(s); setRestaurants(r); setLoading(false)
+  }, [selectedId])
 
-  const handleGenerate = async () => {
-    setGenerating(true)
-    await new Promise(r => setTimeout(r, 1800))
-    setGenerating(false)
+  useEffect(() => { load() }, [load])
+
+  const changeStatus = async (id: string, status: string) => {
+    await updateShiftStatus(id, status)
+    await insertAuditLog({ user_role:'', action:'UPDATE_SHIFT', resource:'shifts', details:{id,status} })
+    setShifts(prev => prev.map(s => s.id===id ? {...s,status} : s))
   }
 
-  const handleApprove = () => {
-    setApprovedDates(prev => new Set([...prev, selectedDate + restaurantId]))
+  const addShift = async () => {
+    if (!form.staff_name||!form.shift_start||!form.shift_end) return
+    const shift = { restaurant_id:selectedId, ...form, status:'SCHEDULED' }
+    const created = await insertShift(shift)
+    await insertAuditLog({ user_role:'', action:'CREATE_SHIFT', resource:'shifts', details:{restaurant_id:selectedId, staff_name:form.staff_name} })
+    setShifts(prev => [...prev, created])
+    setShowAdd(false); setForm({ staff_name:'', role:'GRILL', shift_start:'', shift_end:'' })
   }
 
-  const staffRoles = [
-    { key: 'grill',   label: 'Grill',   icon: '🔥', rec: currentPlan.recommendedStaff.grill,   cur: currentPlan.currentStaff.grill },
-    { key: 'fryer',   label: 'Fryer',   icon: '🍟', rec: currentPlan.recommendedStaff.fryer,   cur: currentPlan.currentStaff.fryer },
-    { key: 'packing', label: 'Packing', icon: '📦', rec: currentPlan.recommendedStaff.packing, cur: currentPlan.currentStaff.packing },
-    { key: 'cashier', label: 'Kasiyer', icon: '💳', rec: currentPlan.recommendedStaff.cashier, cur: currentPlan.currentStaff.cashier },
-    { key: 'manager', label: 'Müdür',   icon: '👔', rec: 1, cur: 1 },
-  ]
+  const active = shifts.filter(s=>s.status==='ACTIVE')
+  const scheduled = shifts.filter(s=>s.status==='SCHEDULED')
+  const absent = shifts.filter(s=>s.status==='ABSENT')
 
   return (
     <div className="dm">
-      <Topbar title="Vardiya Planlama AI" subtitle="Dış olaylar + tarihsel veri ile optimize vardiya önerisi" />
-      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <Topbar title="Vardiya Yönetimi" subtitle="Personel planlaması · Supabase"
+        action={
+          <div style={{display:'flex',alignItems:'center',gap:8}}>
+            <span className="badge badge-green">{active.length} aktif</span>
+            {absent.length>0 && <span className="badge badge-red">{absent.length} gelmedi</span>}
+            <button onClick={()=>setShowAdd(true)} className="btn" style={{padding:'6px 12px',fontSize:12}}>
+              <Plus size={12}/> Vardiya Ekle
+            </button>
+          </div>
+        }
+      />
+      <div className="scroll" style={{padding:'22px 24px',display:'flex',flexDirection:'column',gap:16}}>
 
-        {/* Restoran + tarih seçici */}
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-4">
-            <label className="block text-[10px] uppercase tracking-widest mb-2">Restoran</label>
-            <select value={restaurantId} onChange={e => setRestaurantId(e.target.value)}
-              className="w-full rounded-xl border px-4 py-2.5 text-sm text-white outline-none"
-              style={{ background: 'var(--s1)', borderColor: 'rgba(255,255,255,0.1)' }}>
-              {RESTAURANTS.map(r => <option key={r.id} value={r.id} style={{ background: 'var(--s2)' }}>{r.name}</option>)}
-            </select>
-          </div>
-          <div className="col-span-8">
-            <label className="block text-[10px] uppercase tracking-widest mb-2">Tarih Seç</label>
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {weeklyPlans.map(plan => {
-                const dc = DEMAND_CONFIG[plan.predictedDemand]
-                const isSelected = plan.date === selectedDate
-                const isAppr = approvedDates.has(plan.date + restaurantId)
-                return (
-                  <button key={plan.date} onClick={() => setSelectedDate(plan.date)}
-                    className="shrink-0 rounded-xl border px-4 py-2.5 text-left transition-all"
-                    style={{
-                      background: isSelected ? dc.bg : 'var(--s1)',
-                      borderColor: isSelected ? dc.border : 'var(--bdr)',
-                      minWidth: '90px',
-                    }}>
-                    <div className="text-[10px] mb-0.5">{plan.dayOfWeek.slice(0, 3)}</div>
-                    <div className={cn('text-xs font-semibold', isSelected ? dc.color : 'text-white/50')}>
-                      {new Date(plan.date).getDate()} Ağu
-                    </div>
-                    <div className="flex items-center gap-1 mt-1">
-                      {plan.externalEvents.map((e, i) => <span key={i} className="text-[10px]">{e.icon}</span>)}
-                      {isAppr && <CheckCircle className="w-3 h-3 text-emerald-400" />}
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <select value={selectedId} onChange={e=>setSelectedId(e.target.value)} className="inp" style={{width:'auto',padding:'7px 12px',fontSize:13}}>
+            {restaurants.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
+          <span style={{fontSize:12,color:'var(--tx3)'}}>{new Date().toLocaleDateString('tr-TR',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</span>
         </div>
 
-        {/* Dış olaylar banner */}
-        {currentPlan.externalEvents.length > 0 && (
-          <div className="card" style={{ padding: 16 }}>
-            <Calendar className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <div className="text-xs font-semibold text-indigo-300 mb-2">{currentPlan.dayOfWeek} — Dış Faktörler</div>
-              <div className="flex flex-wrap gap-3">
-                {currentPlan.externalEvents.map((e, i) => (
-                  <div key={i} className="flex items-center gap-2 rounded-lg border px-3 py-1.5"
-                    style={{ background: 'var(--s2)', borderColor: 'var(--bdr)' }}>
-                    <span className="text-sm">{e.icon}</span>
-                    <span className="text-xs">{e.name}</span>
-                    <span className={cn('text-xs font-bold', e.impact > 0.3 ? 'text-orange-400' : 'text-yellow-400')}>
-                      +{Math.round(e.impact * 100)}% TG
-                    </span>
-                  </div>
-                ))}
+        {/* Add shift modal */}
+        {showAdd && (
+          <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.65)',backdropFilter:'blur(4px)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <div style={{background:'var(--s1)',border:'1px solid var(--bdr2)',borderRadius:16,padding:28,width:'100%',maxWidth:440}}>
+              <p style={{fontSize:17,fontWeight:700,color:'var(--tx)',marginBottom:20}}>Vardiya Ekle</p>
+              <div style={{display:'flex',flexDirection:'column',gap:12}}>
+                <div><label className="label">Personel Adı</label><input className="inp" value={form.staff_name} onChange={e=>setForm(p=>({...p,staff_name:e.target.value}))} placeholder="Ad Soyad"/></div>
+                <div><label className="label">Görev</label>
+                  <select className="inp" value={form.role} onChange={e=>setForm(p=>({...p,role:e.target.value}))}>
+                    {ROLES.map(r=><option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                  <div><label className="label">Başlangıç</label><input type="datetime-local" className="inp" value={form.shift_start} onChange={e=>setForm(p=>({...p,shift_start:e.target.value}))}/></div>
+                  <div><label className="label">Bitiş</label><input type="datetime-local" className="inp" value={form.shift_end} onChange={e=>setForm(p=>({...p,shift_end:e.target.value}))}/></div>
+                </div>
+              </div>
+              <div style={{display:'flex',gap:10,marginTop:20}}>
+                <button onClick={addShift} className="btn" style={{flex:1,justifyContent:'center'}}>Kaydet</button>
+                <button onClick={()=>setShowAdd(false)} className="btn-ghost" style={{flex:1,justifyContent:'center'}}>İptal</button>
               </div>
             </div>
           </div>
         )}
 
-        <div className="grid grid-cols-12 gap-5">
-          {/* AI Plan */}
-          <div className="col-span-7 space-y-4">
-            {/* Talep tahmini */}
-            <div className="card" style={{ padding: "20px" }}>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="text-[10px] uppercase tracking-widest mb-1">AI Talep Tahmini</div>
-                  <div className={cn('text-2xl font-bold', demandConfig.color)}>{demandConfig.label} Talep</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold font-mono text-white">{currentPlan.estimatedOrders}</div>
-                  <div className="text-xs">tahmini sipariş</div>
-                  <div className="text-sm font-mono mt-0.5">{currentPlan.estimatedRevenue.toLocaleString('tr-TR')} ₺</div>
-                </div>
-              </div>
-              <div className="text-xs leading-relaxed p-3 rounded-xl"
-                style={{ background: 'rgba(0,0,0,0.2)' }}>
-                <Zap className="w-3 h-3 inline mr-1.5 text-indigo-400" />
-                {currentPlan.aiJustification}
-              </div>
-              <div className="text-[10px] mt-2 text-right">Güven: %{Math.round(currentPlan.confidence * 100)}</div>
-            </div>
-
-            {/* Personel karşılaştırma */}
-            <div className="card" style={{ padding: "20px" }}>
-              <div className="flex items-center justify-between mb-4">
-                <div className="text-xs uppercase tracking-widest font-medium">Personel Planı</div>
-                <div className="flex items-center gap-4 text-[10px]">
-                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-indigo-400 inline-block" />Mevcut</span>
-                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-orange-400 inline-block" />Önerilen</span>
-                </div>
-              </div>
-
-              {staffGap > 0 && (
-                <div className="flex items-center gap-2 mb-4 rounded-xl border px-4 py-2.5"
-                  style={{ background: 'rgba(255,61,61,0.06)', borderColor: 'rgba(255,61,61,0.2)' }}>
-                  <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
-                  <span className="text-xs text-red-300">{staffGap} kişi eksik — tahmin edilen yoğunluğu karşılayamaz</span>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                {staffRoles.map(({ key, label, icon, rec, cur }) => {
-                  const gap = rec - cur
-                  return (
-                    <div key={key} className="flex items-center gap-4">
-                      <div className="w-24 flex items-center gap-1.5 shrink-0">
-                        <span className="text-xs">{icon}</span>
-                        <span className="text-xs">{label}</span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-1">
-                        {/* Mevcut */}
-                        {Array.from({ length: Math.max(cur, rec) }).map((_, i) => (
-                          <div key={i} className={cn('w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border transition-all',
-                            i < cur
-                              ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-300'
-                              : 'bg-white/[0.03] border-white/[0.05] text-white/10'
-                          )}>
-                            {i < cur ? '👤' : ''}
-                          </div>
-                        ))}
-                        {gap > 0 && (
-                          <div className="flex items-center gap-1 ml-1">
-                            {Array.from({ length: gap }).map((_, i) => (
-                              <div key={i} className="w-8 h-8 rounded-lg border-2 border-dashed border-orange-500/40 flex items-center justify-center text-xs text-orange-400/60">+</div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      {gap > 0 && (
-                        <span className="text-xs font-bold text-orange-400 shrink-0">+{gap} gerek</span>
-                      )}
-                      {gap === 0 && <span className="text-xs text-emerald-400/60 shrink-0">✓</span>}
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* Toplam */}
-              <div className="flex items-center justify-between mt-4 pt-4 border-t" style={{ borderColor: 'var(--bdr)' }}>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    <span className="text-xs">Mevcut</span>
-                    <span className="text-lg font-bold font-mono text-indigo-400">{currentPlan.currentStaff.total}</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4" />
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs">Önerilen</span>
-                    <span className={cn('text-lg font-bold font-mono', staffGap > 0 ? 'text-orange-400' : 'text-emerald-400')}>
-                      {currentPlan.recommendedStaff.total}
-                    </span>
-                  </div>
-                </div>
-
-                {isApproved ? (
-                  <div className="flex items-center gap-2 rounded-xl border px-4 py-2 text-emerald-400"
-                    style={{ background: 'rgba(34,197,94,0.08)', borderColor: 'rgba(34,197,94,0.2)' }}>
-                    <CheckCircle className="w-4 h-4" />
-                    <span className="text-xs font-semibold">Onaylandı</span>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <button onClick={handleGenerate} disabled={generating}
-                      className="flex items-center gap-2 rounded-xl border px-4 py-2 text-xs text-indigo-300 transition-all"
-                      style={{ background: 'rgba(129,140,248,0.08)', borderColor: 'rgba(129,140,248,0.2)' }}>
-                      {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
-                      AI Yenile
-                    </button>
-                    <button onClick={handleApprove}
-                      className="flex items-center gap-2 rounded-xl border px-4 py-2 text-xs text-white font-semibold transition-all"
-                      style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)', borderColor: 'rgba(249,115,22,0.4)', boxShadow: '0 0 16px rgba(249,115,22,0.2)' }}>
-                      <CheckCircle className="w-3.5 h-3.5" />
-                      Planı Onayla
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Risk faktörleri */}
-            {currentPlan.riskFactors.length > 0 && (
-              <div className="card" style={{ padding: "20px" }}>
-                <div className="text-xs uppercase tracking-widest font-medium mb-3">Risk Faktörleri</div>
-                <div className="space-y-2">
-                  {currentPlan.riskFactors.map((rf, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <AlertTriangle className="w-3.5 h-3.5 text-orange-400 shrink-0 mt-0.5" />
-                      <span className="text-xs">{rf}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+        {/* Shifts table */}
+        <div className="card">
+          <div className="card-h"><span className="card-title">Bugünkü Vardiyalar</span><span className="card-meta">{shifts.length} toplam</span></div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 100px 140px 140px 100px 120px',gap:0,padding:'8px 20px',borderBottom:'1px solid var(--bdr)'}}>
+            {['Personel','Görev','Başlangıç','Bitiş','Durum','İşlem'].map(h=>(
+              <span key={h} style={{fontSize:10.5,fontWeight:700,color:'var(--tx3)',textTransform:'uppercase',letterSpacing:'.06em'}}>{h}</span>
+            ))}
           </div>
-
-          {/* Sağ panel: tarihsel performans + peak saatler */}
-          <div className="col-span-5 space-y-4">
-            {/* Peak saatler */}
-            <div className="card" style={{ padding: "20px" }}>
-              <div className="text-xs uppercase tracking-widest font-medium mb-4">Peak Saatler</div>
-              <div className="space-y-3">
-                {currentPlan.peakHours.map((ph, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="text-xs font-mono w-20 shrink-0">{ph.start}–{ph.end}</div>
-                    <div className="flex-1 h-2 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all"
-                        style={{
-                          width: `${ph.intensity * 100}%`,
-                          background: ph.intensity > 0.9 ? '#ff3d3d' : ph.intensity > 0.75 ? '#f97316' : '#eab308',
-                          boxShadow: ph.intensity > 0.9 ? '0 0 8px rgba(255,61,61,0.5)' : 'none',
-                        }} />
-                    </div>
-                    <span className="text-xs w-8 text-right">%{Math.round(ph.intensity * 100)}</span>
-                  </div>
-                ))}
+          {loading?<p style={{padding:24,textAlign:'center',color:'var(--tx3)'}}>Yükleniyor…</p>:
+            shifts.map(s=>(
+              <div key={s.id} className="row" style={{display:'grid',gridTemplateColumns:'1fr 100px 140px 140px 100px 120px',gap:0}}>
+                <span style={{fontSize:13,fontWeight:500,color:'var(--tx)'}}>{s.staff_name}</span>
+                <span style={{fontSize:12,fontWeight:600,color:ROLE_COLORS[s.role]||'var(--tx2)'}}>{s.role}</span>
+                <span style={{fontSize:11,fontFamily:'JetBrains Mono,monospace',color:'var(--tx3)'}}>{new Date(s.shift_start).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</span>
+                <span style={{fontSize:11,fontFamily:'JetBrains Mono,monospace',color:'var(--tx3)'}}>{new Date(s.shift_end).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</span>
+                <span className={`badge ${STATUS_BADGE[s.status]||'badge-muted'}`} style={{width:'fit-content'}}>{s.status}</span>
+                <div style={{display:'flex',gap:4}}>
+                  {s.status==='SCHEDULED'&&<button onClick={()=>changeStatus(s.id,'ACTIVE')} className="btn-ghost" style={{padding:'3px 8px',fontSize:10}}>Başlat</button>}
+                  {s.status==='ACTIVE'&&<button onClick={()=>changeStatus(s.id,'COMPLETED')} className="btn-ghost" style={{padding:'3px 8px',fontSize:10}}>Bitir</button>}
+                  {s.status!=='ABSENT'&&<button onClick={()=>changeStatus(s.id,'ABSENT')} className="btn-ghost" style={{padding:'3px 8px',fontSize:10,color:'var(--red)'}}>Gelmedi</button>}
+                </div>
               </div>
-            </div>
-
-            {/* Geçmiş performans */}
-            <div className="card" style={{ padding: "20px" }}>
-              <div className="text-xs uppercase tracking-widest font-medium mb-4">Geçen Hafta Performansı</div>
-              <ResponsiveContainer width="100%" height={140}>
-                <BarChart data={HISTORICAL_PERFORMANCE}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
-                  <XAxis dataKey="dayOfWeek" tickFormatter={v => v.slice(0,3)} tick={{ fill: 'var(--tx3)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <YAxis hide />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="avgPulseScore" name="Ort. Nabız" radius={[3, 3, 0, 0]}>
-                    {HISTORICAL_PERFORMANCE.map((entry, i) => (
-                      <Cell key={i} fill={entry.avgPulseScore >= 60 ? '#f97316' : entry.avgPulseScore >= 40 ? '#eab308' : '#22c55e'} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-
-              <div className="mt-3 space-y-2">
-                {HISTORICAL_PERFORMANCE.slice(-3).map((h, i) => (
-                  <div key={i} className="flex items-center gap-3 text-xs">
-                    <span className="w-12">{h.dayOfWeek.slice(0,3)}</span>
-                    <span >{h.staffCount} kişi</span>
-                    <span className={cn('font-mono font-bold', h.avgPulseScore >= 60 ? 'text-orange-400' : 'text-emerald-400')}>{h.avgPulseScore} nabız</span>
-                    <span className="ml-auto">%{Math.round(h.delayRate * 100)} gecikme</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+            ))
+          }
         </div>
       </div>
     </div>

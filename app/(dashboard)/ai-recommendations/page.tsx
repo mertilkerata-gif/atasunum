@@ -43,7 +43,7 @@ export default function AIRecommendationsPage() {
     try {
       const rows = await fetchRecommendations()
       if (rows.length > 0) {
-        setRecs(rows.map(r => ({
+        setRecs(rows.map((r:any) => ({
           ...r,
           actions: Array.isArray(r.actions)
             ? r.actions

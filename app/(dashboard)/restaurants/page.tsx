@@ -21,11 +21,11 @@ export default function RestaurantsPage() {
       const [restRows, pulseRows] = await Promise.all([fetchRestaurants(), fetchAllPulseScores()])
       const pulseMap = Object.fromEntries(pulseRows.map(p => [p.restaurant_id, p]))
 
-      const merged = restRows.length > 0
-        ? restRows.map(r => ({ ...r, ...(pulseMap[r.id] ? { score: pulseMap[r.id].score, risk_level: pulseMap[r.id].risk_level, open_orders: pulseMap[r.id].open_orders } : { score: 0, risk_level: 'NORMAL', open_orders: 0 }) }))
+      const merged: any[] = restRows.length > 0
+        ? restRows.map((r:any) => ({ ...r, ...(pulseMap[r.id] ? { score: pulseMap[r.id].score, risk_level: pulseMap[r.id].risk_level, open_orders: pulseMap[r.id].open_orders } : { score: 0, risk_level: 'NORMAL', open_orders: 0 }) }))
         : RESTAURANTS.map(r => { const p = pulseMap[r.id] ?? getPulseScore(r.id); return { ...r, is_active: true, score: p.score, risk_level: p.risk_level, open_orders: p.open_orders } })
 
-      merged.sort((a, b) => (b.score as number) - (a.score as number))
+      merged.sort((a: any, b: any) => (b.score as number) - (a.score as number))
       setRestaurants(merged)
       setIsLive(restRows.length > 0 && pulseRows.length > 0)
     } catch {

@@ -1,193 +1,121 @@
 'use client'
+import { useState, useEffect, useCallback } from 'react'
 import { Topbar } from '@/components/layout/topbar'
-import { RESTAURANTS } from '@/data/seed/restaurants'
-import { getRevenueSnapshot, getNetworkRevenueSummary } from '@/data/seed/revenue'
-import { getPulseScore } from '@/data/seed/mock-data'
-import { getRiskConfig, cn } from '@/lib/utils'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts'
-import { TrendingDown, TrendingUp, DollarSign, AlertTriangle, Target } from 'lucide-react'
+import { fetchDailyRevenue, fetchRestaurants } from '@/lib/supabase-client'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
+import { TrendingUp, DollarSign, ShoppingBag, Store } from 'lucide-react'
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="rounded-xl border px-3 py-2 text-xs" style={{ background: 'var(--s2)', borderColor: 'rgba(255,255,255,0.1)' }}>
-      <div className="mb-1">{label}</div>
-      {payload.map((p: any) => (
-        <div key={p.name} className="flex items-center gap-2 mt-0.5">
-          <span style={{ color: p.color }}>●</span>
-          <span >{p.name}:</span>
-          <span className="text-white font-semibold">{typeof p.value === 'number' ? p.value.toLocaleString('tr-TR') + ' ₺' : p.value}</span>
-        </div>
-      ))}
-    </div>
-  )
+const TT = ({active,payload,label}:any) => {
+  if (!active||!payload?.length) return null
+  return <div style={{background:'var(--s2)',border:'1px solid var(--bdr2)',borderRadius:10,padding:'8px 12px'}}>
+    <p style={{fontSize:11,color:'var(--tx3)',marginBottom:4}}>{label}</p>
+    {payload.map((p:any)=><p key={p.name} style={{fontSize:12,fontWeight:600,color:p.color||'var(--tx)',fontFamily:'JetBrains Mono,monospace'}}>{p.name}: {(p.value as number).toLocaleString('tr-TR')} ₺</p>)}
+  </div>
 }
 
 export default function RevenuePage() {
-  const network = getNetworkRevenueSummary()
-  const all = network.restaurantBreakdown
+  const [revenue, setRevenue] = useState<any[]>([])
+  const [restaurants, setRestaurants] = useState<any[]>([])
+  const [selectedId, setSelectedId] = useState<string|null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const lossBreakdown = [
-    { name: 'İptal Nedeniyle', value: all.reduce((s, r) => s + r.lostRevenueCancelled, 0), color: '#ff3d3d' },
-    { name: 'Gecikme Terki', value: all.reduce((s, r) => s + r.lostRevenueDelayed, 0), color: '#f97316' },
-    { name: 'Şikayet İadesi', value: all.reduce((s, r) => s + r.lostRevenueComplaints, 0), color: '#eab308' },
-  ]
+  const load = useCallback(async () => {
+    const [rv,r] = await Promise.all([fetchDailyRevenue(selectedId??undefined,7), fetchRestaurants()])
+    setRevenue(rv); setRestaurants(r); setLoading(false)
+  }, [selectedId])
 
-  const barData = RESTAURANTS.map(r => {
-    const rev = getRevenueSnapshot(r.id)
-    const pulse = getPulseScore(r.id)
+  useEffect(() => { load() }, [load])
+
+  // Günlük toplamlar
+  const byDate = [...new Set(revenue.map(r=>r.date))].sort().reverse().map(date => {
+    const rows = revenue.filter(r=>r.date===date)
     return {
-      name: r.name.replace('Burger King ', 'BK ').replace('Popeyes ', 'Pop.'),
-      actual: rev.actualRevenue,
-      lost: rev.totalLostRevenue,
-      missed: rev.missedRevenueOpportunity,
-      pulse: pulse.score,
-      riskLevel: pulse.risk_level,
+      date, label: new Date(date).toLocaleDateString('tr-TR',{weekday:'short',day:'numeric',month:'short'}),
+      total: rows.reduce((s,r)=>s+(r.total_revenue??0),0),
+      tiklagelsin: rows.reduce((s,r)=>s+(r.tiklagelsin_revenue??0),0),
+      restaurant: rows.reduce((s,r)=>s+(r.restaurant_revenue??0),0),
+      orders: rows.reduce((s,r)=>s+(r.order_count??0),0),
     }
-  }).sort((a, b) => b.lost - a.lost)
+  })
+
+  const today = byDate[0]
+  const yesterday = byDate[1]
+  const todayTotal = today?.total ?? 0
+  const diff = yesterday ? ((todayTotal - yesterday.total) / yesterday.total * 100).toFixed(1) : null
+
+  // Restoran sıralaması (bugün)
+  const todayRows = revenue.filter(r=>r.date===byDate[0]?.date)
+  const ranked = restaurants.map(r=>({
+    ...r,
+    revenue: todayRows.find(rv=>rv.restaurant_id===r.id)?.total_revenue ?? 0,
+    orders: todayRows.find(rv=>rv.restaurant_id===r.id)?.order_count ?? 0,
+  })).sort((a,b)=>b.revenue-a.revenue)
 
   return (
     <div className="dm">
-      <Topbar title="Satış & Ciro Analizi" subtitle="Kayıp ciro, fırsat analizi ve satış planlama" />
-      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <Topbar title="Satış & Ciro" subtitle="Son 7 gün · Supabase"/>
+      <div className="scroll" style={{padding:'22px 24px',display:'flex',flexDirection:'column',gap:16}}>
 
-        {/* Network summary */}
-        <div className="grid grid-cols-4 gap-4">
+        {/* KPI */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}}>
           {[
-            { label: 'Günlük Gerçekleşen Ciro', value: network.totalActual, suffix: ' ₺', color: 'text-white', icon: <DollarSign className="w-4 h-4" /> },
-            { label: 'Kayıp Ciro (Bugün)', value: network.totalLost, suffix: ' ₺', color: 'text-red-400', icon: <TrendingDown className="w-4 h-4" /> },
-            { label: 'Fırsat Kaybı', value: network.totalMissed, suffix: ' ₺', color: 'text-orange-400', icon: <AlertTriangle className="w-4 h-4" />, sub: 'Kapasite dolsaydı' },
-            { label: 'Ort. Sipariş Değeri', value: network.avgOrderValue, suffix: ' ₺', color: 'text-emerald-400', icon: <Target className="w-4 h-4" /> },
-          ].map(({ label, value, suffix, color, icon, sub }) => (
-            <div key={label} className="card" style={{ padding: "20px" }} data-dup={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] uppercase tracking-widest">{label}</span>
-                <span className={cn('opacity-40', color)}>{icon}</span>
+            {label:"Bugün Ciro",value:todayTotal.toLocaleString('tr-TR',{maximumFractionDigits:0})+' ₺',color:'var(--ac)',bg:'var(--ac2)',Icon:DollarSign},
+            {label:"Tıkla Gelsin",value:(today?.tiklagelsin??0).toLocaleString('tr-TR',{maximumFractionDigits:0})+' ₺',color:'var(--amber)',bg:'var(--amber2)',Icon:ShoppingBag},
+            {label:"Restoran",value:(today?.restaurant??0).toLocaleString('tr-TR',{maximumFractionDigits:0})+' ₺',color:'var(--blue)',bg:'var(--blue2)',Icon:Store},
+            {label:"Sipariş",value:String(today?.orders??0),color:'var(--green)',bg:'var(--green2)',Icon:TrendingUp},
+          ].map((k,i)=>{const Icon=k.Icon;return(
+            <div key={k.label} className="kpi" style={{borderLeft:`2.5px solid ${k.color}`,animationDelay:`${i*40}ms`}}>
+              <div style={{position:'absolute',top:0,right:0,width:80,height:80,background:`radial-gradient(circle at top right,${k.bg},transparent 70%)`,pointerEvents:'none'}}/>
+              <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:10}}>
+                <div style={{width:34,height:34,borderRadius:9,background:k.bg,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <Icon size={15} style={{color:k.color}} strokeWidth={1.9}/>
+                </div>
+                {diff && i===0 && <span className={`badge ${parseFloat(diff)>=0?'badge-green':'badge-red'}`}>{parseFloat(diff)>=0?'+':''}{diff}%</span>}
               </div>
-              <div className={cn('text-2xl font-bold font-mono', color)}>
-                {value.toLocaleString('tr-TR')}{suffix}
-              </div>
-              {sub && <div className="text-[10px] mt-1">{sub}</div>}
+              <p className="kpi-label">{k.label}</p>
+              <p className="kpi-value" style={{fontSize:20,color:k.color}}>{loading?'—':k.value}</p>
             </div>
-          ))}
+          )})}
         </div>
 
-        {/* Kayıp ciro dağılımı */}
-        <div className="grid grid-cols-12 gap-5">
-          <div className="col-span-4 rounded-2xl border p-5" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
-            <div className="text-xs uppercase tracking-widest font-medium mb-4">Kayıp Ciro — Neden?</div>
-            <ResponsiveContainer width="100%" height={160}>
-              <PieChart>
-                <Pie data={lossBreakdown} cx="50%" cy="50%" innerRadius={45} outerRadius={68} paddingAngle={3} dataKey="value">
-                  {lossBreakdown.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="space-y-2.5 mt-3">
-              {lossBreakdown.map(d => (
-                <div key={d.name} className="flex items-center gap-2.5">
-                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: d.color }} />
-                  <span className="text-xs flex-1">{d.name}</span>
-                  <span className="text-xs font-bold font-mono text-white">{d.value.toLocaleString('tr-TR')} ₺</span>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 280px',gap:14}}>
+          {/* Chart */}
+          <div className="card">
+            <div className="card-h">
+              <span className="card-title">7 Günlük Ciro Trendi</span>
+              <select value={selectedId??''} onChange={e=>setSelectedId(e.target.value||null)} className="inp" style={{width:'auto',padding:'4px 10px',fontSize:12}}>
+                <option value="">Tüm Ağ</option>
+                {restaurants.map(r=><option key={r.id} value={r.id}>{r.name.replace('Burger King ','BK ').replace('Popeyes ','Pop.')}</option>)}
+              </select>
+            </div>
+            <div style={{padding:'16px 20px'}}>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={[...byDate].reverse()}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--s4)" vertical={false}/>
+                  <XAxis dataKey="label" tick={{fill:'var(--tx3)',fontSize:10}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fill:'var(--tx3)',fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`${(v/1000).toFixed(0)}K`}/>
+                  <Tooltip content={<TT/>}/>
+                  <Bar dataKey="tiklagelsin" name="Tıkla Gelsin" stackId="a" fill="var(--amber)" radius={[0,0,0,0]}/>
+                  <Bar dataKey="restaurant" name="Restoran" stackId="a" fill="var(--ac)" radius={[4,4,0,0]}/>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Ranking */}
+          <div className="card">
+            <div className="card-h"><span className="card-title">Bugün Sıralaması</span></div>
+            <div>
+              {ranked.map((r,i)=>(
+                <div key={r.id} className="row">
+                  <span style={{fontSize:11,fontFamily:'JetBrains Mono,monospace',color:'var(--tx3)',width:16,flexShrink:0}}>{i+1}</span>
+                  <div style={{flex:1,minWidth:0}}>
+                    <p style={{fontSize:12.5,fontWeight:500,color:'var(--tx)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.name.replace('Burger King ','BK ').replace('Popeyes ','Pop.')}</p>
+                    <p style={{fontSize:10,color:'var(--tx3)',marginTop:2}}>{r.orders} sipariş</p>
+                  </div>
+                  <span style={{fontSize:13,fontWeight:700,fontFamily:'JetBrains Mono,monospace',color:'var(--tx)',flexShrink:0}}>{(r.revenue/1000).toFixed(1)}K ₺</span>
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* Restoran bazlı kayıp */}
-          <div className="col-span-8 rounded-2xl border p-5" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
-            <div className="text-xs uppercase tracking-widest font-medium mb-4">Restoran Bazlı Ciro Analizi</div>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={barData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
-                <XAxis dataKey="name" tick={{ fill: 'var(--tx3)', fontSize: 9 }} axisLine={false} tickLine={false} angle={-20} textAnchor="end" height={40} />
-                <YAxis tick={{ fill: 'var(--tx3)', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `${(v/1000).toFixed(0)}K`} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="actual" name="Gerçekleşen" fill="#22c55e" radius={[0, 0, 0, 0]} stackId="a" />
-                <Bar dataKey="lost" name="Kayıp" fill="#ff3d3d" radius={[0, 0, 0, 0]} stackId="a" />
-                <Bar dataKey="missed" name="Fırsat" fill="rgba(249,115,22,0.3)" radius={[3, 3, 0, 0]} stackId="a" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Restoran detay tablosu */}
-        <div className="card" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
-          <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--bdr)' }}>
-            <div className="text-xs uppercase tracking-widest font-medium">Detaylı Analiz</div>
-          </div>
-          <table className="w-full">
-            <thead>
-              <tr className="border-b" style={{ borderColor: 'var(--bdr)', background: 'var(--s2)' }}>
-                {['Restoran', 'Nabız', 'Gerçekleşen Ciro', 'Kayıp Ciro', 'Fırsat Kaybı', 'Kapasite', 'Büyüme'].map(h => (
-                  <th key={h} className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-widest">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {RESTAURANTS.map(r => {
-                const rev = getRevenueSnapshot(r.id)
-                const pulse = getPulseScore(r.id)
-                const config = getRiskConfig(pulse.risk_level)
-                return (
-                  <tr key={r.id} className="border-b transition-colors hover:"
-                    style={{ borderColor: 'var(--bdr)' }}>
-                    <td className="px-5 py-3">
-                      <div className="text-xs font-medium">{r.name}</div>
-                      <div className="text-[10px]">{r.district}</div>
-                    </td>
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-1.5">
-                        <div className={cn('w-1.5 h-1.5 rounded-full', config.dot)} />
-                        <span className={cn('text-sm font-bold font-mono', config.color)}>{pulse.score}</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className="text-sm font-bold font-mono text-white">{rev.actualRevenue.toLocaleString('tr-TR')} ₺</span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className={cn('text-sm font-bold font-mono', rev.totalLostRevenue > 2000 ? 'text-red-400' : rev.totalLostRevenue > 1000 ? 'text-orange-400' : 'text-white/50')}>
-                        {rev.totalLostRevenue.toLocaleString('tr-TR')} ₺
-                      </span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className="text-sm font-mono text-orange-400/70">{rev.missedRevenueOpportunity.toLocaleString('tr-TR')} ₺</span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-16 h-1.5 rounded-full overflow-hidden">
-                          <div className="h-full rounded-full"
-                            style={{ width: `${rev.capacityUtilization}%`, background: rev.capacityUtilization > 80 ? '#ff3d3d' : rev.capacityUtilization > 60 ? '#f97316' : '#22c55e' }} />
-                        </div>
-                        <span className="text-xs font-mono">%{rev.capacityUtilization}</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3">
-                      <div className={cn('flex items-center gap-1 text-xs font-bold', rev.revenueGrowth > 0 ? 'text-emerald-400' : 'text-red-400')}>
-                        {rev.revenueGrowth > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                        {rev.revenueGrowth > 0 ? '+' : ''}{rev.revenueGrowth}%
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* AI insight */}
-        <div className="card" style={{ padding: "20px" }} data-dup={{ background: 'rgba(129,140,248,0.04)', borderColor: 'rgba(129,140,248,0.15)' }}>
-          <div className="flex items-start gap-3">
-            <div className="text-indigo-400 shrink-0 mt-0.5">💡</div>
-            <div>
-              <div className="text-sm font-semibold text-indigo-300 mb-1">AI Ciro Analizi</div>
-              <div className="text-xs leading-relaxed">
-                Bugün toplam <span className="text-white font-medium">{network.totalLost.toLocaleString('tr-TR')} ₺</span> kayıp ciro tespit edildi.
-                Bunun <span className="text-red-400 font-medium">%{Math.round(lossBreakdown[0].value / network.totalLost * 100)}'i gecikmiş teslimat iptallerinden</span> kaynaklanıyor.
-                Operasyonel önlemler alınırsa <span className="text-emerald-400 font-medium">%60–70 oranında önlenebilir</span>.
-                En kritik restoran: <span className="text-orange-400 font-medium">{RESTAURANTS.find(r => r.id === barData[0]?.name ? r.name.includes(barData[0].name.replace('BK ', '').replace('Pop.', '')) : false)?.name ?? 'Popeyes Taksim'}</span>.
-              </div>
             </div>
           </div>
         </div>

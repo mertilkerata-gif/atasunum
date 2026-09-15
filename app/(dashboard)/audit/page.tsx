@@ -1,58 +1,52 @@
 'use client'
+import { useState, useEffect, useCallback } from 'react'
 import { Topbar } from '@/components/layout/topbar'
-import { MEMORY_ENTRIES } from '@/data/seed/memory'
-import { cn } from '@/lib/utils'
+import { fetchAuditLogs } from '@/lib/supabase-client'
+import { RefreshCw, ScrollText } from 'lucide-react'
 
-const AUDIT_LOG = [
-  ...MEMORY_ENTRIES.map((m, i) => ({ id: `audit-${i}`, user: m.appliedBy, action: `Aksiyon Uygulandı: ${m.action}`, resource: m.restaurantName, timestamp: `${m.date} ${m.time}`, type: 'ACTION' as const, result: 'success' as const })),
-  { id: 'audit-r1', user: 'Sistem AI', action: 'Nabız Skoru Hesaplandı', resource: 'Tüm Restoranlar', timestamp: '2026-08-27 18:30:00', type: 'SYSTEM' as const, result: 'success' as const },
-  { id: 'audit-r2', user: 'Ahmet Yılmaz', action: 'Oturum Açıldı', resource: 'Panel', timestamp: '2026-08-27 08:01:14', type: 'AUTH' as const, result: 'success' as const },
-  { id: 'audit-r3', user: 'n8n Workflow', action: 'Snapshot Webhook Tetiklendi', resource: '/api/webhook/snapshot', timestamp: '2026-08-27 18:25:00', type: 'WEBHOOK' as const, result: 'success' as const },
-  { id: 'audit-r4', user: 'n8n Workflow', action: 'WhatsApp Alert Gönderildi', resource: 'BK Kadıköy Müdürü', timestamp: '2026-08-27 18:34:22', type: 'WEBHOOK' as const, result: 'success' as const },
-].sort(() => Math.random() - 0.5)
-
-const TYPE_COLORS = { ACTION: '#f97316', SYSTEM: '#818cf8', AUTH: '#22c55e', WEBHOOK: '#eab308' }
-const RESULT_CONFIG = { success: { color: 'text-emerald-400', label: '✓' }, error: { color: 'text-red-400', label: '✗' } }
+const ACTION_BADGE: Record<string,string> = {
+  LOGIN:'badge-ac', VIEW:'badge-muted', ACKNOWLEDGE:'badge-amber',
+  APPLY_RECOMMENDATION:'badge-green', UPDATE_STOCK:'badge-blue',
+  EXPORT:'badge-muted', RESOLVE_COMPLAINT:'badge-green',
+}
 
 export default function AuditPage() {
+  const [logs, setLogs] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    const data = await fetchAuditLogs(100)
+    setLogs(data as any[]); setLoading(false)
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
   return (
     <div className="dm">
-      <Topbar title="Audit Log" subtitle="Kim · Ne zaman · Ne yaptı" />
-      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div className="flex items-center gap-2 text-xs">
-          <span>{AUDIT_LOG.length} kayıt</span>
-          <span>·</span>
-          <span>Son 7 gün</span>
-        </div>
-        <div className="card" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
-          <table className="w-full">
-            <thead>
-              <tr className="border-b" style={{ borderColor: 'var(--bdr)', background: 'var(--s2)' }}>
-                {['Zaman', 'Kullanıcı', 'Aksiyon', 'Kaynak', 'Tür', 'Sonuç'].map(h => (
-                  <th key={h} className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-widest">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {AUDIT_LOG.slice(0, 20).map(entry => {
-                const typeColor = TYPE_COLORS[entry.type] ?? '#fff'
-                const rc = RESULT_CONFIG[entry.result]
-                return (
-                  <tr key={entry.id} className="border-b transition-colors hover:" style={{ borderColor: 'var(--bdr)' }}>
-                    <td className="px-5 py-3 text-xs font-mono">{entry.timestamp.split(' ')[1]}<div className="text-[9px]">{entry.timestamp.split(' ')[0]}</div></td>
-                    <td className="px-5 py-3 text-xs">{entry.user}</td>
-                    <td className="px-5 py-3 text-xs max-w-xs truncate">{entry.action}</td>
-                    <td className="px-5 py-3 text-xs">{entry.resource}</td>
-                    <td className="px-5 py-3">
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
-                        style={{ background: typeColor + '15', color: typeColor, border: `1px solid ${typeColor}25` }}>{entry.type}</span>
-                    </td>
-                    <td className="px-5 py-3 text-sm font-bold"><span className={rc.color}>{rc.label}</span></td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+      <Topbar title="Audit Log" subtitle="Tüm kullanıcı aksiyonları · Supabase"
+        action={<button onClick={load} className="btn-ghost" style={{padding:'5px 10px',fontSize:12}}><RefreshCw size={12}/> Yenile</button>}
+      />
+      <div className="scroll" style={{padding:'22px 24px',display:'flex',flexDirection:'column',gap:16}}>
+        <div className="card">
+          <div className="card-h">
+            <span className="card-title">Aksiyon Geçmişi</span>
+            <span className="card-meta">{logs.length} kayıt</span>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'160px 140px 140px 1fr',gap:0,padding:'8px 20px',borderBottom:'1px solid var(--bdr)'}}>
+            {['Zaman','Kullanıcı','Aksiyon','Detay'].map(h=>(
+              <span key={h} style={{fontSize:10.5,fontWeight:700,color:'var(--tx3)',textTransform:'uppercase',letterSpacing:'.06em'}}>{h}</span>
+            ))}
+          </div>
+          {loading ? <p style={{padding:24,textAlign:'center',color:'var(--tx3)'}}>Yükleniyor…</p> :
+            logs.map(log=>(
+              <div key={log.id} className="row" style={{display:'grid',gridTemplateColumns:'160px 140px 140px 1fr',gap:0}}>
+                <span style={{fontSize:11,fontFamily:'JetBrains Mono,monospace',color:'var(--tx3)'}}>{new Date(log.created_at).toLocaleString('tr-TR',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})}</span>
+                <span style={{fontSize:12.5,color:'var(--tx2)'}}>{log.user_role||'—'}</span>
+                <span className={`badge ${ACTION_BADGE[log.action]||'badge-muted'}`} style={{width:'fit-content'}}>{log.action}</span>
+                <span style={{fontSize:12,color:'var(--tx3)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{log.resource} {log.details&&Object.keys(log.details).length?'· '+JSON.stringify(log.details).slice(0,60):''}</span>
+              </div>
+            ))
+          }
         </div>
       </div>
     </div>

@@ -1,193 +1,114 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Topbar } from '@/components/layout/topbar'
-import { RESTAURANTS } from '@/data/seed/restaurants'
-import { getPulseScore, getHourlyForecast, getPredictions } from '@/data/seed/mock-data'
-import { getRiskConfig, cn } from '@/lib/utils'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
-import { TrendingUp, AlertTriangle, Clock } from 'lucide-react'
-import { RiskLevel } from '@/types'
+import { fetchForecasts, fetchRestaurants } from '@/lib/supabase-client'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Area, AreaChart } from 'recharts'
 
-const UPCOMING_ALERTS = [
-  { restaurantId: 'r1', message: '18:35–18:55 arasında yüksek operasyonel yoğunluk bekleniyor', orders: 57, confidence: 87, risk: 'packing darboğazı' },
-  { restaurantId: 'r6', message: '19:00–19:30 arasında kritik seviye riski', orders: 72, confidence: 91, risk: 'tüm istasyonlar' },
-  { restaurantId: 'r5', message: '18:45 sonrası kurye bekleme artışı', orders: 41, confidence: 78, risk: 'kurye kapasitesi' },
-]
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="bg-[#1a1a2e] border rounded-lg px-3 py-2 text-xs">
-      <div className="mb-1">{label}</div>
-      {payload.map((p: any) => (
-        <div key={p.name} className="flex items-center gap-2 mt-0.5">
-          <span style={{ color: p.color }}>●</span>
-          <span >{p.name === 'actual' ? 'Gerçek' : p.name === 'predicted' ? 'Tahmin' : 'Nabız'}:</span>
-          <span className="text-white font-semibold">{p.value}</span>
-        </div>
-      ))}
-    </div>
-  )
+const TT = ({active,payload,label}:any) => {
+  if (!active||!payload?.length) return null
+  return <div style={{background:'var(--s2)',border:'1px solid var(--bdr2)',borderRadius:10,padding:'8px 12px'}}>
+    <p style={{fontSize:11,color:'var(--tx3)',marginBottom:4}}>{label}:00</p>
+    {payload.map((p:any)=><p key={p.name} style={{fontSize:12,fontWeight:600,color:p.color||'var(--tx)',fontFamily:'JetBrains Mono,monospace'}}>{p.name}: {p.value}</p>)}
+  </div>
 }
 
 export default function ForecastPage() {
-  const [selectedRestaurant, setSelectedRestaurant] = useState('r1')
+  const [forecasts, setForecasts] = useState<any[]>([])
+  const [restaurants, setRestaurants] = useState<any[]>([])
+  const [selectedId, setSelectedId] = useState('r1')
+  const [loading, setLoading] = useState(true)
 
-  const restaurant = RESTAURANTS.find(r => r.id === selectedRestaurant)!
-  const pulse = getPulseScore(selectedRestaurant)
-  const forecast = getHourlyForecast(selectedRestaurant)
-  const predictions = getPredictions(selectedRestaurant)
-  const pulseConfig = getRiskConfig(pulse.risk_level)
+  const load = useCallback(async () => {
+    const [f,r] = await Promise.all([fetchForecasts(selectedId), fetchRestaurants()])
+    setForecasts(f as any[]); setRestaurants(r as any[]); setLoading(false)
+  }, [selectedId])
 
-  const peakHour = forecast.reduce((max, d) => d.predicted > max.predicted ? d : max, forecast[0])
+  useEffect(() => { load() }, [load])
+
   const currentHour = new Date().getHours()
-  const remainingForecast = forecast.filter(f => parseInt(f.hour.split(':')[0]) >= currentHour)
+  const chartData = forecasts.map(f=>({
+    hour: `${f.hour}`,
+    orders: f.predicted_orders,
+    revenue: Math.round(f.predicted_revenue/100)*100,
+    isPast: f.hour < currentHour,
+    isCurrent: f.hour === currentHour,
+  }))
+
+  const peakHour = forecasts.reduce((max,f)=>f.predicted_orders>max.predicted_orders?f:max, forecasts[0]??{})
+  const totalPredicted = forecasts.reduce((s,f)=>s+f.predicted_orders,0)
+  const remainingHours = forecasts.filter(f=>f.hour>=currentHour)
+  const remainingOrders = remainingHours.reduce((s,f)=>s+f.predicted_orders,0)
 
   return (
     <div className="dm">
-      <Topbar title="Tahmin" subtitle="İleriye dönük operasyon tahmini" />
-      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <Topbar title="Talep Tahmini" subtitle="AI destekli sipariş öngörüsü · Supabase"/>
+      <div className="scroll" style={{padding:'22px 24px',display:'flex',flexDirection:'column',gap:16}}>
 
-        {/* Restaurant selector */}
-        <div className="flex items-center gap-3 flex-wrap">
-          {RESTAURANTS.map(r => {
-            const p = getPulseScore(r.id)
-            const c = getRiskConfig(p.risk_level)
-            return (
-              <button key={r.id} onClick={() => setSelectedRestaurant(r.id)}
-                className={cn('flex items-center gap-2 px-3 py-2 rounded-lg border text-xs transition-all',
-                  selectedRestaurant === r.id ? `${c.bg} ${c.border} ${c.color} font-medium` : 'border-white/[0.08] text-white/40 hover:text-white/60')}>
-                <div className={cn('w-1.5 h-1.5 rounded-full', c.dot)} />
-                {r.name.split(' ').slice(-2).join(' ')}
-                <span className="font-bold">{p.score}</span>
-              </button>
-            )
-          })}
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <select value={selectedId} onChange={e=>setSelectedId(e.target.value)} className="inp" style={{width:'auto',padding:'7px 12px',fontSize:13}}>
+            {restaurants.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
         </div>
 
-        {/* Upcoming alerts */}
-        {UPCOMING_ALERTS.filter(a => a.restaurantId === selectedRestaurant).map((alert, i) => (
-          <div key={i} className="rounded-xl border border-orange-500/30 bg-orange-500/[0.06] p-4">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <div className="text-sm font-medium text-orange-300 mb-1">{alert.message}</div>
-                <div className="flex items-center gap-4 text-xs">
-                  <span>Tahmini sipariş: <strong className="text-white">{alert.orders}</strong></span>
-                  <span>Güven: <strong className="text-emerald-400">%{alert.confidence}</strong></span>
-                  <span>Risk: <strong className="text-orange-400">{alert.risk}</strong></span>
-                </div>
-              </div>
+        {/* KPI */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
+          {[
+            {label:'Günlük Tahmin',value:loading?'—':String(totalPredicted),sub:'sipariş'},
+            {label:'Kalan Tahmin',value:loading?'—':String(remainingOrders),sub:'bu saatten itibaren'},
+            {label:'Zirve Saat',value:loading?'—':(peakHour?.hour!=null?`${peakHour.hour}:00`:'—'),sub:`${peakHour?.predicted_orders??0} sipariş bekleniyor`},
+          ].map(k=>(
+            <div key={k.label} className="kpi" style={{borderLeft:'2.5px solid var(--ac)'}}>
+              <p className="kpi-label">{k.label}</p>
+              <p className="kpi-value" style={{color:'var(--ac)'}}>{k.value}</p>
+              <p className="kpi-sub">{k.sub}</p>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
 
-        <div className="grid grid-cols-12 gap-5">
-          {/* Main forecast chart */}
-          <div className="col-span-8 rounded-xl border p-5">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-xs uppercase tracking-wide font-medium">Saatlik Yoğunluk Tahmini</div>
-              <div className="flex items-center gap-4 text-xs">
-                <span className="flex items-center gap-1.5"><span className="w-4 h-0.5 bg-orange-500 inline-block" />Gerçek</span>
-                <span className="flex items-center gap-1.5"><span className="w-4 h-0.5 bg-indigo-400 inline-block border-dashed" />Tahmin</span>
-              </div>
-            </div>
-            <div className="text-xs mb-4">
-              En yoğun beklenen saat: <span className="text-orange-400 font-medium">{peakHour.hour} — {peakHour.predicted} sipariş</span>
-            </div>
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={forecast}>
+        {/* Sipariş tahmin grafiği */}
+        <div className="card">
+          <div className="card-h"><span className="card-title">Saatlik Sipariş Tahmini</span><span className="card-meta">Bugün</span></div>
+          <div style={{padding:'16px 20px'}}>
+            <ResponsiveContainer width="100%" height={240}>
+              <AreaChart data={chartData}>
                 <defs>
-                  <linearGradient id="actualG" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f97316" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="predictG" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                  <linearGradient id="ordGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--ac)" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="var(--ac)" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--s2)" />
-                <XAxis dataKey="hour" tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip content={<CustomTooltip />} />
-                <ReferenceLine x={`${currentHour}:00`} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4"
-                  label={{ value: 'Şimdi', fill: 'var(--tx3)', fontSize: 10 }} />
-                <Area type="monotone" dataKey="actual" stroke="#f97316" strokeWidth={2} fill="url(#actualG)" name="actual" dot={false} connectNulls={false} />
-                <Area type="monotone" dataKey="predicted" stroke="#6366f1" strokeWidth={2} strokeDasharray="5 3" fill="url(#predictG)" name="predicted" dot={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--s4)" vertical={false}/>
+                <XAxis dataKey="hour" tick={{fill:'var(--tx3)',fontSize:10}} axisLine={false} tickLine={false} tickFormatter={h=>`${h}:00`}/>
+                <YAxis tick={{fill:'var(--tx3)',fontSize:10}} axisLine={false} tickLine={false}/>
+                <Tooltip content={<TT/>}/>
+                <Area type="monotone" dataKey="orders" name="Tahmini Sipariş" stroke="var(--ac)" strokeWidth={2} fill="url(#ordGrad)"/>
               </AreaChart>
             </ResponsiveContainer>
           </div>
+        </div>
 
-          {/* Horizon predictions */}
-          <div className="col-span-4 space-y-3">
-            <div className="text-xs uppercase tracking-wide font-medium">İleriye Dönük Tahmin</div>
-            {predictions.map(p => {
-              const riskLevel: RiskLevel = p.predicted_pulse_score >= 80 ? 'KRITIK' : p.predicted_pulse_score >= 60 ? 'RISKLI' : p.predicted_pulse_score >= 40 ? 'YOGUN' : 'NORMAL'
-              const pConfig = getRiskConfig(riskLevel)
+        {/* Saat bazlı tablo */}
+        <div className="card">
+          <div className="card-h"><span className="card-title">Saat Detayı</span></div>
+          <div style={{display:'grid',gridTemplateColumns:'80px 1fr 120px 100px',gap:0,padding:'8px 20px',borderBottom:'1px solid var(--bdr)'}}>
+            {['Saat','Tahmin Bar','Sipariş','Güven'].map(h=><span key={h} style={{fontSize:10.5,fontWeight:700,color:'var(--tx3)',textTransform:'uppercase',letterSpacing:'.06em'}}>{h}</span>)}
+          </div>
+          <div style={{maxHeight:320,overflowY:'auto'}}>
+            {forecasts.map(f=>{
+              const isCurrent = f.hour===currentHour
+              const isPast = f.hour < currentHour
+              const max = Math.max(...forecasts.map(x=>x.predicted_orders),1)
               return (
-                <div key={p.horizon_minutes} className={cn('rounded-xl border p-4', pConfig.bg, pConfig.border)}>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span className="text-xs font-semibold">+{p.horizon_minutes} dakika</span>
-                    </div>
-                    <span className={cn('text-2xl font-bold tabular-nums', pConfig.color)}>{p.predicted_pulse_score}</span>
+                <div key={f.hour} className="row" style={{display:'grid',gridTemplateColumns:'80px 1fr 120px 100px',gap:0,background:isCurrent?'var(--ac3)':undefined,borderLeft:isCurrent?'2px solid var(--ac)':'2px solid transparent',opacity:isPast?.6:1}}>
+                  <span style={{fontSize:12,fontFamily:'JetBrains Mono,monospace',color:isCurrent?'var(--ac)':'var(--tx2)',fontWeight:isCurrent?700:400}}>{f.hour}:00{isCurrent?' ●':''}</span>
+                  <div style={{paddingRight:16,alignSelf:'center'}}>
+                    <div className="prog"><div className="prog-fill" style={{width:`${(f.predicted_orders/max)*100}%`,background:isCurrent?'var(--ac)':'var(--s5)'}}/></div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-                    <div>
-                      <div className="mb-0.5">Beklenen Sipariş</div>
-                      <div className="font-bold text-white">{p.predicted_orders}</div>
-                    </div>
-                    <div>
-                      <div className="mb-0.5">Gecikme Riski</div>
-                      <div className={cn('font-bold', p.delay_probability > 0.5 ? 'text-red-400' : 'text-emerald-400')}>%{Math.round(p.delay_probability * 100)}</div>
-                    </div>
-                  </div>
-                  {/* Station overload bars */}
-                  <div className="space-y-1.5">
-                    {(['packing', 'grill', 'courier'] as const).map(st => (
-                      <div key={st} className="flex items-center gap-2">
-                        <span className="text-[10px] w-12 capitalize">{st}</span>
-                        <div className="flex-1 h-1 rounded-full overflow-hidden">
-                          <div className={cn('h-full rounded-full', p.station_overload[st] >= 80 ? 'bg-red-500' : p.station_overload[st] >= 60 ? 'bg-orange-500' : 'bg-emerald-500')}
-                            style={{ width: `${p.station_overload[st]}%` }} />
-                        </div>
-                        <span className={cn('text-[10px] font-bold w-6 text-right', p.station_overload[st] >= 80 ? 'text-red-400' : 'text-white/40')}>{p.station_overload[st]}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="text-[10px] mt-2">Güven: %{Math.round(p.confidence_score * 100)}</div>
+                  <span style={{fontSize:13,fontWeight:600,fontFamily:'JetBrains Mono,monospace',color:'var(--tx)'}}>{f.predicted_orders}</span>
+                  <span style={{fontSize:12,color:'var(--tx3)'}}>{Math.round((f.confidence??0.8)*100)}%</span>
                 </div>
               )
             })}
-          </div>
-        </div>
-
-        {/* Similar days */}
-        <div className="rounded-xl border p-5">
-          <div className="text-xs uppercase tracking-wide font-medium mb-4">Benzer Günler</div>
-          <div className="text-xs mb-4">
-            Bugünkü koşullara (hava, gün, saat, kampanya) göre geçmişteki en benzer operasyonlar:
-          </div>
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            {[
-              { date: '12.06.2026', similarity: 94, orders: 1284, peak: '19:10', peakOrders: 118 },
-              { date: '21.05.2026', similarity: 91, orders: 1197, peak: '18:45', peakOrders: 109 },
-              { date: '28.08.2025', similarity: 89, orders: 1341, peak: '19:30', peakOrders: 124 },
-            ].map(day => (
-              <div key={day.date} className="rounded-lg border p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs">{day.date}</span>
-                  <span className="text-xs font-bold text-emerald-400">%{day.similarity} benzer</span>
-                </div>
-                <div className="text-sm font-bold text-white">{day.orders.toLocaleString()} sipariş</div>
-                <div className="text-xs mt-1">Peak: {day.peak} — {day.peakOrders} sipariş</div>
-              </div>
-            ))}
-          </div>
-          <div className="rounded-lg border border-indigo-500/20 bg-indigo-500/[0.05] p-3 text-xs">
-            💡 <span >Benzer operasyonlarda saat 18:40 sonrası ortalama %31 talep artışı gerçekleşmiştir.</span> Packing kapasitesinin 18:15 itibarıyla artırılması önerilir.
           </div>
         </div>
       </div>

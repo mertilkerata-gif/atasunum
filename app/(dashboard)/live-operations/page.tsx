@@ -31,7 +31,7 @@ export default function LiveOperationsPage() {
 
       const pulseMap = Object.fromEntries(pulseRows.map(p => [p.restaurant_id, p]))
       const snapshotMap = Object.fromEntries(snapshotRows.map(s => [s.restaurant_id, s]))
-      const orderCount = orderRows.reduce((acc: Record<string, number>, o) => {
+      const orderCount = orderRows.reduce((acc: Record<string,number>, o:any) => {
         acc[o.restaurant_id] = (acc[o.restaurant_id] || 0) + 1
         return acc
       }, {})
