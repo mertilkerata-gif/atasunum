@@ -1,141 +1,230 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Topbar } from '@/components/layout/topbar'
-import { RESTAURANTS } from '@/data/seed/restaurants'
+import { fetchAllPulseScores, fetchLatestSnapshots, fetchRestaurants } from '@/lib/supabase-client'
 import { getPulseScore, getSnapshot } from '@/data/seed/mock-data'
-import { getRiskConfig, cn } from '@/lib/utils'
-import { calculatePulseScore } from '@/services/pulse'
+import { getRiskConfig } from '@/lib/utils'
+import { RESTAURANTS } from '@/data/seed/restaurants'
 import { Info } from 'lucide-react'
 
 const COMPONENTS = [
-  { key: 'order_pressure',   label: 'Sipariş Baskısı',     weight: 25, icon: '📦', desc: 'Açık sipariş sayısı / baseline oranı + hız' },
-  { key: 'prep_performance', label: 'Hazırlama Performansı',weight: 20, icon: '⏱️', desc: 'Hazırlama süresi / hedef + packing süresi' },
-  { key: 'station_load',     label: 'İstasyon Yükü',       weight: 25, icon: '🔥', desc: 'En yüklü 2 istasyonun ağırlıklı ortalaması' },
-  { key: 'courier_load',     label: 'Kurye Baskısı',       weight: 15, icon: '🛵', desc: 'Kurye bekleme + kurye istasyon yükü' },
-  { key: 'delay_risk',       label: 'Gecikme Riski',       weight: 15, icon: '⚠️', desc: 'Gecikme oranı + iptal oranı sinyali' },
+  { key: 'order_pressure',   label: 'Sipariş Baskısı',      weight: 25, icon: '📦', desc: 'Açık sipariş sayısı / baseline oranı + geliş hızı' },
+  { key: 'prep_performance', label: 'Hazırlama Perf.',       weight: 20, icon: '⏱️', desc: 'Hazırlama süresi / hedef + packing süresi' },
+  { key: 'station_load',     label: 'İstasyon Yükü',         weight: 25, icon: '🔥', desc: 'En yüklü 2 istasyonun ağırlıklı ortalaması' },
+  { key: 'courier_load',     label: 'Kurye Baskısı',         weight: 15, icon: '🛵', desc: 'Kurye bekleme süresi + kurye istasyon yükü' },
+  { key: 'delay_risk',       label: 'Gecikme Riski',         weight: 15, icon: '⚠️', desc: 'Gecikme oranı + iptal oranı sinyali' },
 ]
 
+function barColor(score: number) {
+  if (score >= 80) return 'var(--red)'
+  if (score >= 60) return 'var(--amber)'
+  if (score >= 40) return 'var(--yellow, #eab308)'
+  return 'var(--green)'
+}
+
 export default function ExplainerPage() {
-  const [restaurantId, setRestaurantId] = useState('r1')
-  const [hoveredComp, setHoveredComp] = useState<string | null>(null)
-  const snap = getSnapshot(restaurantId)
-  const pulse = getPulseScore(restaurantId)
-  const config = getRiskConfig(pulse.risk_level)
+  const [restaurantId, setRestaurantId] = useState('r6') // en kritik default
+  const [restaurants, setRestaurants] = useState<any[]>(RESTAURANTS)
+  const [pulse, setPulse] = useState<any>(null)
+  const [snap, setSnap] = useState<any>(null)
+  const [hovered, setHovered] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const result = calculatePulseScore({
-    open_orders: snap.open_orders, orders_last_5m: snap.orders_last_5m,
-    orders_last_15m: snap.orders_last_15m, avg_preparation_time: snap.avg_preparation_time,
-    avg_packing_time: snap.avg_packing_time, avg_courier_wait: snap.avg_courier_wait,
-    delay_rate: snap.delay_rate, cancellation_rate: snap.cancellation_rate,
-    grill_load: snap.grill_load, fryer_load: snap.fryer_load,
-    packing_load: snap.packing_load, courier_load: snap.courier_load,
-    active_staff: snap.active_staff, restaurant_capacity: RESTAURANTS.find(r=>r.id===restaurantId)?.capacity ?? 80,
-    rain_intensity: snap.rain_intensity, campaign_active: snap.campaign_active, special_event: snap.special_event,
-  })
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [pulseRows, snapRows, restRows] = await Promise.all([
+        fetchAllPulseScores(), fetchLatestSnapshots(), fetchRestaurants()
+      ])
+      if (restRows.length) setRestaurants(restRows)
+      const p = pulseRows.find((x: any) => x.restaurant_id === restaurantId) ?? getPulseScore(restaurantId)
+      const s = snapRows.find((x: any) => x.restaurant_id === restaurantId) ?? getSnapshot(restaurantId)
+      setPulse(p); setSnap(s)
+    } catch {
+      setPulse(getPulseScore(restaurantId)); setSnap(getSnapshot(restaurantId))
+    } finally { setLoading(false) }
+  }, [restaurantId])
 
-  const compScores = result.component_scores
+  useEffect(() => { load() }, [load])
+
+  const config = pulse ? getRiskConfig(pulse.risk_level) : getRiskConfig('NORMAL')
+  const stations = (pulse?.station_scores ?? {}) as Record<string, number>
+
+  // Component skorları — station_scores'dan türet
+  const compScores: Record<string, number> = {
+    order_pressure:   Math.min(100, ((snap?.open_orders ?? 0) / 15) * 60),
+    prep_performance: Math.min(100, ((snap?.avg_preparation_time ?? 0) / 7) * 50),
+    station_load:     Math.round(((stations.grill ?? 0) + (stations.packing ?? 0)) / 2),
+    courier_load:     Math.min(100, ((snap?.avg_courier_wait ?? 0) / 5) * 70),
+    delay_risk:       Math.min(100, ((snap?.delay_rate ?? 0) + (snap?.cancellation_rate ?? 0)) * 300),
+  }
+
+  const inputs = snap ? [
+    { label: 'Açık Sipariş', value: String(snap.open_orders), baseline: '15', unit: '' },
+    { label: 'Hazırlama', value: snap.avg_preparation_time?.toFixed(1), baseline: '7', unit: 'dk' },
+    { label: 'Packing', value: snap.avg_packing_time?.toFixed(1), baseline: '3', unit: 'dk' },
+    { label: 'Kurye Bekl.', value: snap.avg_courier_wait?.toFixed(1), baseline: '3', unit: 'dk' },
+    { label: 'Gecikme', value: `%${Math.round((snap.delay_rate ?? 0) * 100)}`, baseline: '%3', unit: '' },
+    { label: 'İptal', value: `%${Math.round((snap.cancellation_rate ?? 0) * 100)}`, baseline: '%2', unit: '' },
+  ] : []
 
   return (
     <div className="dm">
       <Topbar title="Explainable AI" subtitle="Nabız skoru neden bu değeri aldı?" />
-      <div className="p-6 space-y-5 max-w-4xl">
+      <div className="scroll" style={{ padding: 'clamp(14px,3vw,24px)', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
+        {/* Restoran seç */}
         <select value={restaurantId} onChange={e => setRestaurantId(e.target.value)}
-          className="rounded-xl border px-4 py-2.5 text-sm outline-none"
-          style={{ background: 'var(--s1)', borderColor: 'rgba(255,255,255,0.1)' }}>
-          {RESTAURANTS.map(r => <option key={r.id} value={r.id} style={{ background: 'var(--s2)' }}>{r.name}</option>)}
+          className="inp" style={{ width: 'auto', padding: '7px 12px', fontSize: 13, alignSelf: 'flex-start' }}>
+          {restaurants.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
         </select>
 
-        {/* Score breakdown */}
-        <div className={cn('rounded-2xl border p-6', config.glow)} style={{ background: config.bg, borderColor: config.colorHex + '35' }}>
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <div className="text-[10px] uppercase tracking-widest mb-1">Operasyon Nabız Skoru</div>
-              <div className={cn('text-5xl font-bold font-mono', config.color)} style={{ textShadow: `0 0 30px ${config.colorHex}60` }}>
-                {pulse.score}
-              </div>
-              <div className={cn('text-sm font-semibold mt-1', config.color)}>{config.label}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-[10px] mb-2">Formül</div>
-              <div className="text-xs font-mono">Σ (bileşen × ağırlık) × dış_faktör</div>
-            </div>
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
+            <div style={{ width: 20, height: 20, border: '2px solid var(--s4)', borderTopColor: 'var(--ac)', borderRadius: '50%', animation: 'spin .7s linear infinite' }}/>
           </div>
+        ) : (
+          <>
+            {/* Skor breakdown */}
+            <div style={{
+              background: config.bg, border: `1px solid ${config.colorHex}35`,
+              borderRadius: 16, padding: 'clamp(16px,3vw,28px)',
+              boxShadow: pulse?.risk_level === 'KRITIK' ? `0 0 30px ${config.colorHex}12` : 'none',
+            }}>
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
+                <div>
+                  <p style={{ fontSize: 10, color: 'var(--tx3)', textTransform: 'uppercase', letterSpacing: '.14em', marginBottom: 8 }}>Operasyon Nabız Skoru</p>
+                  <p style={{ fontSize: 52, fontWeight: 700, fontFamily: 'JetBrains Mono,monospace', color: config.colorHex, letterSpacing: '-.04em', lineHeight: 1, marginBottom: 6 }}>
+                    {pulse?.score ?? '—'}
+                  </p>
+                  <span className={`badge badge-${pulse?.risk_level === 'KRITIK' ? 'red' : pulse?.risk_level === 'RISKLI' ? 'amber' : pulse?.risk_level === 'YOGUN' ? 'amber' : 'green'}`}>
+                    {config.label}
+                  </span>
+                </div>
+                <div style={{ textAlign: 'right' }} className="hide-mobile">
+                  <p style={{ fontSize: 10, color: 'var(--tx3)', marginBottom: 6 }}>Hesaplama Formülü</p>
+                  <p style={{ fontSize: 12, fontFamily: 'JetBrains Mono,monospace', color: 'var(--tx2)' }}>Σ (bileşen × ağırlık) × dış_faktör</p>
+                </div>
+              </div>
 
-          {/* Component bars */}
-          <div className="space-y-4">
-            {COMPONENTS.map(comp => {
-              const rawScore = (compScores as any)[comp.key] ?? 0
-              const weightedContribution = Math.round(rawScore * comp.weight / 100)
-              const isHovered = hoveredComp === comp.key
-              const barColor = rawScore >= 80 ? '#ff3d3d' : rawScore >= 60 ? '#f97316' : rawScore >= 40 ? '#eab308' : '#22c55e'
-              return (
-                <div key={comp.key}
-                  onMouseEnter={() => setHoveredComp(comp.key)}
-                  onMouseLeave={() => setHoveredComp(null)}
-                  className="cursor-help">
-                  <div className="flex items-center gap-3 mb-1.5">
-                    <span className="text-lg shrink-0">{comp.icon}</span>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium">{comp.label}</span>
-                          <span className="text-[10px]">ağırlık %{comp.weight}</span>
-                          {isHovered && <Info className="w-3 h-3" />}
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs font-mono">{rawScore.toFixed(0)} puan</span>
-                          <span className="text-xs font-bold font-mono" style={{ color: barColor }}>+{weightedContribution} katkı</span>
+              {/* Bileşen barları */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {COMPONENTS.map(comp => {
+                  const raw = Math.round(compScores[comp.key] ?? 0)
+                  const contribution = Math.round(raw * comp.weight / 100)
+                  const color = barColor(raw)
+                  const isH = hovered === comp.key
+
+                  return (
+                    <div key={comp.key}
+                      onMouseEnter={() => setHovered(comp.key)}
+                      onMouseLeave={() => setHovered(null)}
+                      style={{ cursor: 'help' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{ fontSize: 20, flexShrink: 0 }}>{comp.icon}</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, flexWrap: 'wrap', gap: 4 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--tx)' }}>{comp.label}</span>
+                              <span style={{ fontSize: 10, color: 'var(--tx3)' }}>ağırlık %{comp.weight}</span>
+                              {isH && <Info size={11} style={{ color: 'var(--tx3)' }}/>}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <span style={{ fontSize: 12, fontFamily: 'JetBrains Mono,monospace', color: 'var(--tx2)' }}>{raw} puan</span>
+                              <span style={{ fontSize: 12, fontWeight: 700, fontFamily: 'JetBrains Mono,monospace', color }}>+{contribution} katkı</span>
+                            </div>
+                          </div>
+
+                          {/* Bar */}
+                          <div style={{ height: 8, borderRadius: 4, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                            <div style={{
+                              height: '100%', borderRadius: 4, width: `${raw}%`,
+                              background: color,
+                              boxShadow: raw >= 80 ? `0 0 8px ${color}` : 'none',
+                              transition: 'width .8s cubic-bezier(.4,0,.2,1)',
+                            }}/>
+                          </div>
+
+                          {/* Hover açıklama */}
+                          {isH && (
+                            <p style={{ fontSize: 11, color: 'var(--tx3)', marginTop: 5 }}>{comp.desc}</p>
+                          )}
                         </div>
                       </div>
-                      <div className="h-2 rounded-full overflow-hidden">
-                        <div className="h-full rounded-full transition-all duration-700"
-                          style={{ width: `${rawScore}%`, background: barColor, boxShadow: rawScore >= 80 ? `0 0 8px ${barColor}60` : 'none' }} />
-                      </div>
-                      {isHovered && (
-                        <div className="text-[10px] mt-1">{comp.desc}</div>
-                      )}
                     </div>
+                  )
+                })}
+              </div>
+
+              {/* Dış faktörler */}
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--bdr)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                  <span style={{ fontSize: 12, color: 'var(--tx3)' }}>Dış Faktör Çarpanı</span>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    {(snap?.rain_intensity ?? 0) > 0 && (
+                      <span style={{ fontSize: 12, color: 'var(--blue)' }}>🌧️ Yağmur +{Math.round((snap.rain_intensity ?? 0) * 1.2)}%</span>
+                    )}
+                    {snap?.campaign_active && (
+                      <span style={{ fontSize: 12, color: 'var(--amber)' }}>📢 Kampanya +8%</span>
+                    )}
+                    {!snap?.rain_intensity && !snap?.campaign_active && (
+                      <span style={{ fontSize: 12, color: 'var(--tx3)' }}>1.0 — dış etki yok</span>
+                    )}
                   </div>
                 </div>
-              )
-            })}
-          </div>
-
-          {/* External factors */}
-          <div className="mt-5 pt-4 border-t" style={{ borderColor: 'var(--bdr)' }}>
-            <div className="flex items-center justify-between text-xs">
-              <span >Dış Faktör Çarpanı</span>
-              <div className="flex items-center gap-3">
-                {snap.rain_intensity > 0 && <span>🌧️ Yağmur +{Math.round(snap.rain_intensity * 1.2)}%</span>}
-                {snap.campaign_active && <span>📢 Kampanya +8%</span>}
-                {!snap.rain_intensity && !snap.campaign_active && <span>1.0 (etkisiz)</span>}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Input values */}
-        <div className="card" style={{ padding: "20px" }}>
-          <div className="text-xs uppercase tracking-widest font-medium mb-4">Motor Girdi Değerleri</div>
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { label: 'Açık Sipariş', value: snap.open_orders, baseline: '15', unit: '' },
-              { label: 'Hazırlama', value: `${snap.avg_preparation_time.toFixed(1)}`, baseline: '7', unit: ' dk' },
-              { label: 'Packing', value: `${snap.avg_packing_time.toFixed(1)}`, baseline: '3', unit: ' dk' },
-              { label: 'Kurye Bekl.', value: `${snap.avg_courier_wait.toFixed(1)}`, baseline: '3', unit: ' dk' },
-              { label: 'Gecikme', value: `%${Math.round(snap.delay_rate * 100)}`, baseline: '%3', unit: '' },
-              { label: 'İptal', value: `%${Math.round(snap.cancellation_rate * 100)}`, baseline: '%2', unit: '' },
-            ].map(({ label, value, baseline, unit }) => (
-              <div key={label} className="card" style={{ padding: 12 }}>
-                <div className="text-[10px] uppercase tracking-wider mb-1">{label}</div>
-                <div className="text-lg font-bold font-mono">{value}{unit}</div>
-                <div className="text-[10px] mt-0.5">baz: {baseline}{unit}</div>
+            {/* Girdi değerleri */}
+            <div className="card">
+              <div className="card-h">
+                <span className="card-title">Motor Girdi Değerleri</span>
+                <span className="card-meta">Anlık snapshot</span>
               </div>
-            ))}
-          </div>
-        </div>
+              <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(100%,140px),1fr))', gap: 10 }}>
+                {inputs.map(({ label, value, baseline, unit }) => {
+                  const numVal = parseFloat(value ?? '0')
+                  const numBase = parseFloat(baseline)
+                  const over = numVal > numBase
+                  return (
+                    <div key={label} style={{ background: 'var(--s2)', border: `1px solid ${over ? 'rgba(242,87,87,.2)' : 'var(--bdr)'}`, borderRadius: 10, padding: '12px 14px' }}>
+                      <p style={{ fontSize: 10, color: 'var(--tx3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>{label}</p>
+                      <p style={{ fontSize: 18, fontWeight: 700, fontFamily: 'JetBrains Mono,monospace', color: over ? 'var(--red)' : 'var(--tx)', letterSpacing: '-.03em' }}>
+                        {value}{unit && <span style={{ fontSize: 11, color: 'var(--tx3)', marginLeft: 2 }}>{unit}</span>}
+                      </p>
+                      <p style={{ fontSize: 10, color: 'var(--tx3)', marginTop: 4 }}>baz: {baseline}{unit}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* İstasyon detayı */}
+            <div className="card">
+              <div className="card-h"><span className="card-title">İstasyon Detayı</span></div>
+              <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[
+                  { label: 'Grill',   val: stations.grill   ?? 0, color: 'var(--amber)' },
+                  { label: 'Fryer',   val: stations.fryer   ?? 0, color: '#f0c040' },
+                  { label: 'Packing', val: stations.packing ?? 0, color: 'var(--ac)' },
+                  { label: 'Kurye',   val: stations.courier ?? 0, color: 'var(--green)' },
+                ].map(({ label, val, color }) => (
+                  <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ width: 56, fontSize: 12, color: 'var(--tx3)', flexShrink: 0 }}>{label}</span>
+                    <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'rgba(255,255,255,0.05)' }}>
+                      <div style={{ height: '100%', borderRadius: 4, width: `${val}%`, background: val >= 80 ? 'var(--red)' : color, transition: 'width .8s ease' }}/>
+                    </div>
+                    <span style={{ width: 32, fontSize: 12, fontFamily: 'JetBrains Mono,monospace', color: val >= 80 ? 'var(--red)' : 'var(--tx3)', textAlign: 'right', flexShrink: 0 }}>{val}</span>
+                    {val >= 80 && <span className="badge badge-red" style={{ fontSize: 9, flexShrink: 0 }}>KRİTİK</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 }
