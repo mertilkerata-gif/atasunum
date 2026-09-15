@@ -350,70 +350,148 @@ function TrackingView({ order, onNewOrder, onKitchen }: { order: LiveOrder; onNe
   const isComplete = order.status === 'COMPLETED'
   const currentStep = getStatusStep(order.status)
   const steps = order.channel === 'DELIVERY' ? STATUS_FLOW.slice(0,9) : STATUS_FLOW.filter(s => !['COURIER_ARRIVED','PICKED_UP'].includes(s))
+  const elapsed = Math.round((Date.now() - new Date(order.createdAt).getTime()) / 60000)
 
   return (
     <div className="dm">
-      <Topbar title="Sipariş Takip" subtitle={order.id}/>
-      <div className="scroll" style={{ padding:'clamp(14px,3vw,24px) clamp(14px,3vw,24px)' }}>
-        <div style={{ maxWidth:520, display:'flex', flexDirection:'column', gap:14 }}>
+      <Topbar title="Sipariş Takip" subtitle={`#${order.id}`}/>
+      <div className="scroll" style={{ padding:'clamp(14px,3vw,24px)' }}>
+        <div style={{ maxWidth:500, margin:'0 auto', display:'flex', flexDirection:'column', gap:14 }}>
 
-          {/* Durum kartı */}
-          <div style={{ background: isComplete?'var(--green2)':'var(--amber2)', border:`1px solid ${isComplete?'var(--green-ln)':'var(--amber-ln)'}`, borderRadius:14, padding:'24px', textAlign:'center' }}>
-            <div style={{ fontSize:40, marginBottom:10 }}>{isComplete ? '🎉' : '⏱️'}</div>
-            <p style={{ fontSize:18, fontWeight:700, color: isComplete?'var(--green)':'var(--amber)', marginBottom:6 }}>{STATUS_LABELS[order.status]}</p>
-            <p style={{ fontSize:13, color:'var(--tx2)', marginBottom:8 }}>{STATUS_DESCRIPTIONS[order.status]}</p>
-            <p style={{ fontSize:11, fontFamily:'JetBrains Mono,monospace', color:'var(--tx3)' }}>#{order.id}</p>
+          {/* Ana durum kartı */}
+          <div style={{
+            borderRadius:16, padding:'22px 24px', textAlign:'center',
+            background: isComplete ? 'var(--green2)' : 'linear-gradient(135deg,var(--s2),var(--s1))',
+            border: `1px solid ${isComplete ? 'var(--green-ln)' : 'rgba(247,144,9,.25)'}`,
+            boxShadow: isComplete ? '0 0 24px rgba(23,178,106,.12)' : '0 0 24px rgba(247,144,9,.08)',
+          }}>
+            <div style={{ fontSize:44, marginBottom:12 }}>
+              {isComplete ? '🎉' : elapsed < 5 ? '📱' : elapsed < 12 ? '🔥' : elapsed < 20 ? '📦' : '🛵'}
+            </div>
+            <p style={{ fontSize:20, fontWeight:700, letterSpacing:'-.3px', marginBottom:6,
+              color: isComplete ? 'var(--green)' : 'var(--amber)' }}>
+              {STATUS_LABELS[order.status]}
+            </p>
+            <p style={{ fontSize:13, color:'var(--tx2)', marginBottom:12 }}>{STATUS_DESCRIPTIONS[order.status]}</p>
+            <div style={{ display:'flex', justifyContent:'center', gap:20 }}>
+              <div style={{ textAlign:'center' }}>
+                <p style={{ fontSize:22, fontWeight:700, fontFamily:'JetBrains Mono,monospace', color:'var(--tx)', letterSpacing:'-.04em' }}>{elapsed}</p>
+                <p style={{ fontSize:10, color:'var(--tx3)', textTransform:'uppercase', letterSpacing:'.08em' }}>Dakika</p>
+              </div>
+              <div style={{ width:1, background:'var(--bdr)' }}/>
+              <div style={{ textAlign:'center' }}>
+                <p style={{ fontSize:22, fontWeight:700, fontFamily:'JetBrains Mono,monospace', color:'var(--ac)', letterSpacing:'-.04em' }}>{order.total} ₺</p>
+                <p style={{ fontSize:10, color:'var(--tx3)', textTransform:'uppercase', letterSpacing:'.08em' }}>Toplam</p>
+              </div>
+              <div style={{ width:1, background:'var(--bdr)' }}/>
+              <div style={{ textAlign:'center' }}>
+                <p style={{ fontSize:22, fontWeight:700, fontFamily:'JetBrains Mono,monospace', color:'var(--tx)', letterSpacing:'-.04em' }}>{steps.filter((_,i)=>i<=currentStep).length}</p>
+                <p style={{ fontSize:10, color:'var(--tx3)', textTransform:'uppercase', letterSpacing:'.08em' }}>Adım</p>
+              </div>
+            </div>
           </div>
 
-          {/* Adımlar */}
-          <div style={{ background:'var(--s1)', border:'1px solid var(--bdr)', borderRadius:12 }}>
-            <div style={{ padding:'12px 18px', borderBottom:'1px solid var(--bdr)' }}>
-              <p style={{ fontSize:10.5, fontWeight:700, color:'var(--tx3)', textTransform:'uppercase', letterSpacing:'.08em' }}>Sipariş Durumu</p>
+          {/* Timeline */}
+          <div className="card">
+            <div className="card-h">
+              <span className="card-title">Sipariş Durumu</span>
+              <span style={{ fontSize:11, color:'var(--tx3)' }}>{steps.filter((_,i)=>i<=currentStep).length}/{steps.length} adım</span>
             </div>
-            <div style={{ padding:'14px 18px', display:'flex', flexDirection:'column', gap:10 }}>
-              {steps.map(step => {
+            <div style={{ padding:'8px 0' }}>
+              {steps.map((step, si) => {
                 const idx = STATUS_FLOW.indexOf(step)
-                const done = idx <= currentStep; const active = idx === currentStep
+                const done   = idx < currentStep
+                const active = idx === currentStep
+                const pending = idx > currentStep
                 const ts = order.statusHistory.find(h => h.status === step)
+                const isLast = si === steps.length - 1
+
                 return (
-                  <div key={step} style={{ display:'flex', alignItems:'center', gap:12 }}>
-                    <div style={{ width:24, height:24, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, border:`2px solid ${done?'var(--green)':active?'var(--amber)':'var(--s4)'}`, background: done?'var(--green2)':active?'var(--amber2)':'transparent', transition:'all .3s' }}>
-                      {done ? <CheckCircle size={13} style={{ color:'var(--green)' }}/> : active ? <div style={{ width:8, height:8, borderRadius:'50%', background:'var(--amber)', animation:'pulse 1.5s ease-in-out infinite' }}/> : null}
+                  <div key={step} style={{ display:'flex', gap:0, alignItems:'stretch' }}>
+                    {/* Sol — indicator + connector */}
+                    <div style={{ width:52, display:'flex', flexDirection:'column', alignItems:'center', flexShrink:0, padding:'12px 0' }}>
+                      {/* Circle */}
+                      <div style={{
+                        width:28, height:28, borderRadius:'50%', flexShrink:0,
+                        display:'flex', alignItems:'center', justifyContent:'center',
+                        border: `2px solid ${done ? 'var(--green)' : active ? 'var(--amber)' : 'var(--s4)'}`,
+                        background: done ? 'var(--green)' : active ? 'rgba(247,144,9,.15)' : 'var(--s2)',
+                        boxShadow: active ? '0 0 12px rgba(247,144,9,.4)' : done ? '0 0 8px rgba(23,178,106,.3)' : 'none',
+                        transition: 'all .3s',
+                        zIndex:1,
+                      }}>
+                        {done   && <span style={{ fontSize:13, color:'#fff' }}>✓</span>}
+                        {active && <div style={{ width:10, height:10, borderRadius:'50%', background:'var(--amber)', animation:'pulse 1.2s ease-in-out infinite' }}/>}
+                        {pending && <div style={{ width:8, height:8, borderRadius:'50%', background:'var(--s4)' }}/>}
+                      </div>
+                      {/* Connector */}
+                      {!isLast && (
+                        <div style={{ width:2, flex:1, minHeight:12, marginTop:2,
+                          background: done ? 'var(--green)' : 'var(--s4)', opacity: done ? .5 : .3,
+                          transition:'background .3s',
+                        }}/>
+                      )}
                     </div>
-                    <div style={{ flex:1 }}>
-                      <p style={{ fontSize:13, color: done||active?'var(--tx)':'var(--tx3)', fontWeight: active?600:400 }}>{STATUS_LABELS[step]}</p>
-                      {ts && <p style={{ fontSize:10.5, color:'var(--tx3)', marginTop:1, fontFamily:'JetBrains Mono,monospace' }}>{new Date(ts.timestamp).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</p>}
+
+                    {/* Sağ — içerik */}
+                    <div style={{ flex:1, padding:'12px 18px 12px 0', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom: !isLast ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
+                      <div>
+                        <p style={{ fontSize:13.5, fontWeight: active ? 600 : done ? 500 : 400,
+                          color: done ? 'var(--tx)' : active ? 'var(--amber)' : 'var(--tx3)' }}>
+                          {STATUS_LABELS[step]}
+                        </p>
+                        {ts && (
+                          <p style={{ fontSize:11, color:'var(--tx3)', marginTop:2, fontFamily:'JetBrains Mono,monospace' }}>
+                            {new Date(ts.timestamp).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
+                          </p>
+                        )}
+                      </div>
+                      {active && (
+                        <div style={{ display:'flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:20,
+                          background:'rgba(247,144,9,.10)', border:'1px solid rgba(247,144,9,.25)' }}>
+                          <div style={{ width:5, height:5, borderRadius:'50%', background:'var(--amber)', animation:'pulse 1.2s ease-in-out infinite' }}/>
+                          <span style={{ fontSize:11, color:'var(--amber)', fontWeight:500 }}>İşleniyor</span>
+                        </div>
+                      )}
+                      {done && ts && (
+                        <span style={{ fontSize:10, color:'var(--green)', opacity:.7 }}>✓</span>
+                      )}
                     </div>
-                    {active && <span style={{ fontSize:11, color:'var(--amber)', animation:'pulse 2s ease-in-out infinite' }}>İşleniyor…</span>}
                   </div>
                 )
               })}
             </div>
           </div>
 
-          {/* Sipariş detay */}
-          <div style={{ background:'var(--s1)', border:'1px solid var(--bdr)', borderRadius:12, padding:'14px 18px' }}>
-            {order.items.map(item => (
-              <div key={item.menuItemId} style={{ display:'flex', justifyContent:'space-between', fontSize:13, color:'var(--tx2)', marginBottom:6 }}>
-                <span>{item.qty}x {item.name}</span>
-                <span style={{ fontFamily:'JetBrains Mono,monospace' }}>{item.price * item.qty} ₺</span>
+          {/* Ürünler */}
+          <div className="card">
+            <div className="card-h"><span className="card-title">Sipariş İçeriği</span></div>
+            <div style={{ padding:'12px 20px' }}>
+              {order.items.map(item => (
+                <div key={item.menuItemId} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'6px 0', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
+                  <span style={{ fontSize:13, color:'var(--tx2)' }}>{item.qty}× {item.name}</span>
+                  <span style={{ fontSize:13, fontFamily:'JetBrains Mono,monospace', color:'var(--tx)', fontWeight:500 }}>{item.price*item.qty} ₺</span>
+                </div>
+              ))}
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', paddingTop:10, marginTop:4 }}>
+                <span style={{ fontSize:14, fontWeight:700, color:'var(--tx)' }}>Toplam</span>
+                <span style={{ fontSize:18, fontWeight:700, fontFamily:'JetBrains Mono,monospace', color:'var(--ac)', letterSpacing:'-.03em' }}>{order.total} ₺</span>
               </div>
-            ))}
-            <div style={{ display:'flex', justifyContent:'space-between', paddingTop:10, borderTop:'1px solid var(--bdr)', fontWeight:700 }}>
-              <span style={{ color:'var(--tx)' }}>Toplam</span>
-              <span style={{ fontFamily:'JetBrains Mono,monospace', color:'var(--ac)' }}>{order.total} ₺</span>
+              {order.channel === 'DELIVERY' && order.courierName && (
+                <div style={{ marginTop:10, paddingTop:10, borderTop:'1px solid var(--bdr)', display:'flex', alignItems:'center', gap:6 }}>
+                  <Truck size={12} style={{ color:'var(--tx3)' }}/>
+                  <span style={{ fontSize:12, color:'var(--tx3)' }}>Kurye: <strong style={{ color:'var(--tx2)' }}>{order.courierName}</strong></span>
+                </div>
+              )}
             </div>
-            {order.channel === 'DELIVERY' && order.courierName && (
-              <div style={{ marginTop:10, paddingTop:10, borderTop:'1px solid var(--bdr)', display:'flex', alignItems:'center', gap:6, fontSize:12, color:'var(--tx3)' }}>
-                <Truck size={12}/> Kuryeniz: <strong style={{ color:'var(--tx2)' }}>{order.courierName}</strong>
-              </div>
-            )}
           </div>
 
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 , overflowX: "auto"}}>
-            <button onClick={onKitchen} style={{ ...S.ghost, justifyContent:'center' }}><Store size={14}/> Mutfak</button>
-            <button onClick={onNewOrder} style={{ ...S.btn }}>+ Yeni Sipariş</button>
+          {/* Butonlar */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+            <button onClick={onKitchen} style={{ ...S.ghost, justifyContent:'center', padding:'11px' }}><Store size={14}/> Mutfak</button>
+            <button onClick={onNewOrder} style={{ ...S.btn, justifyContent:'center' }}>+ Yeni Sipariş</button>
           </div>
+
         </div>
       </div>
     </div>
