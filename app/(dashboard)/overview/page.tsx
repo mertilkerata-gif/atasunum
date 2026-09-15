@@ -154,7 +154,7 @@ export default function OverviewPage() {
       <div className="scroll" style={{ padding:'clamp(14px,3vw,24px)', display:'flex', flexDirection:'column', gap:16 }}>
 
         {/* AI Otopilot */}
-        <AIAutopilot interval={30}/>
+        <AIAutopilot interval={30} onRefresh={load}/>
 
         {/* AI Error */}
         {aiError && (
