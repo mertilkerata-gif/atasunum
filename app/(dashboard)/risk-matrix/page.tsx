@@ -142,7 +142,7 @@ export default function RiskMatrixPage() {
                     style={{ borderColor: 'var(--bdr)' }}>
                     <div className="w-2 h-2 rounded-full shrink-0" style={{ background: config.colorHex }} />
                     <span className="text-xs flex-1 truncate">{d.restaurant.name.replace('Burger King ','BK ').replace('Popeyes ','Pop.')}</span>
-                    <span className={cn('text-xs font-bold font-mono', config.color)}>{d.pulse.score}</span>
+                    <span className="text-xs font-bold font-mono">{d.pulse.score}</span>
                   </div>
                 )
               })}

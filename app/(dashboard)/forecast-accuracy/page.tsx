@@ -75,8 +75,7 @@ export default function ForecastAccuracyPage() {
         <div className="flex items-center gap-2">
           {[{ v: 'today', l: 'Bugün' }, { v: '7d', l: '7 Gün' }, { v: '30d', l: '30 Gün' }].map(({ v, l }) => (
             <button key={v} onClick={() => setPeriod(v as typeof period)}
-              className={cn('px-4 py-2 rounded-lg border text-sm font-medium transition-all',
-                period === v ? 'border-orange-500/50 bg-orange-500/15 text-orange-300' : 'border-white/[0.08] text-white/40 hover:text-white/60')}>
+              className="px-4 py-2 rounded-lg border text-sm font-medium transition-all">
               {l}
             </button>
           ))}
@@ -97,9 +96,9 @@ export default function ForecastAccuracyPage() {
             { label: 'Doğruluk', value: `%${accuracy}`, desc: '100 - MAPE', color: 'text-emerald-400', good: true },
             { label: 'Tahmin Sayısı', value: ACCURACY_DATA.length.toString(), desc: 'bugün değerlendirilen', color: 'text-white', good: true },
           ].map(({ label, value, desc, color, good }) => (
-            <div key={label} className={cn('rounded-xl border p-4', good ? 'border-white/[0.08] bg-white/[0.04]' : 'border-orange-500/20 bg-orange-500/[0.04]')}>
+            <div key={label} className="rounded-xl border p-4">
               <div className="text-xs uppercase tracking-wide mb-1">{label}</div>
-              <div className={cn('text-2xl font-bold tabular-nums', color)}>{value}</div>
+              <div className="text-2xl font-bold tabular-nums">{value}</div>
               <div className="text-xs mt-0.5">{desc}</div>
             </div>
           ))}
@@ -149,10 +148,10 @@ export default function ForecastAccuracyPage() {
                   <div className="w-20">
                     <div className="flex items-center gap-1.5">
                       <div className="flex-1 h-1 rounded-full overflow-hidden">
-                        <div className={cn('h-full rounded-full', r.accuracy >= 93 ? 'bg-emerald-500' : r.accuracy >= 90 ? 'bg-yellow-500' : 'bg-orange-500')}
+                        <div className="h-full rounded-full"
                           style={{ width: `${r.accuracy - 80}%` }} />
                       </div>
-                      <span className={cn('text-xs font-bold w-10 text-right', r.accuracy >= 93 ? 'text-emerald-400' : r.accuracy >= 90 ? 'text-yellow-400' : 'text-orange-400')}>
+                      <span className="text-xs font-bold w-10 text-right">
                         %{r.accuracy}
                       </span>
                     </div>

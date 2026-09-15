@@ -40,9 +40,9 @@ export default function MemoryPage() {
             <div key={label} className="card" style={{ padding: "20px" }}>
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[10px] uppercase tracking-widest">{label}</span>
-                <span className={cn('opacity-40', color)}>{icon}</span>
+                <span className="opacity-40">{icon}</span>
               </div>
-              <div className={cn('text-2xl font-bold font-mono', color)}>{value}</div>
+              <div className="text-2xl font-bold font-mono">{value}</div>
               <div className="text-[11px] mt-1">{unit}</div>
             </div>
           ))}
@@ -52,8 +52,7 @@ export default function MemoryPage() {
         <div className="flex gap-1 border rounded-xl p-1" style={{ background: 'var(--s2)', width: 'fit-content' }}>
           {[{ id: 'history', label: '📋 Aksiyon Geçmişi' }, { id: 'patterns', label: '🧠 Öğrenilen Örüntüler' }].map(t => (
             <button key={t.id} onClick={() => setTab(t.id as any)}
-              className={cn('px-5 py-2.5 rounded-lg text-xs font-medium transition-all',
-                tab === t.id ? 'bg-orange-500/15 border border-orange-500/25 text-orange-300' : 'text-white/40 hover:text-white/60')}>
+              className="px-5 py-2.5 rounded-lg text-xs font-medium transition-all">
               {t.label}
             </button>
           ))}
