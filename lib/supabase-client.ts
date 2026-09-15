@@ -95,7 +95,12 @@ export async function fetchForecasts(restaurantId?:string, date?:string) {
   const d = date ?? new Date().toISOString().split('T')[0]
   let q = sb().from('forecasts').select('*').eq('forecast_date',d).order('hour')
   if(restaurantId) q = q.eq('restaurant_id',restaurantId) as any
-  return rows(q as any)
+  const data = await rows(q as any)
+  if (data.length) return data
+  // Bugün için veri yoksa en son tarihli verileri getir
+  let q2 = sb().from('forecasts').select('*').order('forecast_date',{ascending:false}).order('hour').limit(restaurantId ? 16 : 160)
+  if(restaurantId) q2 = q2.eq('restaurant_id',restaurantId) as any
+  return rows(q2 as any)
 }
 
 // Audit
