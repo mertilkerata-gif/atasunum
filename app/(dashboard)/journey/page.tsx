@@ -62,25 +62,40 @@ export default function JourneyPage() {
             <span className="card-title">Sipariş Akış Haritası</span>
             <span className="card-meta">{STEPS.length} adım</span>
           </div>
-          <div style={{ padding:'32px 28px 24px', overflowX:'auto' }}>
-            <div style={{ minWidth:560, position:'relative' }}>
-              {/* Steps row */}
-              <div style={{ display:'flex', alignItems:'flex-start', gap:0 }}>
+          <div style={{ overflowX:'auto', padding:'0 8px' }}>
+            <div style={{ minWidth:620, padding:'40px 20px 28px' }}>
+              {/* Connector çizgisi — circle'ların tam ortasında */}
+              <div style={{ position:'relative', display:'flex', alignItems:'flex-start' }}>
+                {/* Arka plan connector */}
+                <div style={{
+                  position:'absolute',
+                  top:30, /* circle height/2 = 30 */
+                  left: `${100/STEPS.length/2}%`,
+                  right: `${100/STEPS.length/2}%`,
+                  height:2,
+                  background:'rgba(255,255,255,0.06)',
+                  zIndex:0,
+                }}/>
+
                 {STEPS.map((step, i) => {
                   const d = steps[i]
-                  const isLast = i === STEPS.length - 1
                   const barColor = d.bottleneck ? 'var(--red)' : step.color
-                  const circleBg = d.bottleneck ? 'rgba(242,87,87,0.12)' : `${step.color}18`
-                  const circleBorder = d.bottleneck ? 'rgba(242,87,87,0.6)' : `${step.color}70`
+                  const circleBg = d.bottleneck ? 'rgba(242,87,87,0.10)' : `${step.color}15`
+                  const circleBorder = d.bottleneck ? '#f25757' : `${step.color}90`
 
                   return (
-                    <div key={step.key} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', position:'relative' }}>
-                      {/* Connector line (before circle) */}
+                    <div key={step.key} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', position:'relative', zIndex:1 }}>
+                      {/* Renkli connector segment (önceki ile bu arasında) */}
                       {i > 0 && (
                         <div style={{
-                          position:'absolute', top:30, right:'50%', left:'-50%', height:2,
-                          background: steps[i-1].bottleneck||d.bottleneck ? 'rgba(242,87,87,0.35)' : 'rgba(255,255,255,0.08)',
-                          zIndex:0,
+                          position:'absolute',
+                          top:30,
+                          right:'50%', left:'-50%',
+                          height:2, zIndex:0,
+                          background: (steps[i-1].bottleneck || d.bottleneck)
+                            ? 'rgba(242,87,87,0.40)'
+                            : `${step.color}35`,
+                          transition:'background .5s',
                         }}/>
                       )}
 
@@ -88,55 +103,56 @@ export default function JourneyPage() {
                       <div style={{
                         width:60, height:60, borderRadius:'50%',
                         background:circleBg,
-                        border:`2.5px solid ${circleBorder}`,
+                        border:`2px solid ${circleBorder}`,
                         display:'flex', alignItems:'center', justifyContent:'center',
-                        fontSize:26, position:'relative', zIndex:1, marginBottom:10,
-                        boxShadow: d.bottleneck ? '0 0 20px rgba(242,87,87,0.35)' : `0 0 12px ${step.color}22`,
-                        flexShrink:0,
-                        transition:'transform .2s',
+                        fontSize:24, position:'relative', zIndex:2,
+                        marginBottom:14, flexShrink:0,
+                        boxShadow: d.bottleneck
+                          ? '0 0 20px rgba(242,87,87,0.4), 0 0 0 4px rgba(242,87,87,0.08)'
+                          : `0 0 14px ${step.color}25`,
                       }}>
                         {step.icon}
                         {d.bottleneck && (
                           <div style={{
-                            position:'absolute', top:-3, right:-3, width:20, height:20,
-                            borderRadius:'50%', background:'var(--red)',
+                            position:'absolute', top:-4, right:-4,
+                            width:20, height:20, borderRadius:'50%',
+                            background:'#f25757',
                             display:'flex', alignItems:'center', justifyContent:'center',
-                            fontSize:10, fontWeight:800, color:'#fff',
-                            boxShadow:'0 0 8px rgba(242,87,87,0.7)',
-                            border:'2px solid var(--bg)',
+                            fontSize:11, fontWeight:900, color:'#fff',
+                            boxShadow:'0 0 10px rgba(242,87,87,0.8)',
+                            border:'2px solid var(--s1)',
+                            zIndex:3,
                           }}>!</div>
                         )}
                       </div>
 
                       {/* Duration bar */}
-                      <div style={{ width:'85%', marginBottom:8 }}>
-                        <div style={{ height:5, borderRadius:3, background:'rgba(255,255,255,0.06)', overflow:'hidden' }}>
+                      <div style={{ width:'78%', marginBottom:8 }}>
+                        <div style={{ height:4, borderRadius:2, background:'rgba(255,255,255,0.06)' }}>
                           <div style={{
-                            height:'100%', borderRadius:3,
+                            height:'100%', borderRadius:2,
                             width:`${(d.min/maxMin)*100}%`,
                             background:barColor,
-                            boxShadow: d.bottleneck ? `0 0 8px ${barColor}` : 'none',
-                            transition:'width .7s ease',
+                            boxShadow: d.bottleneck ? `0 0 6px ${barColor}` : 'none',
+                            transition:'width .8s ease',
                           }}/>
                         </div>
                       </div>
 
                       {/* Labels */}
-                      <div style={{ textAlign:'center', padding:'0 4px' }}>
-                        <p style={{ fontSize:11.5, fontWeight:600, color:d.bottleneck?'var(--red)':'var(--tx2)', marginBottom:3 }}>
+                      <div style={{ textAlign:'center', padding:'0 2px' }}>
+                        <p style={{ fontSize:11, fontWeight:600, marginBottom:2,
+                          color:d.bottleneck?'#f25757':'var(--tx2)' }}>
                           {step.label}
                         </p>
-                        <p style={{ fontSize:18, fontWeight:700, fontFamily:'JetBrains Mono,monospace', color:d.bottleneck?'var(--red)':'var(--tx)', letterSpacing:'-.04em', lineHeight:1, marginBottom:3 }}>
-                          {d.min}<span style={{ fontSize:10, color:'var(--tx3)', marginLeft:2 }}>dk</span>
+                        <p style={{ fontSize:17, fontWeight:700, fontFamily:'JetBrains Mono,monospace',
+                          color:d.bottleneck?'#f25757':'var(--tx)', letterSpacing:'-.03em', lineHeight:1, marginBottom:2 }}>
+                          {d.min}
+                          <span style={{ fontSize:10, color:'var(--tx3)', marginLeft:2 }}>dk</span>
                         </p>
-                        {step.target && d.bottleneck && (
-                          <p style={{ fontSize:9.5, color:'var(--red)', opacity:.8 }}>hedef: {step.target}dk</p>
-                        )}
-                        {!d.bottleneck && (
-                          <p style={{ fontSize:9, color:'var(--tx3)' }}>
-                            {step.key==='order'?'sipariş':step.key==='kds'?'KDS':step.key==='prep'?'ızgara/fryer':step.key==='packing'?'kutulama':step.key==='ready'?'hazır':step.key==='courier'?'bekleme':'teslimat'}
-                          </p>
-                        )}
+                        <p style={{ fontSize:9, color:'var(--tx3)' }}>
+                          {step.target && d.bottleneck ? `hedef: ${step.target}dk` : step.key==='order'?'sipariş':step.key==='kds'?'KDS':step.key==='prep'?'ızgara':step.key==='packing'?'kutulama':step.key==='ready'?'hazır':step.key==='courier'?'bekleme':'teslimat'}
+                        </p>
                       </div>
                     </div>
                   )
