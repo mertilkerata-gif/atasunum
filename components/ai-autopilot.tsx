@@ -27,7 +27,7 @@ interface Props {
 }
 
 export function AIAutopilot({ interval = 30 }: Props) {
-  const [running, setRunning] = useState(false)
+  const [running, setRunning] = useState(true)
   const [muted, setMuted] = useState(false)
   const [listening, setListening] = useState(false)
   const [expanded, setExpanded] = useState(true)
@@ -183,6 +183,23 @@ export function AIAutopilot({ interval = 30 }: Props) {
       if (countRef.current) clearInterval(countRef.current)
     }
   }, [running, interval])
+
+  // Sayfa açılınca otomatik başlat — key yoksa bekle
+  useEffect(() => {
+    const checkAndStart = () => {
+      const key = getOpenAIKey()
+      if (key) {
+        setRunning(true)
+        addLog('🚀 Otopilot otomatik başlatıldı')
+      } else {
+        setRunning(false)
+        addLog('⚠️ OpenAI key bulunamadı — Ayarlar > API Anahtarları')
+      }
+    }
+    // Kısa gecikme — sayfa mount sonrası
+    const t = setTimeout(checkAndStart, 1500)
+    return () => clearTimeout(t)
+  }, [])
 
   const toggle = () => {
     if (running) {
