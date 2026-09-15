@@ -180,6 +180,9 @@ export function AIAutopilot({ interval = 30 }: Props) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ api_key: apiKey, auto_apply: true }),
+              }).then(r => r.json()).then(data => {
+                const updates = data.pulse_updates || []
+                updates.forEach((u: any) => addLog(`📊 ${u.restaurant_id}: ${u.old_score} → ${u.new_score} (${u.new_risk})`))
               }).catch(() => {})
               addLog(`✅ ONAYLANDI: ${decision.restaurant_id} — ${decision.action}`)
               speak(`Tamam. ${decision.action}. Uygulandı.`, processNext)
