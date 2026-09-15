@@ -41,7 +41,7 @@ export default function ExplainerPage() {
       <div className="p-6 space-y-5 max-w-4xl">
 
         <select value={restaurantId} onChange={e => setRestaurantId(e.target.value)}
-          className="rounded-xl border px-4 py-2.5 text-sm text-white outline-none"
+          className="rounded-xl border px-4 py-2.5 text-sm outline-none"
           style={{ background: 'var(--s1)', borderColor: 'rgba(255,255,255,0.1)' }}>
           {RESTAURANTS.map(r => <option key={r.id} value={r.id} style={{ background: 'var(--s2)' }}>{r.name}</option>)}
         </select>
@@ -129,7 +129,7 @@ export default function ExplainerPage() {
             ].map(({ label, value, baseline, unit }) => (
               <div key={label} className="card" style={{ padding: 12 }}>
                 <div className="text-[10px] uppercase tracking-wider mb-1">{label}</div>
-                <div className="text-lg font-bold font-mono text-white">{value}{unit}</div>
+                <div className="text-lg font-bold font-mono">{value}{unit}</div>
                 <div className="text-[10px] mt-0.5">baz: {baseline}{unit}</div>
               </div>
             ))}

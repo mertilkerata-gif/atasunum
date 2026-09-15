@@ -1,104 +1,111 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Topbar } from '@/components/layout/topbar'
-import { cn } from '@/lib/utils'
-import { CheckCircle, AlertTriangle, XCircle, RefreshCw, Loader2 } from 'lucide-react'
+import { getSupabase } from '@/lib/supabase-client'
+import { RefreshCw, CheckCircle2, XCircle, AlertTriangle, Activity } from 'lucide-react'
 
-interface ServiceStatus { name: string; status: 'ok' | 'warn' | 'down'; latency?: number; lastCheck: string; detail: string; icon: string }
+const SERVICES = [
+  { id: 'supabase', label: 'Supabase DB', test: async () => { const { error } = await getSupabase().from('restaurants').select('id').limit(1); return !error } },
+  { id: 'pulse',    label: 'Pulse API',   test: async () => { const { data } = await getSupabase().from('pulse_scores').select('id').limit(1); return (data?.length ?? 0) > 0 } },
+  { id: 'orders',   label: 'Siparişler',  test: async () => { const { error } = await getSupabase().from('orders').select('id').limit(1); return !error } },
+  { id: 'anomaly',  label: 'Anomali',     test: async () => { const { error } = await getSupabase().from('anomalies').select('id').limit(1); return !error } },
+  { id: 'revenue',  label: 'Ciro',        test: async () => { const { error } = await getSupabase().from('daily_revenue').select('id').limit(1); return !error } },
+  { id: 'shifts',   label: 'Vardiyalar',  test: async () => { const { error } = await getSupabase().from('shifts').select('id').limit(1); return !error } },
+  { id: 'products', label: 'Ürünler',     test: async () => { const { error } = await getSupabase().from('products').select('id').limit(1); return !error } },
+  { id: 'audit',    label: 'Audit Log',   test: async () => { const { error } = await getSupabase().from('audit_logs').select('id').limit(1); return !error } },
+]
 
-function generateStatus(): ServiceStatus[] {
-  const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-  return [
-    { name: 'Supabase Database', status: 'ok',   latency: 12,  lastCheck: now, detail: 'Tüm tablolar erişilebilir', icon: '🗄️' },
-    { name: 'Supabase Realtime', status: 'ok',   latency: 8,   lastCheck: now, detail: 'WebSocket bağlantısı aktif', icon: '⚡' },
-    { name: 'OpenAI API',        status: 'ok',   latency: 340, lastCheck: now, detail: 'GPT-4o yanıt veriyor', icon: '🤖' },
-    { name: 'n8n Workflow',      status: 'warn', latency: 1240,lastCheck: now, detail: 'Son snapshot 7 dk önce — gecikme var', icon: '⚙️' },
-    { name: 'WhatsApp API',      status: 'ok',   latency: 180, lastCheck: now, detail: 'Business API bağlı', icon: '💬' },
-    { name: 'Webhook Endpoint',  status: 'ok',   latency: 28,  lastCheck: now, detail: '/api/webhook/snapshot aktif', icon: '🔗' },
-    { name: 'Pulse Engine',      status: 'ok',   latency: 3,   lastCheck: now, detail: 'Rule-based engine çalışıyor', icon: '💓' },
-    { name: 'Vercel Edge',       status: 'ok',   latency: 18,  lastCheck: now, detail: 'CDN ve edge functions aktif', icon: '▲' },
-  ]
-}
+type Status = 'unknown' | 'ok' | 'error' | 'checking'
 
 export default function HealthPage() {
-  const [services, setServices] = useState<ServiceStatus[]>(generateStatus())
-  const [checking, setChecking] = useState(false)
-  const [lastFull, setLastFull] = useState(new Date().toLocaleTimeString('tr-TR'))
+  const [statuses, setStatuses] = useState<Record<string, { status: Status; latency?: number }>>({})
+  const [lastCheck, setLastCheck] = useState<Date | null>(null)
 
-  const recheck = async () => {
-    setChecking(true)
-    await new Promise(r => setTimeout(r, 1800))
-    setServices(generateStatus())
-    setLastFull(new Date().toLocaleTimeString('tr-TR'))
-    setChecking(false)
+  const check = useCallback(async () => {
+    setStatuses(prev => Object.fromEntries(SERVICES.map(s => [s.id, { status: 'checking' as Status }])))
+    await Promise.all(SERVICES.map(async svc => {
+      const start = Date.now()
+      try {
+        const ok = await svc.test()
+        const latency = Date.now() - start
+        setStatuses(prev => ({ ...prev, [svc.id]: { status: ok ? 'ok' : 'error', latency } }))
+      } catch {
+        setStatuses(prev => ({ ...prev, [svc.id]: { status: 'error', latency: Date.now() - start } }))
+      }
+    }))
+    setLastCheck(new Date())
+  }, [])
+
+  useEffect(() => { check() }, [check])
+
+  const allOk = Object.values(statuses).every(s => s.status === 'ok')
+  const errCount = Object.values(statuses).filter(s => s.status === 'error').length
+  const avgLatency = Object.values(statuses).filter(s => s.latency).reduce((s, v) => s + (v.latency ?? 0), 0) / (Object.values(statuses).filter(s => s.latency).length || 1)
+
+  const StatusIcon = ({ status }: { status: Status }) => {
+    if (status === 'checking') return <div style={{ width: 14, height: 14, border: '2px solid var(--bdr)', borderTopColor: 'var(--ac)', borderRadius: '50%', animation: 'spin .7s linear infinite' }}/>
+    if (status === 'ok') return <CheckCircle2 size={14} style={{ color: 'var(--green)' }}/>
+    if (status === 'error') return <XCircle size={14} style={{ color: 'var(--red)' }}/>
+    return <AlertTriangle size={14} style={{ color: 'var(--tx3)' }}/>
   }
-
-  useEffect(() => { const t = setInterval(() => setServices(generateStatus()), 15000); return () => clearInterval(t) }, [])
-
-  const ok = services.filter(s => s.status === 'ok').length
-  const warn = services.filter(s => s.status === 'warn').length
-  const down = services.filter(s => s.status === 'down').length
-
-  const StatusIcon = ({ status }: { status: string }) =>
-    status === 'ok' ? <CheckCircle className="w-5 h-5 text-emerald-400" /> :
-    status === 'warn' ? <AlertTriangle className="w-5 h-5 text-yellow-400" /> :
-    <XCircle className="w-5 h-5 text-red-400" />
 
   return (
     <div className="dm">
-      <Topbar title="Sistem Sağlığı" subtitle="Entegrasyon ve servis durumu" />
-      <div className="p-6 space-y-5 max-w-3xl">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 rounded-xl border px-4 py-2"
-              style={{ background: down > 0 ? 'rgba(255,61,61,0.08)' : warn > 0 ? 'rgba(234,179,8,0.08)' : 'rgba(34,197,94,0.08)', borderColor: down > 0 ? 'rgba(255,61,61,0.2)' : warn > 0 ? 'rgba(234,179,8,0.2)' : 'rgba(34,197,94,0.2)' }}>
-              <div className={cn('w-2.5 h-2.5 rounded-full', down > 0 ? 'bg-red-500' : warn > 0 ? 'bg-yellow-400' : 'bg-emerald-400')}
-                style={{ boxShadow: `0 0 8px ${down > 0 ? 'rgba(255,61,61,0.8)' : warn > 0 ? 'rgba(234,179,8,0.8)' : 'rgba(34,197,94,0.8)'}` }} />
-              <span className={cn('text-sm font-semibold', down > 0 ? 'text-red-400' : warn > 0 ? 'text-yellow-400' : 'text-emerald-400')}>
-                {down > 0 ? 'Servis Kesintisi' : warn > 0 ? 'Uyarı Var' : 'Tüm Sistemler Aktif'}
-              </span>
-            </div>
-            <span className="text-xs">Son kontrol: {lastFull}</span>
+      <Topbar title="Sistem Sağlığı" subtitle="Supabase servis durumu"
+        action={<button onClick={check} className="btn-ghost" style={{ padding: '5px 12px', fontSize: 12 }}><RefreshCw size={12}/> Kontrol Et</button>}
+      />
+      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+        {/* Genel durum */}
+        <div style={{ background: allOk ? 'var(--green2)' : 'var(--red2)', border: `1px solid ${allOk ? 'var(--green-ln)' : 'var(--red-ln)'}`, borderRadius: 14, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ width: 44, height: 44, borderRadius: '50%', background: allOk ? 'rgba(23,178,106,.15)' : 'rgba(242,87,87,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            {allOk ? <CheckCircle2 size={22} style={{ color: 'var(--green)' }}/> : <XCircle size={22} style={{ color: 'var(--red)' }}/>}
           </div>
-          <button onClick={recheck} disabled={checking}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border text-xs transition-all hover:"
-            style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
-            {checking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-            Yeniden Kontrol Et
-          </button>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 16, fontWeight: 700, color: allOk ? 'var(--green)' : 'var(--red)', marginBottom: 4 }}>
+              {allOk ? 'Tüm Sistemler Çalışıyor' : `${errCount} Servis Hatalı`}
+            </p>
+            <p style={{ fontSize: 12, color: 'var(--tx2)' }}>
+              {lastCheck ? `Son kontrol: ${lastCheck.toLocaleTimeString('tr-TR')}` : 'Kontrol ediliyor…'}
+            </p>
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <p style={{ fontSize: 22, fontWeight: 700, fontFamily: 'JetBrains Mono,monospace', color: 'var(--tx)' }}>{Math.round(avgLatency)}<span style={{ fontSize: 12, color: 'var(--tx3)', marginLeft: 2 }}>ms</span></p>
+            <p style={{ fontSize: 11, color: 'var(--tx3)' }}>Ort. Gecikme</p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
-          {[{ label: 'Aktif', count: ok, color: 'text-emerald-400' }, { label: 'Uyarı', count: warn, color: 'text-yellow-400' }, { label: 'Kesinti', count: down, color: 'text-red-400' }].map(({ label, count, color }) => (
-            <div key={label} className="card" style={{ padding: 16 }}>
-              <div className={cn('text-3xl font-bold font-mono', color)}>{count}</div>
-              <div className="text-[10px] mt-1 uppercase tracking-widest">{label}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="card" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
-          <div className="divide-y" style={{ borderColor: 'var(--bdr)' }}>
-            {services.map(s => (
-              <div key={s.name} className="flex items-center gap-4 px-6 py-4">
-                <span className="text-xl shrink-0">{s.icon}</span>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{s.name}</span>
-                    {s.status === 'warn' && <span className="text-[9px] bg-yellow-500/15 text-yellow-300 border border-yellow-500/20 px-1.5 py-0.5 rounded font-medium">UYARI</span>}
+        {/* Servis listesi */}
+        <div className="card">
+          <div className="card-h"><span className="card-title">Servis Durumları</span><span className="card-meta">{SERVICES.length} servis</span></div>
+          <div>
+            {SERVICES.map(svc => {
+              const s = statuses[svc.id] ?? { status: 'unknown' as Status }
+              return (
+                <div key={svc.id} className="row" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <StatusIcon status={s.status}/>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--tx)' }}>{svc.label}</p>
+                    <p style={{ fontSize: 11, color: 'var(--tx3)', marginTop: 1 }}>Supabase · {svc.id}</p>
                   </div>
-                  <span className="text-xs">{s.detail}</span>
+                  {s.latency && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                      <div className="prog" style={{ width: 60 }}>
+                        <div className="prog-fill" style={{ width: `${Math.min(100, s.latency / 5)}%`, background: s.latency > 300 ? 'var(--red)' : s.latency > 100 ? 'var(--amber)' : 'var(--green)' }}/>
+                      </div>
+                      <span style={{ fontSize: 11, fontFamily: 'JetBrains Mono,monospace', color: 'var(--tx3)', width: 40, textAlign: 'right' }}>{s.latency}ms</span>
+                    </div>
+                  )}
+                  <span className={`badge badge-${s.status === 'ok' ? 'green' : s.status === 'error' ? 'red' : s.status === 'checking' ? 'ac' : 'muted'}`} style={{ fontSize: 10, flexShrink: 0 }}>
+                    {s.status === 'checking' ? 'Test…' : s.status === 'ok' ? 'OK' : s.status === 'error' ? 'HATA' : '?'}
+                  </span>
                 </div>
-                <div className="text-right shrink-0">
-                  {s.latency && <div className="text-xs font-mono mb-1">{s.latency}ms</div>}
-                  <div className="text-[10px]">{s.lastCheck}</div>
-                </div>
-                <StatusIcon status={s.status} />
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </div>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 }

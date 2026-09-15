@@ -45,13 +45,13 @@ function calcMAPE(data: typeof ACCURACY_DATA) {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-[#1a1a2e] border rounded-lg px-3 py-2 text-xs">
+    <div className=" border rounded-lg px-3 py-2 text-xs">
       <div className="mb-1">{label}</div>
       {payload.map((p: any) => (
         <div key={p.name} className="flex items-center gap-2 mt-0.5">
           <span style={{ color: p.color }}>●</span>
           <span >{p.name}:</span>
-          <span className="text-white font-semibold">{p.value}</span>
+          <span className="font-semibold">{p.value}</span>
         </div>
       ))}
     </div>
@@ -82,9 +82,9 @@ export default function ForecastAccuracyPage() {
           ))}
           <div className="ml-auto">
             <select value={restaurantFilter} onChange={e => setRestaurantFilter(e.target.value)}
-              className="border text-white text-sm rounded-lg px-3 py-1.5 outline-none">
-              <option value="all" className="bg-[#1a1a2e]">Tüm Restoranlar</option>
-              {RESTAURANTS.map(r => <option key={r.id} value={r.id} className="bg-[#1a1a2e]">{r.name}</option>)}
+              className="border text-sm rounded-lg px-3 py-1.5 outline-none">
+              <option value="all" >Tüm Restoranlar</option>
+              {RESTAURANTS.map(r => <option key={r.id} value={r.id} >{r.name}</option>)}
             </select>
           </div>
         </div>
@@ -106,7 +106,7 @@ export default function ForecastAccuracyPage() {
         </div>
 
         {/* Main comparison chart */}
-        <div className="rounded-xl border p-5">
+        <div className="card" style={{ padding: 20 }}>
           <div className="text-xs uppercase tracking-wide font-medium mb-4">Tahmin vs Gerçekleşen — Saatlik</div>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={ACCURACY_DATA}>
@@ -123,7 +123,7 @@ export default function ForecastAccuracyPage() {
 
         <div className="grid grid-cols-2 gap-5">
           {/* Weekly accuracy trend */}
-          <div className="rounded-xl border p-5">
+          <div className="card" style={{ padding: 20 }}>
             <div className="text-xs uppercase tracking-wide font-medium mb-4">Haftalık Doğruluk Trendi</div>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={WEEKLY_ACCURACY}>
@@ -137,7 +137,7 @@ export default function ForecastAccuracyPage() {
           </div>
 
           {/* Restaurant accuracy table */}
-          <div className="rounded-xl border p-5">
+          <div className="card" style={{ padding: 20 }}>
             <div className="text-xs uppercase tracking-wide font-medium mb-4">Restoran Bazlı Doğruluk</div>
             <div className="space-y-2">
               {RESTAURANT_ACCURACY.sort((a, b) => b.accuracy - a.accuracy).map(r => (
@@ -164,7 +164,7 @@ export default function ForecastAccuracyPage() {
         </div>
 
         {/* Error distribution */}
-        <div className="rounded-xl border p-5">
+        <div className="card" style={{ padding: 20 }}>
           <div className="text-xs uppercase tracking-wide font-medium mb-4">Hata Dağılımı (Tahmin − Gerçek)</div>
           <ResponsiveContainer width="100%" height={140}>
             <BarChart data={ACCURACY_DATA}>

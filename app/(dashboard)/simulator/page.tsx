@@ -89,7 +89,7 @@ export default function SimulatorPage() {
       <div className="p-6 max-w-5xl space-y-6">
 
         {/* Restoran seç */}
-        <div className="rounded-xl border p-5">
+        <div className="card" style={{ padding: 20 }}>
           <div className="text-xs uppercase tracking-wide font-medium mb-3">Restoran</div>
           <div className="grid grid-cols-5 gap-2">
             {RESTAURANTS.map(r => {
@@ -147,16 +147,16 @@ export default function SimulatorPage() {
             </div>
 
             <button onClick={runSimulation} disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white rounded-lg py-2.5 text-sm font-semibold transition-colors">
+              className="w-full flex items-center justify-center gap-2 hover: disabled:opacity-50 rounded-lg py-2.5 text-sm font-semibold transition-colors">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
               {loading ? 'Hesaplanıyor...' : 'Simülasyonu Çalıştır'}
             </button>
 
-            {error && <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3">{error}</div>}
+            {error && <div className="text-xs bg-red-500/10 border border-red-500/20 rounded-lg p-3">{error}</div>}
           </div>
 
           {/* Sonuçlar */}
-          <div className="rounded-xl border p-5">
+          <div className="card" style={{ padding: 20 }}>
             <div className="text-xs uppercase tracking-wide font-medium mb-4">Karşılaştırma</div>
             <div className="grid grid-cols-2 gap-4 mb-5">
               <div className={cn('rounded-xl border p-4', origConfig.bg, origConfig.border)}>
@@ -195,7 +195,7 @@ export default function SimulatorPage() {
                   </div>
                 </div>
                 {result.delta.risk_improved && (
-                  <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/[0.06] p-3 text-xs text-emerald-300">
+                  <div className="rounded-lg border border-emerald-500/30 p-3 text-xs">
                     ✓ Risk seviyesi düştü: {result.current.risk_level} → {result.simulated.risk_level}
                   </div>
                 )}

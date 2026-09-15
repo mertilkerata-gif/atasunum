@@ -99,16 +99,16 @@ export default function MemoryPage() {
                         <div className="rounded-xl border px-4 py-2.5 min-w-[120px]"
                           style={{ background: 'rgba(255,61,61,0.06)', borderColor: 'rgba(255,61,61,0.15)' }}>
                           <div className="text-[9px] mb-0.5">Öncesi · {entry.before.metric}</div>
-                          <div className="text-sm font-bold font-mono text-red-400">{entry.before.value}</div>
+                          <div className="text-sm font-bold font-mono">{entry.before.value}</div>
                         </div>
                         <ChevronRight className="w-4 h-4 shrink-0" />
                         <div className="rounded-xl border px-4 py-2.5 min-w-[120px]"
                           style={{ background: 'rgba(34,197,94,0.06)', borderColor: 'rgba(34,197,94,0.15)' }}>
                           <div className="text-[9px] mb-0.5">Sonrası · {entry.after.metric}</div>
-                          <div className="text-sm font-bold font-mono text-emerald-400">{entry.after.value}</div>
+                          <div className="text-sm font-bold font-mono">{entry.after.value}</div>
                         </div>
                         <div className="flex flex-col items-center">
-                          <div className="text-lg font-bold text-emerald-400">↓%{entry.improvement}</div>
+                          <div className="text-lg font-bold">↓%{entry.improvement}</div>
                           {scoreImprovement > 0 && (
                             <div className="text-[10px]">Nabız ↓{scoreImprovement}</div>
                           )}
@@ -129,8 +129,8 @@ export default function MemoryPage() {
                       {entry.learnedPattern && (
                         <div className="flex items-center gap-2 mt-2 text-[11px] rounded-lg border px-3 py-2"
                           style={{ background: 'rgba(249,115,22,0.04)', borderColor: 'rgba(249,115,22,0.12)' }}>
-                          <Brain className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-                          <span className="text-orange-300/70">Öğrenilen: {entry.learnedPattern}</span>
+                          <Brain className="w-3.5 h-3.5 shrink-0" />
+                          <span className="/70">Öğrenilen: {entry.learnedPattern}</span>
                         </div>
                       )}
                     </div>
@@ -149,20 +149,20 @@ export default function MemoryPage() {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <Brain className="w-4 h-4 text-orange-400" />
-                      <span className="text-sm font-bold text-white">{p.pattern}</span>
+                      <Brain className="w-4 h-4" />
+                      <span className="text-sm font-bold">{p.pattern}</span>
                     </div>
                     <div className="text-xs">Tetikleyici: {p.trigger}</div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-2xl font-bold font-mono text-emerald-400">%{p.successRate}</div>
+                    <div className="text-2xl font-bold font-mono">%{p.successRate}</div>
                     <div className="text-[10px]">başarı oranı</div>
                   </div>
                 </div>
                 <div className="rounded-xl border px-4 py-3 mb-4"
                   style={{ background: 'rgba(129,140,248,0.05)', borderColor: 'rgba(129,140,248,0.15)' }}>
-                  <div className="text-[10px] text-indigo-300/60 mb-1">Önerilen Aksiyon</div>
-                  <div className="text-sm text-indigo-200">{p.recommendedAction}</div>
+                  <div className="text-[10px]/60 mb-1">Önerilen Aksiyon</div>
+                  <div className="text-sm">{p.recommendedAction}</div>
                 </div>
                 <div className="flex items-center gap-6 text-xs">
                   <span>{p.appliedCount} kez uygulandı</span>

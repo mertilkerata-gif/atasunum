@@ -77,7 +77,7 @@ export default function AIAnalystPage() {
           <div key={msg.id} className={cn('flex gap-3', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
             <div className={cn('w-8 h-8 rounded-full flex items-center justify-center shrink-0',
               msg.role === 'user' ? 'bg-orange-500' : 'bg-indigo-500/30 border border-indigo-500/40')}>
-              {msg.role === 'user' ? <User className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-indigo-400" />}
+              {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
             </div>
             <div className={cn('max-w-2xl rounded-xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap',
               msg.role === 'user' ? 'bg-orange-500/15 border border-orange-500/20 text-white' : 'bg-white/[0.05] border border-white/[0.08] text-white/80')}>
@@ -88,11 +88,11 @@ export default function AIAnalystPage() {
         ))}
         {loading && (
           <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-indigo-500/30 border border-indigo-500/40 flex items-center justify-center">
-              <Bot className="w-4 h-4 text-indigo-400" />
+            <div className="w-8 h-8 rounded-full border flex items-center justify-center">
+              <Bot className="w-4 h-4" />
             </div>
             <div className="border rounded-xl px-4 py-3 flex items-center gap-2">
-              <Loader2 className="w-3.5 h-3.5 text-indigo-400 animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
               <span className="text-xs">Analiz ediliyor...</span>
             </div>
           </div>
@@ -105,7 +105,7 @@ export default function AIAnalystPage() {
           {SUGGESTED.map(q => (
             <button key={q} onClick={() => send(q)}
               className="shrink-0 flex items-center gap-1.5 border hover: rounded-full px-3 py-1.5 text-xs hover: transition-all">
-              <Sparkles className="w-3 h-3 text-indigo-400" />{q}
+              <Sparkles className="w-3 h-3" />{q}
             </button>
           ))}
         </div>
@@ -116,9 +116,9 @@ export default function AIAnalystPage() {
           <input value={input} onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send(input)}
             placeholder="Örn: Hangi restoranlarda packing darboğazı var?"
-            className="flex-1 border rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-indigo-500/50 transition-colors" />
+            className="flex-1 border rounded-xl px-4 py-3 text-sm placeholder-white/25 outline-none focus: transition-colors" />
           <button onClick={() => send(input)} disabled={loading || !input.trim()}
-            className="px-4 py-3 bg-indigo-500 hover:bg-indigo-400 disabled:opacity-40 text-white rounded-xl transition-colors">
+            className="px-4 py-3 hover: disabled:opacity-40 rounded-xl transition-colors">
             <Send className="w-4 h-4" />
           </button>
         </div>

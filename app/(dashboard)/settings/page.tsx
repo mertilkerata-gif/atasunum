@@ -1,341 +1,181 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Topbar } from '@/components/layout/topbar'
-import { RESTAURANTS } from '@/data/seed/restaurants'
-import { cn } from '@/lib/utils'
-import { Save, Bell, Sliders, Store, Shield, Key, Eye, EyeOff, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react'
-import { getConfig, saveConfig, maskSecret, hasRequiredConfig, AppConfig } from '@/lib/config-store'
+import { getConfig, saveConfig as setConfig, hasRequiredConfig } from '@/lib/config-store'
+import { Save, Eye, EyeOff, AlertTriangle, CheckCircle2, Sliders, Bell, Shield, Key } from 'lucide-react'
 
-type Tab = 'api-keys' | 'thresholds' | 'alerts' | 'system'
+const SECTIONS = [
+  { id: 'thresholds', label: 'Eşik Değerleri', Icon: Sliders },
+  { id: 'alerts',     label: 'Bildirimler',    Icon: Bell },
+  { id: 'api-keys',   label: 'API Anahtarları', Icon: Key },
+  { id: 'system',     label: 'Sistem',          Icon: Shield },
+]
+
+const THRESHOLDS = [
+  { key: 'criticalPulseScore',   label: 'Kritik Nabız Eşiği',       unit: '/100', desc: 'Bu değerin üzerindeki nabız skorları KRİTİK sayılır' },
+  { key: 'warningPulseScore',    label: 'Riskli Nabız Eşiği',       unit: '/100', desc: 'RISKLI seviyesi için eşik' },
+  { key: 'maxPrepTime',          label: 'Maks. Hazırlama Süresi',   unit: 'dk',   desc: 'Bu süreden uzun hazırlama uyarı tetikler' },
+  { key: 'maxCourierWait',       label: 'Maks. Kurye Bekleme',      unit: 'dk',   desc: 'Bu süreden uzun bekleyen kurye anomali sayılır' },
+  { key: 'maxOpenOrders',        label: 'Maks. Açık Sipariş',       unit: 'adet', desc: 'Bu sayıyı aşan açık sipariş uyarı tetikler' },
+  { key: 'anomalyLookbackMinutes', label: 'Anomali Geriye Bakış',   unit: 'dk',   desc: 'Anomali tespitinde kaç dakika geriye bakılır' },
+]
 
 export default function SettingsPage() {
-  const [tab, setTab] = useState<Tab>('api-keys')
-  const [config, setConfig] = useState<AppConfig | null>(null)
-  const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({})
+  const [section, setSection] = useState('thresholds')
+  const [config, setConfigState] = useState(() => getConfig())
+  const [showKey, setShowKey] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [testResult, setTestResult] = useState<Record<string, 'idle' | 'testing' | 'ok' | 'fail'>>({})
+  const { missing } = hasRequiredConfig()
 
-  useEffect(() => { setConfig(getConfig()) }, [])
-
-  if (!config) return null
-
-  const update = (key: keyof AppConfig, value: AppConfig[keyof AppConfig]) => {
-    setConfig(prev => prev ? { ...prev, [key]: value } : prev)
-  }
-
-  const handleSave = () => {
-    if (config) saveConfig(config)
+  const save = () => {
+    setConfig(config)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
 
-  const toggleShow = (key: string) => setShowSecrets(p => ({ ...p, [key]: !p[key] }))
-
-  const testOpenAI = async () => {
-    setTestResult(p => ({ ...p, openai: 'testing' }))
-    try {
-      const key = config.openai_api_key
-      if (!key) throw new Error('Key yok')
-      const res = await fetch('https://api.openai.com/v1/models', {
-        headers: { Authorization: `Bearer ${key}` }
-      })
-      setTestResult(p => ({ ...p, openai: res.ok ? 'ok' : 'fail' }))
-    } catch { setTestResult(p => ({ ...p, openai: 'fail' })) }
-  }
-
-  const { missing } = hasRequiredConfig()
-
-  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: 'api-keys', label: 'API Anahtarları', icon: <Key className="w-4 h-4" /> },
-    { id: 'thresholds', label: 'Eşik Değerleri', icon: <Sliders className="w-4 h-4" /> },
-    { id: 'alerts', label: 'Bildirimler', icon: <Bell className="w-4 h-4" /> },
-    { id: 'system', label: 'Sistem', icon: <Shield className="w-4 h-4" /> },
-  ]
-
   return (
     <div className="dm">
-      <Topbar title="Ayarlar" subtitle="Sistem konfigürasyonu" />
-      <div className="p-6 max-w-3xl space-y-5">
+      <Topbar title="Ayarlar" subtitle="Sistem konfigürasyonu"
+        action={
+          <button onClick={save} className="btn" style={{ padding: '6px 14px', fontSize: 12 }}>
+            {saved ? <><CheckCircle2 size={12}/> Kaydedildi</> : <><Save size={12}/> Kaydet</>}
+          </button>
+        }
+      />
+      <div className="scroll" style={{ padding: '22px 24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 20, alignItems: 'start' }}>
 
-        {/* Config durumu */}
-        {missing.length > 0 && (
-          <div className="rounded-xl border border-orange-500/30 bg-orange-500/[0.06] p-4 flex items-start gap-3">
-            <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-            <div>
-              <div className="text-sm font-medium text-orange-300 mb-1">Eksik konfigürasyon</div>
-              <div className="text-xs">{missing.join(', ')} tanımlanmamış. AI özellikleri çalışmayacak.</div>
-            </div>
-          </div>
-        )}
-
-        {/* Tabs */}
-        <div className="flex gap-1 border rounded-xl p-1">
-          {tabs.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={cn('flex items-center gap-2 flex-1 justify-center py-2 rounded-lg text-xs font-medium transition-all',
-                tab === t.id ? 'bg-orange-500/15 border border-orange-500/30 text-orange-300' : 'text-white/40 hover:text-white/60')}>
-              {t.icon}{t.label}
-            </button>
-          ))}
-        </div>
-
-        {/* API Keys Tab */}
-        {tab === 'api-keys' && (
-          <div className="space-y-4">
-            <div className="rounded-xl border p-5 space-y-5">
-              <div className="text-xs uppercase tracking-wide font-medium">AI & Entegrasyon Anahtarları</div>
-
-              {/* OpenAI */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium">OpenAI API Key</label>
-                  <div className="flex items-center gap-2">
-                    {testResult.openai === 'ok' && <span className="text-xs text-emerald-400 flex items-center gap-1"><CheckCircle className="w-3 h-3" />Bağlandı</span>}
-                    {testResult.openai === 'fail' && <span className="text-xs text-red-400">Hatalı key</span>}
-                    <button onClick={testOpenAI} disabled={testResult.openai === 'testing' || !config.openai_api_key}
-                      className="text-xs px-2.5 py-1 rounded-lg border hover: disabled:opacity-30 flex items-center gap-1">
-                      {testResult.openai === 'testing' ? <RefreshCw className="w-3 h-3 animate-spin" /> : null}
-                      Test Et
-                    </button>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type={showSecrets.openai ? 'text' : 'password'}
-                    value={config.openai_api_key}
-                    onChange={e => update('openai_api_key', e.target.value)}
-                    placeholder="sk-..."
-                    className="flex-1 border rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none font-mono focus:border-orange-500/50 transition-colors"
-                  />
-                  <button onClick={() => toggleShow('openai')} className="p-2.5 border rounded-lg hover:">
-                    {showSecrets.openai ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                <div className="text-xs mt-1">AI Analyst + Operasyon Reçetesi için gerekli</div>
-              </div>
-
-              {/* n8n Webhook Secret */}
-              <div>
-                <label className="text-sm font-medium block mb-2">n8n Webhook Secret</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type={showSecrets.n8n ? 'text' : 'password'}
-                    value={config.n8n_webhook_secret}
-                    onChange={e => update('n8n_webhook_secret', e.target.value)}
-                    placeholder="webhook_secret_..."
-                    className="flex-1 border rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none font-mono focus:border-orange-500/50 transition-colors"
-                  />
-                  <button onClick={() => toggleShow('n8n')} className="p-2.5 border rounded-lg hover:">
-                    {showSecrets.n8n ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                <div className="text-xs mt-1">n8n → Mutfak Nabzı webhook auth</div>
-              </div>
-
-              {/* API Key */}
-              <div>
-                <label className="text-sm font-medium block mb-2">Mutfak Nabzı API Key</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type={showSecrets.apikey ? 'text' : 'password'}
-                    value={config.mutfak_nabzi_api_key}
-                    onChange={e => update('mutfak_nabzi_api_key', e.target.value)}
-                    placeholder="mnabzi_..."
-                    className="flex-1 border rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none font-mono focus:border-orange-500/50 transition-colors"
-                  />
-                  <button onClick={() => toggleShow('apikey')} className="p-2.5 border rounded-lg hover:">
-                    {showSecrets.apikey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                <div className="text-xs mt-1">Harici sistemler (tablet, BI araçları) için</div>
-              </div>
-
-              {/* WhatsApp */}
-              <div>
-                <label className="text-sm font-medium block mb-2">WhatsApp Business Token</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type={showSecrets.wa ? 'text' : 'password'}
-                    value={config.whatsapp_token}
-                    onChange={e => update('whatsapp_token', e.target.value)}
-                    placeholder="EAABs..."
-                    className="flex-1 border rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none font-mono focus:border-orange-500/50 transition-colors"
-                  />
-                  <button onClick={() => toggleShow('wa')} className="p-2.5 border rounded-lg hover:">
-                    {showSecrets.wa ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                <div className="text-xs mt-1">n8n üzerinden kritik alarm bildirimi</div>
-              </div>
-            </div>
-
-            {/* Supabase */}
-            <div className="rounded-xl border p-5 space-y-4">
-              <div className="text-xs uppercase tracking-wide font-medium">Supabase Bağlantısı</div>
-              <div>
-                <label className="text-sm font-medium block mb-2">Supabase URL</label>
-                <input
-                  type="text"
-                  value={config.supabase_url}
-                  onChange={e => update('supabase_url', e.target.value)}
-                  placeholder="https://xxxx.supabase.co"
-                  className="w-full border rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none font-mono focus:border-orange-500/50 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium block mb-2">Supabase Anon Key</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type={showSecrets.sb ? 'text' : 'password'}
-                    value={config.supabase_anon_key}
-                    onChange={e => update('supabase_anon_key', e.target.value)}
-                    placeholder="eyJhbGc..."
-                    className="flex-1 border rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none font-mono focus:border-orange-500/50 transition-colors"
-                  />
-                  <button onClick={() => toggleShow('sb')} className="p-2.5 border rounded-lg hover:">
-                    {showSecrets.sb ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-              <div className="text-xs rounded-lg p-3 border">
-                ⚠️ Bu değerler tarayıcı localStorage'a kaydedilir. Prod ortamda Vercel environment variables kullanılmalıdır.
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Thresholds Tab */}
-        {tab === 'thresholds' && (
-          <div className="rounded-xl border p-5 space-y-5">
-            <div className="text-xs uppercase tracking-wide font-medium">Nabız Skoru Eşik Değerleri</div>
-            <div className="grid grid-cols-3 gap-4">
-              {[
-                { key: 'pulse_threshold_yogun' as const, label: 'Yoğun Başlangıcı', color: 'text-yellow-400', border: 'border-yellow-500/30', desc: '0 – bu değer arası: Normal' },
-                { key: 'pulse_threshold_riskli' as const, label: 'Riskli Başlangıcı', color: 'text-orange-400', border: 'border-orange-500/30', desc: 'Yoğun – bu değer arası: Yoğun' },
-                { key: 'pulse_threshold_kritik' as const, label: 'Kritik Başlangıcı', color: 'text-red-400', border: 'border-red-500/30', desc: 'Riskli – bu değer arası: Riskli' },
-              ].map(({ key, label, color, border, desc }) => (
-                <div key={key}>
-                  <div className={cn('text-xs font-medium mb-1', color)}>{label}</div>
-                  <div className={cn('border rounded-lg px-3 py-2 bg-white/[0.03]', border)}>
-                    <input type="number" min={0} max={100}
-                      value={config[key] as number}
-                      onChange={e => update(key, parseInt(e.target.value))}
-                      className="w-full bg-transparent text-white text-2xl font-bold outline-none tabular-nums"
-                    />
-                  </div>
-                  <div className="text-xs mt-1">{desc}</div>
-                </div>
-              ))}
-            </div>
-            <div className="rounded-lg border p-3 text-xs">
-              Mevcut: 0–{config.pulse_threshold_yogun - 1} <span className="text-emerald-400">Normal</span> · {config.pulse_threshold_yogun}–{config.pulse_threshold_riskli - 1} <span className="text-yellow-400">Yoğun</span> · {config.pulse_threshold_riskli}–{config.pulse_threshold_kritik - 1} <span className="text-orange-400">Riskli</span> · {config.pulse_threshold_kritik}–100 <span className="text-red-400">Kritik</span>
-            </div>
-          </div>
-        )}
-
-        {/* Alerts Tab */}
-        {tab === 'alerts' && (
-          <div className="rounded-xl border p-5 space-y-4">
-            <div className="text-xs uppercase tracking-wide font-medium">Bildirim Kanalları</div>
-            {[
-              { key: 'alerts_dashboard' as const, label: 'Dashboard Bildirimi', desc: 'Sistem içi toast & badge' },
-              { key: 'alerts_whatsapp' as const, label: 'WhatsApp', desc: 'n8n üzerinden — WhatsApp token gerekli' },
-              { key: 'alerts_email' as const, label: 'E-posta', desc: 'Günlük özet ve kritik alarmlar' },
-            ].map(({ key, label, desc }) => (
-              <div key={key} className="flex items-center justify-between py-2 border-b last:border-0">
-                <div>
-                  <div className="text-sm">{label}</div>
-                  <div className="text-xs">{desc}</div>
-                </div>
-                <button onClick={() => update(key, !config[key])}
-                  className={cn('w-11 h-6 rounded-full transition-all relative', config[key] ? 'bg-orange-500' : 'bg-white/[0.1]')}>
-                  <div className={cn('absolute top-1 w-4 h-4 rounded-full bg-white transition-all', config[key] ? 'left-6' : 'left-1')} />
-                </button>
-              </div>
+          {/* Sol nav */}
+          <div className="card">
+            {SECTIONS.map(({ id, label, Icon }) => (
+              <button key={id} onClick={() => setSection(id)}
+                className={`sb-item ${section === id ? 'active' : ''}`}
+                style={{ width: '100%', margin: '2px 0' }}>
+                <span className="sb-icon"><Icon size={14} strokeWidth={1.8}/></span>
+                {label}
+              </button>
             ))}
-            <div className="pt-2">
-              <div className="text-sm mb-3">Alert gönderim aralığı</div>
-              <div className="flex gap-2">
-                {[5, 10, 15, 30].map(v => (
-                  <button key={v} onClick={() => update('alert_interval_minutes', v)}
-                    className={cn('px-4 py-2 rounded-lg border text-sm font-medium transition-all',
-                      config.alert_interval_minutes === v ? 'border-orange-500/50 bg-orange-500/15 text-orange-300' : 'border-white/[0.08] text-white/40 hover:text-white/60')}>
-                    {v} dk
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
-        )}
 
-        {/* System Tab */}
-        {tab === 'system' && (
-          <div className="space-y-4">
-            <div className="rounded-xl border p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Shield className="w-4 h-4" />
-                <div className="text-xs uppercase tracking-wide font-medium">Sistem Modu</div>
-              </div>
-              <div className="flex items-center justify-between mb-3">
+          {/* İçerik */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {missing.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 18px', background: 'var(--amber2)', border: '1px solid var(--amber-ln)', borderRadius: 12 }}>
+                <AlertTriangle size={16} style={{ color: 'var(--amber)', flexShrink: 0, marginTop: 1 }}/>
                 <div>
-                  <div className="text-sm">Demo Modu</div>
-                  <div className="text-xs">Mock data, auth bypass, OpenAI olmadan çalışır</div>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--amber)', marginBottom: 3 }}>Eksik konfigürasyon</p>
+                  <p style={{ fontSize: 12, color: 'var(--tx2)' }}>{missing.join(', ')} tanımlanmamış. AI özellikleri çalışmayacak.</p>
                 </div>
-                <button onClick={() => update('demo_mode', !config.demo_mode)}
-                  className={cn('w-11 h-6 rounded-full transition-all relative', config.demo_mode ? 'bg-orange-500' : 'bg-white/[0.1]')}>
-                  <div className={cn('absolute top-1 w-4 h-4 rounded-full bg-white transition-all', config.demo_mode ? 'left-6' : 'left-1')} />
-                </button>
               </div>
-              {!config.demo_mode && (
-                <div className="p-3 rounded-lg border border-yellow-500/30 bg-yellow-500/[0.06] text-xs text-yellow-300">
-                  ⚠️ Prod modu aktif — Supabase ve OpenAI bağlantısı gerekli.
-                </div>
-              )}
-            </div>
+            )}
 
-            <div className="rounded-xl border p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Store className="w-4 h-4" />
-                <div className="text-xs uppercase tracking-wide font-medium">Aktif Restoranlar</div>
-                <span className="ml-auto text-xs">{RESTAURANTS.length} restoran</span>
-              </div>
-              <div className="space-y-1.5">
-                {RESTAURANTS.map(r => (
-                  <div key={r.id} className="flex items-center gap-3 py-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                    <span className="text-xs flex-1">{r.name}</span>
-                    <span className="text-xs">{r.brand.replace('_', ' ')}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Webhook URL'leri */}
-            <div className="rounded-xl border p-5">
-              <div className="text-xs uppercase tracking-wide font-medium mb-4">n8n Webhook URL&apos;leri</div>
-              {[
-                { label: 'Snapshot Webhook', path: '/api/webhook/snapshot', method: 'POST' },
-                { label: 'Order Event Webhook', path: '/api/webhook/order-event', method: 'POST' },
-                { label: 'Tüm Nabız Skorları', path: '/api/pulse/all', method: 'GET' },
-                { label: 'Günlük Rapor', path: '/api/reports/daily', method: 'GET' },
-                { label: 'Simülasyon', path: '/api/simulate', method: 'POST' },
-              ].map(({ label, path, method }) => (
-                <div key={path} className="flex items-center gap-3 py-2 border-b last:border-0">
-                  <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded', method === 'POST' ? 'bg-orange-500/20 text-orange-300' : 'bg-blue-500/20 text-blue-300')}>{method}</span>
-                  <span className="text-xs flex-1">{label}</span>
-                  <code className="text-xs font-mono">{path}</code>
+            {section === 'thresholds' && (
+              <div className="card">
+                <div className="card-h"><span className="card-title">Operasyonel Eşik Değerleri</span></div>
+                <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+                  {THRESHOLDS.map(({ key, label, unit, desc }) => (
+                    <div key={key}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--tx)' }}>{label}</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <input
+                            type="number"
+                            value={(config as any)[key] ?? 0}
+                            onChange={e => setConfigState(p => ({ ...p, [key]: Number(e.target.value) }))}
+                            className="inp"
+                            style={{ width: 80, padding: '5px 10px', fontSize: 13, textAlign: 'right' }}
+                          />
+                          <span style={{ fontSize: 12, color: 'var(--tx3)', width: 36 }}>{unit}</span>
+                        </div>
+                      </div>
+                      <p style={{ fontSize: 11.5, color: 'var(--tx3)' }}>{desc}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
+
+            {section === 'api-keys' && (
+              <div className="card">
+                <div className="card-h"><span className="card-title">API Anahtarları</span></div>
+                <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {[
+                    { key: 'openaiApiKey', label: 'OpenAI API Key', placeholder: 'sk-...', secret: true },
+                    { key: 'tiklagelsinApiKey', label: 'Tıkla Gelsin API Key', placeholder: 'tg_...', secret: true },
+                    { key: 'supabaseUrl', label: 'Supabase URL', placeholder: 'https://xxx.supabase.co', secret: false },
+                    { key: 'supabaseAnonKey', label: 'Supabase Anon Key', placeholder: 'eyJ...', secret: true },
+                  ].map(({ key, label, placeholder, secret }) => (
+                    <div key={key}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--tx2)', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.06em' }}>{label}</label>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type={secret && !showKey ? 'password' : 'text'}
+                          value={(config as any)[key] ?? ''}
+                          onChange={e => setConfigState(p => ({ ...p, [key]: e.target.value }))}
+                          placeholder={placeholder}
+                          className="inp"
+                          style={{ paddingRight: secret ? 40 : 13 }}
+                        />
+                        {secret && (
+                          <button onClick={() => setShowKey(v => !v)}
+                            style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--tx3)' }}>
+                            {showKey ? <EyeOff size={14}/> : <Eye size={14}/>}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {section === 'alerts' && (
+              <div className="card">
+                <div className="card-h"><span className="card-title">Bildirim Ayarları</span></div>
+                <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {[
+                    { key: 'alertsEnabled', label: 'Bildirimler Aktif', desc: 'Anomali ve kritik uyarıları etkinleştir' },
+                    { key: 'criticalAlertsOnly', label: 'Sadece Kritik', desc: 'Yalnızca KRİTİK seviyesinde bildirim gönder' },
+                    { key: 'soundEnabled', label: 'Ses Bildirimi', desc: 'Kritik anomalilerde sesli uyarı' },
+                    { key: 'emailAlerts', label: 'E-posta Bildirimleri', desc: 'Önemli olaylar için e-posta gönder' },
+                  ].map(({ key, label, desc }) => (
+                    <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--s2)', borderRadius: 10, border: '1px solid var(--bdr)' }}>
+                      <div>
+                        <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--tx)' }}>{label}</p>
+                        <p style={{ fontSize: 11.5, color: 'var(--tx3)', marginTop: 2 }}>{desc}</p>
+                      </div>
+                      <button
+                        onClick={() => setConfigState(p => ({ ...p, [key]: !(p as any)[key] }))}
+                        style={{ width: 42, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', transition: 'background .2s', background: (config as any)[key] ? 'var(--ac)' : 'var(--s4)', position: 'relative', flexShrink: 0 }}>
+                        <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, transition: 'left .2s', left: (config as any)[key] ? 21 : 3 }}/>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {section === 'system' && (
+              <div className="card">
+                <div className="card-h"><span className="card-title">Sistem Bilgisi</span></div>
+                <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {[
+                    { label: 'Versiyon', value: 'v1.0.0' },
+                    { label: 'Supabase Projesi', value: 'exkhzmpowcoxdzzvzisv' },
+                    { label: 'Ortam', value: 'Production' },
+                    { label: 'Güncelleme Sıklığı', value: '5 dakika' },
+                    { label: 'Realtime', value: 'Aktif' },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="row" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 13, color: 'var(--tx2)' }}>{label}</span>
+                      <span style={{ fontSize: 13, fontFamily: 'JetBrains Mono,monospace', color: 'var(--tx)' }}>{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
-
-        {/* Save button */}
-        <button onClick={handleSave}
-          className={cn('flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all w-full justify-center',
-            saved ? 'bg-emerald-500 text-white' : 'bg-orange-500 hover:bg-orange-400 text-white')}>
-          {saved ? <><CheckCircle className="w-4 h-4" /> Kaydedildi</> : <><Save className="w-4 h-4" /> Ayarları Kaydet</>}
-        </button>
+        </div>
       </div>
     </div>
   )

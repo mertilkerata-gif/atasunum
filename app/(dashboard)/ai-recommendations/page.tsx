@@ -203,7 +203,7 @@ export default function AIRecommendationsPage() {
                           </span>
                         )}
                         {action.applied
-                          ? <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
+                          ? <CheckCircle2 size={13} className="shrink-0" />
                           : (
                             <button onClick={() => applyAction(rec.id, action.id)}
                               disabled={applying === action.id}

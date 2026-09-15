@@ -83,7 +83,7 @@ export default function LiveOperationsPage() {
               <div className="flex items-center gap-1.5 rounded-full px-3 py-1"
                 style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)' }}>
                 <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-                <span className="text-[10px] font-bold text-red-400">{criticalCount} Kritik</span>
+                <span className="text-[10px] font-bold">{criticalCount} Kritik</span>
               </div>
             )}
             <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1"

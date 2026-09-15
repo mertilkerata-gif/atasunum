@@ -176,7 +176,7 @@ export default function BenchmarkPage() {
                     </div>
 
                     <div className="text-right w-24 shrink-0">
-                      <div className="text-sm font-bold font-mono text-white">{typeof value === 'number' && metric === 'revenue' ? value.toLocaleString('tr-TR') : value}{mc.unit}</div>
+                      <div className="text-sm font-bold font-mono">{typeof value === 'number' && metric === 'revenue' ? value.toLocaleString('tr-TR') : value}{mc.unit}</div>
                       <div className={cn('flex items-center justify-end gap-1 text-[10px]', isAboveAvg ? 'text-emerald-400' : 'text-red-400')}>
                         {isAboveAvg ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                         {isAboveAvg ? '-' : '+'}{diffPct}% ort.

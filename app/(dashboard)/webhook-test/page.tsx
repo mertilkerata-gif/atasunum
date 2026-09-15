@@ -1,102 +1,136 @@
 'use client'
 import { useState } from 'react'
 import { Topbar } from '@/components/layout/topbar'
-import { cn } from '@/lib/utils'
-import { Send, CheckCircle, XCircle, Loader2, Copy } from 'lucide-react'
+import { fetchWebhookEvents, insertWebhookEvent } from '@/lib/supabase-client'
+import { Send, Terminal, CheckCircle2, XCircle, Clock } from 'lucide-react'
 
-const EXAMPLE_PAYLOADS: Record<string, object> = {
-  snapshot: { restaurant_id: 'r1', open_orders: 28, orders_last_5m: 9, orders_last_15m: 22, avg_preparation_time: 11.2, avg_packing_time: 4.8, avg_courier_wait: 8.1, grill_load: 88, fryer_load: 72, packing_load: 94, courier_load: 81, active_staff: 6, delay_rate: 0.18, cancellation_rate: 0.07, rain_intensity: 7, campaign_active: true },
-  order_event: { order_id: 'TG-A1B2C3', restaurant_id: 'r1', event_type: 'PREPARATION_STARTED', timestamp: new Date().toISOString() },
-  whatsapp: { restaurant_name: 'BK Kadıköy', restaurant_id: 'r1', pulse_score: 84, risk_level: 'KRITIK', top_signal: 'Packing istasyonu %94 yükle çalışıyor' },
-  simulate: { current: { restaurant_id: 'r1', open_orders: 28, orders_last_5m: 9, orders_last_15m: 22, avg_preparation_time: 11.2, avg_packing_time: 4.8, avg_courier_wait: 8.1, grill_load: 88, fryer_load: 72, packing_load: 94, courier_load: 81, active_staff: 6, restaurant_capacity: 80, rain_intensity: 7, campaign_active: true, special_event: false, delay_rate: 0.18, cancellation_rate: 0.07 }, changes: { extra_packing_staff: 1 } },
-  generate: { restaurant_id: 'r1', open_orders: 28, orders_last_5m: 9, orders_last_15m: 22, avg_preparation_time: 11.2, avg_packing_time: 4.8, avg_courier_wait: 8.1, grill_load: 88, fryer_load: 72, packing_load: 94, courier_load: 81, active_staff: 6 },
+const SAMPLES = {
+  order_created: { event: 'order.created', restaurant_id: 'r1', order_id: 'ORD-001', total: 285, channel: 'DELIVERY' },
+  pulse_alert: { event: 'pulse.alert', restaurant_id: 'r6', score: 91, risk_level: 'KRITIK', top_signal: 'Tüm istasyonlar kritik' },
+  anomaly: { event: 'anomaly.detected', restaurant_id: 'r9', type: 'POS_CRASH', severity: 'CRITICAL', deviation: '-%100' },
 }
 
-const ENDPOINTS = [
-  { id: 'snapshot',    method: 'POST', path: '/api/webhook/snapshot',        label: 'Snapshot Webhook'    },
-  { id: 'order_event', method: 'POST', path: '/api/webhook/order-event',      label: 'Order Event'         },
-  { id: 'whatsapp',    method: 'POST', path: '/api/webhook/whatsapp-alert',   label: 'WhatsApp Alert'      },
-  { id: 'simulate',    method: 'POST', path: '/api/simulate',                 label: 'What-If Simülatör'  },
-  { id: 'generate',    method: 'POST', path: '/api/recommendations/generate', label: 'AI Reçete Üret'     },
-  { id: 'pulse_all',   method: 'GET',  path: '/api/pulse/all',                label: 'Tüm Nabız Skorları' },
-]
-
 export default function WebhookTestPage() {
-  const [sel, setSel] = useState(ENDPOINTS[0])
-  const [payload, setPayload] = useState(JSON.stringify(EXAMPLE_PAYLOADS.snapshot, null, 2))
+  const [payload, setPayload] = useState(JSON.stringify(SAMPLES.order_created, null, 2))
+  const [url, setUrl] = useState('https://hook.eu2.make.com/example')
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<{ ok: boolean; status: number; data: unknown; ms: number } | null>(null)
-
-  const select = (ep: typeof ENDPOINTS[0]) => {
-    setSel(ep); setResult(null)
-    if (ep.method === 'POST' && EXAMPLE_PAYLOADS[ep.id]) setPayload(JSON.stringify(EXAMPLE_PAYLOADS[ep.id], null, 2))
-  }
+  const [result, setResult] = useState<{ ok: boolean; status: number; body: string } | null>(null)
+  const [events, setEvents] = useState<any[]>([])
+  const [eventsLoaded, setEventsLoaded] = useState(false)
 
   const send = async () => {
     setLoading(true); setResult(null)
-    const t0 = Date.now()
+    let parsed: any
+    try { parsed = JSON.parse(payload) } catch { setResult({ ok: false, status: 0, body: 'Geçersiz JSON' }); setLoading(false); return }
     try {
-      const opts: RequestInit = { method: sel.method, headers: { 'Content-Type': 'application/json', 'x-webhook-secret': 'demo', 'x-api-key': 'demo' } }
-      if (sel.method === 'POST') opts.body = payload
-      const res = await fetch(sel.path, opts)
-      const data = await res.json()
-      setResult({ ok: res.ok, status: res.status, data, ms: Date.now() - t0 })
-    } catch (e) { setResult({ ok: false, status: 0, data: { error: String(e) }, ms: Date.now() - t0 })
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(parsed) })
+      const body = await res.text().catch(() => '')
+      setResult({ ok: res.ok, status: res.status, body: body.slice(0, 500) })
+      await insertWebhookEvent({ event_type: parsed.event ?? 'test', payload: parsed, status: res.ok ? 'SUCCESS' : 'ERROR' })
+    } catch (e: any) {
+      setResult({ ok: false, status: 0, body: e.message })
+      await insertWebhookEvent({ event_type: parsed?.event ?? 'test', payload: parsed, status: 'ERROR' })
     } finally { setLoading(false) }
+  }
+
+  const loadEvents = async () => {
+    const data = await fetchWebhookEvents(20)
+    setEvents(data); setEventsLoaded(true)
   }
 
   return (
     <div className="dm">
-      <Topbar title="Webhook Test Konsolu" subtitle="API endpoint'lerini canlı test et" />
-      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div className="grid grid-cols-12 gap-5">
-          <div className="col-span-4 space-y-2">
-            <div className="text-[10px] uppercase tracking-widest px-1 mb-3">Endpoint Seç</div>
-            {ENDPOINTS.map(ep => (
-              <button key={ep.id} onClick={() => select(ep)}
-                className={cn('w-full text-left rounded-xl border px-4 py-3 transition-all', sel.id === ep.id ? 'border-orange-500/30 bg-orange-500/[0.08]' : 'border-white/[0.07] hover:border-white/[0.12]')}
-                style={{ background: sel.id === ep.id ? undefined : 'var(--s1)' }}>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded', ep.method === 'POST' ? 'bg-orange-500/20 text-orange-300' : 'bg-blue-500/20 text-blue-300')}>{ep.method}</span>
-                  <span className={cn('text-xs font-medium', sel.id === ep.id ? 'text-orange-300' : 'text-white/60')}>{ep.label}</span>
-                </div>
-                <code className="text-[10px]">{ep.path}</code>
-              </button>
-            ))}
-          </div>
-          <div className="col-span-8 space-y-4">
-            {sel.method === 'POST' && (
-              <div className="card" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
-                <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--bdr)' }}>
-                  <span className="text-xs uppercase tracking-widest">Request Body (JSON)</span>
-                </div>
-                <textarea value={payload} onChange={e => setPayload(e.target.value)} rows={12}
-                  className="w-full px-5 py-4 text-xs font-mono outline-none resize-none"
-                  style={{ background: 'transparent', lineHeight: '1.6' }} />
-              </div>
-            )}
-            <button onClick={send} disabled={loading}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all"
-              style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)', boxShadow: '0 0 16px rgba(249,115,22,0.2)', opacity: loading ? 0.7 : 1 }}>
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              {loading ? 'Gönderiliyor...' : `${sel.method} ${sel.path}`}
+      <Topbar title="Webhook Test Konsolu" subtitle="Canlı API endpoint testi"/>
+      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+        {/* Örnekler */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <span style={{ fontSize: 12, color: 'var(--tx3)', alignSelf: 'center' }}>Örnek:</span>
+          {Object.entries(SAMPLES).map(([key, val]) => (
+            <button key={key} onClick={() => setPayload(JSON.stringify(val, null, 2))} className="btn-ghost" style={{ padding: '4px 10px', fontSize: 11 }}>
+              {key.replace('_', ' ')}
             </button>
-            {result && (
-              <div className="card" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>
-                <div className="px-5 py-3 border-b flex items-center justify-between" style={{ borderColor: 'var(--bdr)' }}>
-                  <div className="flex items-center gap-3">
-                    {result.ok ? <CheckCircle className="w-4 h-4 text-emerald-400" /> : <XCircle className="w-4 h-4 text-red-400" />}
-                    <span className={cn('text-sm font-bold', result.ok ? 'text-emerald-400' : 'text-red-400')}>HTTP {result.status}</span>
-                    <span className="text-xs">{result.ms}ms</span>
-                  </div>
-                  <button onClick={() => navigator.clipboard.writeText(JSON.stringify(result.data, null, 2))}
-                    className="flex items-center gap-1.5 text-xs hover: transition-colors">
-                    <Copy className="w-3.5 h-3.5" /> Kopyala
-                  </button>
+          ))}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16 }}>
+          {/* Sol — editor */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="card">
+              <div className="card-h"><span className="card-title">Endpoint URL</span></div>
+              <div style={{ padding: '14px 18px' }}>
+                <input className="inp" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://hook.eu2.make.com/..."/>
+              </div>
+            </div>
+
+            <div className="card" style={{ flex: 1 }}>
+              <div className="card-h">
+                <span className="card-title">JSON Payload</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Terminal size={13} style={{ color: 'var(--tx3)' }}/>
+                  <span className="card-meta">{payload.split('\n').length} satır</span>
                 </div>
-                <pre className="px-5 py-4 text-xs font-mono overflow-auto max-h-80 leading-relaxed">{JSON.stringify(result.data, null, 2)}</pre>
+              </div>
+              <div style={{ padding: '14px 18px' }}>
+                <textarea
+                  value={payload}
+                  onChange={e => setPayload(e.target.value)}
+                  rows={14}
+                  className="inp"
+                  style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 12, lineHeight: 1.6, resize: 'vertical' }}
+                />
+              </div>
+            </div>
+
+            <button onClick={send} disabled={loading} className="btn" style={{ justifyContent: 'center' }}>
+              {loading ? '…Gönderiliyor' : <><Send size={14}/> Webhook Gönder</>}
+            </button>
+          </div>
+
+          {/* Sağ — sonuç */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {result && (
+              <div className="card" style={{ borderLeft: `3px solid ${result.ok ? 'var(--green)' : 'var(--red)'}` }}>
+                <div className="card-h">
+                  {result.ok
+                    ? <><CheckCircle2 size={14} style={{ color: 'var(--green)' }}/><span className="card-title" style={{ color: 'var(--green)' }}>Başarılı</span></>
+                    : <><XCircle size={14} style={{ color: 'var(--red)' }}/><span className="card-title" style={{ color: 'var(--red)' }}>Hata</span></>
+                  }
+                  <span style={{ fontSize: 12, fontFamily: 'JetBrains Mono,monospace', color: result.ok ? 'var(--green)' : 'var(--red)' }}>HTTP {result.status}</span>
+                </div>
+                {result.body && (
+                  <div style={{ padding: '12px 18px' }}>
+                    <pre style={{ fontSize: 11, fontFamily: 'JetBrains Mono,monospace', color: 'var(--tx2)', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{result.body}</pre>
+                  </div>
+                )}
               </div>
             )}
+
+            <div className="card">
+              <div className="card-h">
+                <span className="card-title">Geçmiş</span>
+                {!eventsLoaded && <button onClick={loadEvents} className="btn-ghost" style={{ padding: '3px 10px', fontSize: 11 }}>Yükle</button>}
+              </div>
+              {eventsLoaded ? (
+                <div style={{ maxHeight: 360, overflowY: 'auto' }}>
+                  {events.map(ev => (
+                    <div key={ev.id} className="row">
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--tx)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.event_type}</p>
+                        <p style={{ fontSize: 10.5, color: 'var(--tx3)', marginTop: 1 }}>{new Date(ev.created_at).toLocaleString('tr-TR')}</p>
+                      </div>
+                      <span className={`badge badge-${ev.status === 'SUCCESS' ? 'green' : 'red'}`} style={{ fontSize: 10, flexShrink: 0 }}>{ev.status}</span>
+                    </div>
+                  ))}
+                  {events.length === 0 && <p style={{ padding: 20, textAlign: 'center', color: 'var(--tx3)', fontSize: 12 }}>Henüz kayıt yok</p>}
+                </div>
+              ) : (
+                <div style={{ padding: '30px', textAlign: 'center' }}>
+                  <Clock size={24} style={{ color: 'var(--tx3)', margin: '0 auto 8px', display: 'block', opacity: .4 }}/>
+                  <p style={{ fontSize: 12, color: 'var(--tx3)' }}>Geçmiş olayları yükle</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
