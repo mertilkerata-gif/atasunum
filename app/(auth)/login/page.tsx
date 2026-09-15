@@ -98,7 +98,7 @@ export default function LoginPage() {
               önce gör.
             </span>
           </h1>
-          <p style={{ fontSize: 14, color: 'var(--tx2)', lineHeight: 1.7, maxWidth: 380 }}>
+          <p style={{ fontSize: 14, color: 'var(--tx2)', lineHeight: 1.7, maxWidth: "min(380px,100%)" }}>
             Restoranlarınızın operasyonel yükünü gerçek zamanlı izleyin. Darboğaz oluşmadan önce müdahale edin.
           </p>
 
@@ -124,7 +124,7 @@ export default function LoginPage() {
       {/* Sağ — giriş formu */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 24px' }}>
         <div style={{
-          width: '100%', maxWidth: 380,
+          width: '100%', maxWidth: "min(380px,100%)",
           opacity: mounted ? 1 : 0,
           transform: mounted ? 'none' : 'translateY(8px)',
           transition: 'opacity .3s ease, transform .3s ease',

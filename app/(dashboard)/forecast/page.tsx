@@ -42,7 +42,7 @@ export default function ForecastPage() {
   return (
     <div className="dm">
       <Topbar title="Talep Tahmini" subtitle="AI destekli sipariş öngörüsü · Supabase"/>
-      <div className="scroll" style={{padding:'22px 24px',display:'flex',flexDirection:'column',gap:16}}>
+      <div className="scroll" style={{padding:'clamp(14px,3vw,24px) clamp(14px,3vw,24px)',display:'flex',flexDirection:'column',gap:16}}>
 
         <div style={{display:'flex',alignItems:'center',gap:12}}>
           <select value={selectedId} onChange={e=>setSelectedId(e.target.value)} className="inp" style={{width:'auto',padding:'7px 12px',fontSize:13}}>
@@ -51,7 +51,7 @@ export default function ForecastPage() {
         </div>
 
         {/* KPI */}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:14}}>
           {[
             {label:'Günlük Tahmin',value:loading?'—':String(totalPredicted),sub:'sipariş'},
             {label:'Kalan Tahmin',value:loading?'—':String(remainingOrders),sub:'bu saatten itibaren'},
@@ -90,7 +90,7 @@ export default function ForecastPage() {
         {/* Saat bazlı tablo */}
         <div className="card">
           <div className="card-h"><span className="card-title">Saat Detayı</span></div>
-          <div style={{display:'grid',gridTemplateColumns:'80px 1fr 120px 100px',gap:0,padding:'8px 20px',borderBottom:'1px solid var(--bdr)'}}>
+          <div style={{display:'grid',gridTemplateColumns:'80px 1fr 120px 100px',gap:0,padding:'8px 20px',borderBottom:'1px solid var(--bdr)', overflowX: "auto"}}>
             {['Saat','Tahmin Bar','Sipariş','Güven'].map(h=><span key={h} style={{fontSize:10.5,fontWeight:700,color:'var(--tx3)',textTransform:'uppercase',letterSpacing:'.06em'}}>{h}</span>)}
           </div>
           <div style={{maxHeight:320,overflowY:'auto'}}>
@@ -99,7 +99,7 @@ export default function ForecastPage() {
               const isPast = f.hour < currentHour
               const max = Math.max(...forecasts.map(x=>x.predicted_orders),1)
               return (
-                <div key={f.hour} className="row" style={{display:'grid',gridTemplateColumns:'80px 1fr 120px 100px',gap:0,background:isCurrent?'var(--ac3)':undefined,borderLeft:isCurrent?'2px solid var(--ac)':'2px solid transparent',opacity:isPast?.6:1}}>
+                <div key={f.hour} className="row" style={{display:'grid',gridTemplateColumns:'80px 1fr 120px 100px',gap:0,background:isCurrent?'var(--ac3)':undefined,borderLeft:isCurrent?'2px solid var(--ac)':'2px solid transparent',opacity:isPast?.6:1, overflowX: "auto"}}>
                   <span style={{fontSize:12,fontFamily:'JetBrains Mono,monospace',color:isCurrent?'var(--ac)':'var(--tx2)',fontWeight:isCurrent?700:400}}>{f.hour}:00{isCurrent?' ●':''}</span>
                   <div style={{paddingRight:16,alignSelf:'center'}}>
                     <div className="prog"><div className="prog-fill" style={{width:`${(f.predicted_orders/max)*100}%`,background:isCurrent?'var(--ac)':'var(--s5)'}}/></div>

@@ -59,7 +59,7 @@ export default function ShiftsPage() {
           </div>
         }
       />
-      <div className="scroll" style={{padding:'22px 24px',display:'flex',flexDirection:'column',gap:16}}>
+      <div className="scroll" style={{padding:'clamp(14px,3vw,24px) clamp(14px,3vw,24px)',display:'flex',flexDirection:'column',gap:16}}>
 
         <div style={{display:'flex',alignItems:'center',gap:12}}>
           <select value={selectedId} onChange={e=>setSelectedId(e.target.value)} className="inp" style={{width:'auto',padding:'7px 12px',fontSize:13}}>
@@ -80,7 +80,7 @@ export default function ShiftsPage() {
                     {ROLES.map(r=><option key={r} value={r}>{r}</option>)}
                   </select>
                 </div>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12, overflowX: "auto"}}>
                   <div><label className="label">Başlangıç</label><input type="datetime-local" className="inp" value={form.shift_start} onChange={e=>setForm(p=>({...p,shift_start:e.target.value}))}/></div>
                   <div><label className="label">Bitiş</label><input type="datetime-local" className="inp" value={form.shift_end} onChange={e=>setForm(p=>({...p,shift_end:e.target.value}))}/></div>
                 </div>
@@ -96,14 +96,14 @@ export default function ShiftsPage() {
         {/* Shifts table */}
         <div className="card">
           <div className="card-h"><span className="card-title">Bugünkü Vardiyalar</span><span className="card-meta">{shifts.length} toplam</span></div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 100px 140px 140px 100px 120px',gap:0,padding:'8px 20px',borderBottom:'1px solid var(--bdr)'}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 80px 110px 110px 80px 100px',gap:0,padding:'8px 14px',borderBottom:'1px solid var(--bdr)', overflowX: "auto"}}>
             {['Personel','Görev','Başlangıç','Bitiş','Durum','İşlem'].map(h=>(
               <span key={h} style={{fontSize:10.5,fontWeight:700,color:'var(--tx3)',textTransform:'uppercase',letterSpacing:'.06em'}}>{h}</span>
             ))}
           </div>
           {loading?<p style={{padding:24,textAlign:'center',color:'var(--tx3)'}}>Yükleniyor…</p>:
             shifts.map(s=>(
-              <div key={s.id} className="row" style={{display:'grid',gridTemplateColumns:'1fr 100px 140px 140px 100px 120px',gap:0}}>
+              <div key={s.id} className="row" style={{display:'grid',gridTemplateColumns:'1fr 80px 110px 110px 80px 100px',gap:0, overflowX: "auto"}}>
                 <span style={{fontSize:13,fontWeight:500,color:'var(--tx)'}}>{s.staff_name}</span>
                 <span style={{fontSize:12,fontWeight:600,color:ROLE_COLORS[s.role]||'var(--tx2)'}}>{s.role}</span>
                 <span style={{fontSize:11,fontFamily:'JetBrains Mono,monospace',color:'var(--tx3)'}}>{new Date(s.shift_start).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</span>

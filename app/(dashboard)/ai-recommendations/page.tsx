@@ -127,7 +127,7 @@ export default function AIRecommendationsPage() {
         }
       />
 
-      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="scroll" style={{ padding: 'clamp(14px,3vw,24px) clamp(14px,3vw,24px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 size={20} className="animate-spin" />

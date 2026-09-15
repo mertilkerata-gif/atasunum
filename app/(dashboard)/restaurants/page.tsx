@@ -52,7 +52,7 @@ export default function RestaurantsPage() {
         }
       />
 
-      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="scroll" style={{ padding: 'clamp(14px,3vw,24px) clamp(14px,3vw,24px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
           {[
             { label: 'Toplam', value: restaurants.length, color: 'var(--tx)' },

@@ -87,8 +87,8 @@ export default function ReportsPage() {
           </div>
         }
       />
-      <div className="scroll" style={{ padding: '22px 24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 20, alignItems: 'start' }}>
+      <div className="scroll" style={{ padding: 'clamp(14px,3vw,24px) clamp(14px,3vw,24px)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'clamp(180px,25%,240px) 1fr', gap: 20, alignItems: 'start' }}>
 
           {/* Rapor tipi seç */}
           <div className="card">
@@ -122,7 +122,7 @@ export default function ReportsPage() {
                   </button>
                 </div>
               ) : active === 'daily' ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: 12 }}>
                   {data.map(({ label, value }) => (
                     <div key={label} style={{ background: 'var(--s2)', border: '1px solid var(--bdr)', borderRadius: 12, padding: '18px', textAlign: 'center' }}>
                       <p style={{ fontSize: 22, fontWeight: 700, fontFamily: 'JetBrains Mono,monospace', color: 'var(--ac)', letterSpacing: '-.04em', marginBottom: 6 }}>{value}</p>

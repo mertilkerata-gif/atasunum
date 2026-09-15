@@ -41,7 +41,7 @@ export default function WebhookTestPage() {
   return (
     <div className="dm">
       <Topbar title="Webhook Test Konsolu" subtitle="Canlı API endpoint testi"/>
-      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="scroll" style={{ padding: 'clamp(14px,3vw,24px) clamp(14px,3vw,24px)', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Örnekler */}
         <div style={{ display: 'flex', gap: 8 }}>
@@ -53,7 +53,7 @@ export default function WebhookTestPage() {
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16 , overflowX: "auto"}}>
           {/* Sol — editor */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div className="card">

@@ -97,7 +97,7 @@ export default function BenchmarkPage() {
   return (
     <div className="dm">
       <Topbar title="Benchmark & Rozetler" subtitle="Şube karşılaştırması · Performans sıralaması" />
-      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="scroll" style={{ padding: 'clamp(14px,3vw,24px) clamp(14px,3vw,24px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* Badge wall */}
         <div className="grid grid-cols-6 gap-3">

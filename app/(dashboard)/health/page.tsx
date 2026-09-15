@@ -54,7 +54,7 @@ export default function HealthPage() {
       <Topbar title="Sistem Sağlığı" subtitle="Supabase servis durumu"
         action={<button onClick={check} className="btn-ghost" style={{ padding: '5px 12px', fontSize: 12 }}><RefreshCw size={12}/> Kontrol Et</button>}
       />
-      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="scroll" style={{ padding: 'clamp(14px,3vw,24px) clamp(14px,3vw,24px)', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Genel durum */}
         <div style={{ background: allOk ? 'var(--green2)' : 'var(--red2)', border: `1px solid ${allOk ? 'var(--green-ln)' : 'var(--red-ln)'}`, borderRadius: 14, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>

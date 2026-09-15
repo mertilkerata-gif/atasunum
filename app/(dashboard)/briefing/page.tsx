@@ -51,7 +51,7 @@ export default function BriefingPage() {
   return (
     <div className="dm">
       <Topbar title="Sabah Briefing" subtitle={now.toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}/>
-      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="scroll" style={{ padding: 'clamp(14px,3vw,24px) clamp(14px,3vw,24px)', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Karşılama */}
         <div style={{ background: 'linear-gradient(135deg,var(--ac2),rgba(124,106,247,.04))', border: '1px solid rgba(124,106,247,.2)', borderRadius: 16, padding: '24px 28px', display: 'flex', alignItems: 'center', gap: 20 }}>
@@ -84,7 +84,7 @@ export default function BriefingPage() {
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 , overflowX: "auto"}}>
           {/* Öncelikler */}
           <div className="card">
             <div className="card-h"><span className="card-title">Bugünün Öncelikleri</span></div>

@@ -38,7 +38,7 @@ export default function JourneyPage() {
   return (
     <div className="dm">
       <Topbar title="Müşteri Yolculuğu" subtitle="Sipariş → Teslimat akışı" />
-      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="scroll" style={{ padding: 'clamp(14px,3vw,24px) clamp(14px,3vw,24px)', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

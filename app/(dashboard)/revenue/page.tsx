@@ -54,10 +54,10 @@ export default function RevenuePage() {
   return (
     <div className="dm">
       <Topbar title="Satış & Ciro" subtitle="Son 7 gün · Supabase"/>
-      <div className="scroll" style={{padding:'22px 24px',display:'flex',flexDirection:'column',gap:16}}>
+      <div className="scroll" style={{padding:'clamp(14px,3vw,24px) clamp(14px,3vw,24px)',display:'flex',flexDirection:'column',gap:16}}>
 
         {/* KPI */}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:14}}>
           {[
             {label:"Bugün Ciro",value:todayTotal.toLocaleString('tr-TR',{maximumFractionDigits:0})+' ₺',color:'var(--ac)',bg:'var(--ac2)',Icon:DollarSign},
             {label:"Tıkla Gelsin",value:(today?.tiklagelsin??0).toLocaleString('tr-TR',{maximumFractionDigits:0})+' ₺',color:'var(--amber)',bg:'var(--amber2)',Icon:ShoppingBag},
@@ -78,7 +78,7 @@ export default function RevenuePage() {
           )})}
         </div>
 
-        <div style={{display:'grid',gridTemplateColumns:'1fr 280px',gap:14}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr clamp(240px,28%,300px)',gap:14}}>
           {/* Chart */}
           <div className="card">
             <div className="card-h">

@@ -69,10 +69,10 @@ export default function ComplaintsPage() {
   return (
     <div className="dm">
       <Topbar title="Müşteri Şikayetleri" subtitle="Supabase · gerçek zamanlı"/>
-      <div className="scroll" style={{padding:'22px 24px',display:'flex',flexDirection:'column',gap:16}}>
+      <div className="scroll" style={{padding:'clamp(14px,3vw,24px) clamp(14px,3vw,24px)',display:'flex',flexDirection:'column',gap:16}}>
 
         {/* KPI */}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:14}}>
           {kpis.map((k,i)=>{const Icon=k.Icon;return(
             <div key={k.label} className="kpi" style={{borderLeft:`2.5px solid ${k.color}`,animationDelay:`${i*40}ms`}}>
               <div style={{position:'absolute',top:0,right:0,width:80,height:80,background:`radial-gradient(circle at top right,${k.iconBg},transparent 70%)`,pointerEvents:'none'}}/>
@@ -87,7 +87,7 @@ export default function ComplaintsPage() {
           )})}
         </div>
 
-        <div style={{display:'grid',gridTemplateColumns:'280px 1fr',gap:14}}>
+        <div style={{display:'grid',gridTemplateColumns:'clamp(220px,30%,300px) 1fr',gap:14}}>
           {/* Ranking */}
           <div className="card">
             <div className="card-h"><span className="card-title">Restoran Sıralaması</span></div>

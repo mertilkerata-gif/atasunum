@@ -45,10 +45,10 @@ export default function ProductsPage() {
           </div>
         }
       />
-      <div className="scroll" style={{padding:'22px 24px',display:'flex',flexDirection:'column',gap:16}}>
+      <div className="scroll" style={{padding:'clamp(14px,3vw,24px) clamp(14px,3vw,24px)',display:'flex',flexDirection:'column',gap:16}}>
 
         {/* KPIs */}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:14}}>
           {[
             {label:'Toplam Ürün',value:stock.length,color:'var(--ac)',bg:'var(--ac2)',Icon:Package},
             {label:'Stok Yok',value:outOfStock.length,color:'var(--red)',bg:'var(--red2)',Icon:AlertTriangle},
@@ -84,7 +84,7 @@ export default function ProductsPage() {
                 <span className="card-meta">{catItems.length} ürün</span>
               </div>
               <div>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 80px 80px 120px 100px',gap:0,padding:'8px 20px',borderBottom:'1px solid var(--bdr)'}}>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 70px 70px 100px 90px',gap:0,padding:'8px 14px',borderBottom:'1px solid var(--bdr)', overflowX: "auto"}}>
                   {['Ürün','Fiyat','Min.','Stok','İşlem'].map(h=>(
                     <span key={h} style={{fontSize:10.5,fontWeight:700,color:'var(--tx3)',textTransform:'uppercase',letterSpacing:'.06em'}}>{h}</span>
                   ))}
@@ -94,7 +94,7 @@ export default function ProductsPage() {
                   const out = item.quantity === 0
                   const editVal = editQty[item.id] ?? item.quantity
                   return (
-                    <div key={item.id} className="row" style={{display:'grid',gridTemplateColumns:'1fr 80px 80px 120px 100px',gap:0,borderLeft:out?'3px solid var(--red)':low?'3px solid var(--amber)':'3px solid transparent'}}>
+                    <div key={item.id} className="row" style={{display:'grid',gridTemplateColumns:'1fr 70px 70px 100px 90px',gap:0,borderLeft:out?'3px solid var(--red)':low?'3px solid var(--amber)':'3px solid transparent', overflowX: "auto"}}>
                       <div style={{display:'flex',alignItems:'center',gap:8}}>
                         <span style={{fontSize:18}}>{item.products?.emoji}</span>
                         <div>

@@ -91,9 +91,9 @@ export default function OverviewPage() {
         }
       />
 
-      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="scroll" style={{ padding: 'clamp(14px,3vw,24px) clamp(14px,3vw,24px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
         {/* KPI cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: 14 }}>
           {kpis.map((k, i) => {
             const Icon = k.Icon
             return (
@@ -133,7 +133,7 @@ export default function OverviewPage() {
             <div style={{ width: 20, height: 20, border: '2px solid var(--s4)', borderTopColor: 'var(--ac)', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(290px,1fr))', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(100%,290px),1fr))', gap: 14 }}>
             {shown.map((d, i) => (
               <div key={d.restaurant.id} className="anim-pop" style={{ animationDelay: `${i*30}ms` }}>
                 <RestaurantCard data={d} />

@@ -9,11 +9,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     const user = localStorage.getItem('mn_user')
-    if (!user) {
-      router.replace('/login')
-    } else {
-      setReady(true)
-    }
+    if (!user) { router.replace('/login') } else { setReady(true) }
   }, [router])
 
   if (!ready) return (
@@ -28,9 +24,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   )
 
   return (
-    <div className="dw">
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
       <Sidebar />
-      <div className="dm">{children}</div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+        {children}
+      </div>
     </div>
   )
 }

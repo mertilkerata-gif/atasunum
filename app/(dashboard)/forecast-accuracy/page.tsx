@@ -69,7 +69,7 @@ export default function ForecastAccuracyPage() {
   return (
     <div className="dm">
       <Topbar title="Tahmin Doğruluğu" subtitle="MAE · MAPE · Gerçekleşen vs Tahmin" />
-      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="scroll" style={{ padding: 'clamp(14px,3vw,24px) clamp(14px,3vw,24px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {/* Period tabs */}
         <div className="flex items-center gap-2">

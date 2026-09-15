@@ -32,7 +32,7 @@ export default function RiskMatrixPage() {
   return (
     <div className="dm">
       <Topbar title="Operasyonel Risk Matrisi" subtitle="Olasılık × Etki büyüklüğü analizi" />
-      <div className="scroll" style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="scroll" style={{ padding: 'clamp(14px,3vw,24px) clamp(14px,3vw,24px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div className="grid grid-cols-12 gap-5">
           {/* Matrix */}
           <div className="col-span-8 rounded-2xl border p-6" style={{ background: 'var(--s1)', borderColor: 'var(--bdr)' }}>

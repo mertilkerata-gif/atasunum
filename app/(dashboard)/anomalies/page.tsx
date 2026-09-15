@@ -57,7 +57,7 @@ export default function AnomaliesPage() {
           </div>
         }
       />
-      <div className="scroll" style={{ padding:'22px 24px', display:'flex', flexDirection:'column', gap:16 }}>
+      <div className="scroll" style={{ padding:'clamp(14px,3vw,24px) clamp(14px,3vw,24px)', display:'flex', flexDirection:'column', gap:16 }}>
 
         {/* Status bar */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--s1)', border:'1px solid var(--bdr)', borderRadius:12, padding:'10px 16px' }}>

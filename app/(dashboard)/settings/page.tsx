@@ -42,8 +42,8 @@ export default function SettingsPage() {
           </button>
         }
       />
-      <div className="scroll" style={{ padding: '22px 24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 20, alignItems: 'start' }}>
+      <div className="scroll" style={{ padding: 'clamp(14px,3vw,24px) clamp(14px,3vw,24px)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 20, alignItems: 'start' , overflowX: "auto"}}>
 
           {/* Sol nav */}
           <div className="card">

@@ -98,8 +98,8 @@ export default function TiklaGelsinPage() {
   return (
     <div className="dm">
       <Topbar title="Tıkla Gelsin Demo" subtitle="Müşteri sipariş akışı + Mutfak paneli" />
-      <div className="scroll" style={{ padding:'22px 24px' }}>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 300px', gap:20, alignItems:'start' }}>
+      <div className="scroll" style={{ padding:'clamp(14px,3vw,24px) clamp(14px,3vw,24px)' }}>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,340px),1fr))', gap:20, alignItems:'start' }}>
 
           {/* SOL — Menü */}
           <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
@@ -120,7 +120,7 @@ export default function TiklaGelsinPage() {
               </div>
 
               {/* Kanal seç */}
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:0 }}>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:0 , overflowX: "auto"}}>
                 {[{ v:'DELIVERY' as const, label:'🛵 Paket Servis' }, { v:'PICKUP' as const, label:'🏪 Gel Al' }].map(({ v, label }) => (
                   <button key={v} onClick={() => setChannel(v)}
                     style={{ padding:'12px', fontSize:13, fontWeight:600, border:'none', borderBottom:'2px solid', cursor:'pointer', transition:'all .15s',
@@ -150,7 +150,7 @@ export default function TiklaGelsinPage() {
             </div>
 
             {/* Ürün grid */}
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(min(100%,260px),1fr))', gap:12 , overflowX: "auto"}}>
               {filtered.map(item => {
                 const inCart = cart.find(c => c.item.id === item.id)
                 return (
@@ -291,7 +291,7 @@ function CheckoutView({ cart, total, channel, customerName, setCustomerName, add
   return (
     <div className="dm">
       <Topbar title="Sipariş Özeti" subtitle="Siparişinizi onaylayın"/>
-      <div className="scroll" style={{ padding:'22px 24px' }}>
+      <div className="scroll" style={{ padding:'clamp(14px,3vw,24px) clamp(14px,3vw,24px)' }}>
         <div style={{ maxWidth:520, display:'flex', flexDirection:'column', gap:14 }}>
           <button onClick={onBack} style={{ ...S.ghost, width:'fit-content' }}>
             <ArrowLeft size={14}/> Menüye Dön
@@ -302,7 +302,7 @@ function CheckoutView({ cart, total, channel, customerName, setCustomerName, add
             <div style={{ padding:'12px 18px', borderBottom:'1px solid var(--bdr)' }}>
               <p style={{ fontSize:10.5, fontWeight:700, color:'var(--tx3)', textTransform:'uppercase', letterSpacing:'.08em' }}>Teslimat Yöntemi</p>
             </div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, padding:'14px 18px' }}>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(min(100%,260px),1fr))', gap:12, padding:'14px 18px' , overflowX: "auto"}}>
               {[{ v:'DELIVERY' as const, label:'🛵 Paket Servis', desc:'Adresinize teslim' }, { v:'PICKUP' as const, label:'🏪 Gel Al', desc:'Restorandan teslim' }].map(({ v, label, desc }) => (
                 <button key={v} onClick={() => setChannel(v)}
                   style={{ padding:'12px', borderRadius:10, border:`1px solid ${channel===v?'rgba(124,106,247,.35)':'var(--bdr)'}`, background: channel===v?'var(--ac2)':'var(--s2)', cursor:'pointer', textAlign:'left' as const, transition:'all .12s' }}>
@@ -354,7 +354,7 @@ function TrackingView({ order, onNewOrder, onKitchen }: { order: LiveOrder; onNe
   return (
     <div className="dm">
       <Topbar title="Sipariş Takip" subtitle={order.id}/>
-      <div className="scroll" style={{ padding:'22px 24px' }}>
+      <div className="scroll" style={{ padding:'clamp(14px,3vw,24px) clamp(14px,3vw,24px)' }}>
         <div style={{ maxWidth:520, display:'flex', flexDirection:'column', gap:14 }}>
 
           {/* Durum kartı */}
@@ -410,7 +410,7 @@ function TrackingView({ order, onNewOrder, onKitchen }: { order: LiveOrder; onNe
             )}
           </div>
 
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 , overflowX: "auto"}}>
             <button onClick={onKitchen} style={{ ...S.ghost, justifyContent:'center' }}><Store size={14}/> Mutfak</button>
             <button onClick={onNewOrder} style={{ ...S.btn }}>+ Yeni Sipariş</button>
           </div>
@@ -436,7 +436,7 @@ function KitchenView({ orders, onAdvance, onBack, restaurantName, pulse, pulseCo
   return (
     <div className="dm">
       <Topbar title="Mutfak Paneli" subtitle={restaurantName}/>
-      <div className="scroll" style={{ padding:'22px 24px', display:'flex', flexDirection:'column', gap:16 }}>
+      <div className="scroll" style={{ padding:'clamp(14px,3vw,24px) clamp(14px,3vw,24px)', display:'flex', flexDirection:'column', gap:16 }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <button onClick={onBack} style={{ ...S.ghost }}><ArrowLeft size={14}/> Sipariş Ekranı</button>
           <div style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:9, background:pulseConfig.bg, border:`1px solid ${pulseConfig.border}` }}>
@@ -451,7 +451,7 @@ function KitchenView({ orders, onAdvance, onBack, restaurantName, pulse, pulseCo
             <p style={{ fontSize:12, color:'var(--tx3)', marginTop:6 }}>Müşteri sipariş verdiğinde burada görünür</p>
           </div>
         ) : (
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14 }}>
             {cols.map(col => (
               <div key={col.title}>
                 <p style={{ fontSize:11, fontWeight:700, color:'var(--tx3)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:10 }}>{col.title}</p>
