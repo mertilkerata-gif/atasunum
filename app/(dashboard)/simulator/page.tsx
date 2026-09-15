@@ -55,10 +55,17 @@ export default function SimulatorPage() {
             active_staff:snapshot.active_staff, restaurant_capacity:RESTAURANTS.find(r=>r.id===restaurantId)?.capacity??80,
             rain_intensity:snapshot.rain_intensity, campaign_active:snapshot.campaign_active, special_event:snapshot.special_event,
             delay_rate:snapshot.delay_rate, cancellation_rate:snapshot.cancellation_rate },
-          changes:params,
+          changes:{
+            extra_packing_staff: params.extraPacking,
+            extra_grill_staff: params.extraGrill,
+            extra_staff: params.extraStaff,
+            order_increase_pct: params.orderIncrease,
+            campaign_active: params.campaignActive,
+          },
         }),
       })
-      const data = await res.json()
+      const json = await res.json()
+      const data = json.data ?? json
       setResult(data)
     } catch {
       // fallback simülasyon
