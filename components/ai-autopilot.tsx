@@ -45,23 +45,55 @@ export function AIAutopilot({ interval = 30 }: Props) {
 
   const addLog = (msg: string) => setLogs(prev => [`${new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} ${msg}`, ...prev.slice(0, 29)])
 
-  // Text-to-speech
+  // Text-to-speech — voices async yüklendiği için retry ile
   const speak = useCallback((text: string, onEnd?: () => void) => {
     if (muted || typeof window === 'undefined' || !window.speechSynthesis) { onEnd?.(); return }
     window.speechSynthesis.cancel()
-    const utt = new SpeechSynthesisUtterance(text)
-    utt.lang = 'tr-TR'
-    utt.rate = 1.1
-    utt.pitch = 1
-    // Türkçe ses tercih et
+
+    const doSpeak = () => {
+      const utt = new SpeechSynthesisUtterance(text)
+      utt.lang = 'tr-TR'
+      utt.rate = 1.05
+      utt.pitch = 1
+      utt.volume = 1
+
+      // Türkçe ses bul — yoksa İngilizce al
+      const voices = window.speechSynthesis.getVoices()
+      const trVoice = voices.find(v => v.lang === 'tr-TR')
+        ?? voices.find(v => v.lang.startsWith('tr'))
+        ?? voices.find(v => v.lang.startsWith('en'))
+        ?? voices[0]
+      if (trVoice) utt.voice = trVoice
+
+      utt.onend = () => { setStatus('idle'); onEnd?.() }
+      utt.onerror = (e) => { console.warn('TTS error:', e); setStatus('idle'); onEnd?.() }
+
+      synthRef.current = utt
+      setStatus('speaking')
+      window.speechSynthesis.speak(utt)
+    }
+
+    // Voices zaten yüklüyse hemen, yoksa bekle
     const voices = window.speechSynthesis.getVoices()
-    const trVoice = voices.find(v => v.lang.startsWith('tr')) ?? voices[0]
-    if (trVoice) utt.voice = trVoice
-    utt.onend = () => onEnd?.()
-    synthRef.current = utt
-    setStatus('speaking')
-    window.speechSynthesis.speak(utt)
+    if (voices.length > 0) {
+      doSpeak()
+    } else {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.onvoiceschanged = null
+        doSpeak()
+      }
+      // 1sn içinde yüklenmezse yine de dene
+      setTimeout(doSpeak, 1000)
+    }
   }, [muted])
+
+  // Kullanıcı etkileşimi olmadan ses çalışmıyor — ilk etkileşimde sessiz bir ses çal
+  const unlockAudio = useCallback(() => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return
+    const utt = new SpeechSynthesisUtterance(' ')
+    utt.volume = 0
+    window.speechSynthesis.speak(utt)
+  }, [])
 
   // Speech recognition
   const startListening = useCallback((onResult: (text: string) => void, timeout = 5000) => {
@@ -189,6 +221,7 @@ export function AIAutopilot({ interval = 30 }: Props) {
     const checkAndStart = () => {
       const key = getOpenAIKey()
       if (key) {
+        unlockAudio()
         setRunning(true)
         addLog('🚀 Otopilot otomatik başlatıldı')
       } else {
@@ -210,6 +243,7 @@ export function AIAutopilot({ interval = 30 }: Props) {
       setPendingDecision(null)
       addLog('⏹ Otopilot durduruldu')
     } else {
+      unlockAudio() // Sesi unlock et
       setRunning(true)
       addLog('🚀 Otopilot başlatıldı')
     }
@@ -251,10 +285,15 @@ export function AIAutopilot({ interval = 30 }: Props) {
 
         {/* Controls */}
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-          <button onClick={() => setMuted(m=>!m)} title={muted?'Sesi aç':'Sessiz'}
+          <button onClick={() => { unlockAudio(); speak('Mutfak Nabzı hazır. Sistem izleniyor.') }} title="Sesi test et"
             style={{ width:28, height:28, borderRadius:7, background:'var(--s2)', border:'1px solid var(--bdr)',
               display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'var(--tx3)' }}>
-            {muted ? <VolumeX size={12}/> : <Volume2 size={12}/>}
+            <Volume2 size={12}/>
+          </button>
+          <button onClick={() => setMuted(m=>!m)} title={muted?'Sesi aç':'Sessiz'}
+            style={{ width:28, height:28, borderRadius:7, background:muted?'var(--red2)':'var(--s2)', border:`1px solid ${muted?'var(--red-ln)':'var(--bdr)'}`,
+              display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:muted?'var(--red)':'var(--tx3)' }}>
+            {muted ? <VolumeX size={12}/> : <Mic size={12}/>}
           </button>
           <button onClick={toggle}
             style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', borderRadius:9,
