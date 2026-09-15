@@ -2,57 +2,55 @@
 import { useState } from 'react'
 import { Topbar } from '@/components/layout/topbar'
 import { MEMORY_ENTRIES, LEARNED_PATTERNS } from '@/data/seed/memory'
-import { getRiskConfig, cn } from '@/lib/utils'
-import { Brain, TrendingDown, CheckCircle, Zap, ChevronRight } from 'lucide-react'
+import { getRiskConfig } from '@/lib/utils'
+import { Brain, TrendingDown, CheckCircle2, Zap, ChevronRight } from 'lucide-react'
 
-const ACTION_COLORS: Record<string, string> = {
-  STAFF_ADD:       '#818cf8',
-  PREP_ADJUST:     '#f97316',
-  COURIER_PRIORITY:'#22c55e',
-  STOCK_REFILL:    '#eab308',
-  PROCESS_CHANGE:  '#c084fc',
+const ACTION_COLORS: Record<string,string> = {
+  STAFF_ADD:'var(--ac)', PREP_ADJUST:'var(--amber)', COURIER_PRIORITY:'var(--green)',
+  STOCK_REFILL:'var(--yellow,#eab308)', PROCESS_CHANGE:'#c084fc',
 }
-const ACTION_LABELS: Record<string, string> = {
+const ACTION_LABELS: Record<string,string> = {
   STAFF_ADD:'Personel Takviye', PREP_ADJUST:'Hazırlık Ayarı',
   COURIER_PRIORITY:'Kurye Öncelik', STOCK_REFILL:'Stok İkmal', PROCESS_CHANGE:'Süreç Değişimi',
 }
 
 export default function MemoryPage() {
-  const [tab, setTab] = useState<'history' | 'patterns'>('history')
+  const [tab, setTab] = useState<'history'|'patterns'>('history')
 
-  const avgImprovement = Math.round(MEMORY_ENTRIES.reduce((s, m) => s + m.improvement, 0) / MEMORY_ENTRIES.length)
-  const aiRecommendedCount = MEMORY_ENTRIES.filter(m => m.aiRecommended).length
-  const totalPulseReduced = MEMORY_ENTRIES.reduce((s, m) => s + (m.pulseBefore - m.pulseAfter), 0)
+  const avgImprovement = Math.round(MEMORY_ENTRIES.reduce((s,m)=>s+m.improvement,0)/MEMORY_ENTRIES.length)
+  const aiRecommendedCount = MEMORY_ENTRIES.filter(m=>m.aiRecommended).length
+  const totalPulseReduced = MEMORY_ENTRIES.reduce((s,m)=>s+(m.pulseBefore-m.pulseAfter),0)
+
+  const kpis = [
+    { label:'Toplam Aksiyon',  value:MEMORY_ENTRIES.length, sub:'kayıtlı',              color:'var(--ac)',    bg:'var(--ac2)',    Icon:CheckCircle2 },
+    { label:'Ort. İyileşme',   value:`%${avgImprovement}`,  sub:'metrik düşüşü',        color:'var(--green)', bg:'var(--green2)', Icon:TrendingDown },
+    { label:'AI Önerisi',      value:`%${Math.round(aiRecommendedCount/MEMORY_ENTRIES.length*100)}`, sub:`${aiRecommendedCount} aksiyondan`, color:'var(--ac)', bg:'var(--ac2)', Icon:Zap },
+    { label:'Öğrenilen Örüntü',value:LEARNED_PATTERNS.length, sub:'aktif pattern',     color:'var(--amber)', bg:'var(--amber2)', Icon:Brain },
+  ]
 
   return (
     <div className="dm">
-      <Topbar title="Operasyonel Hafıza" subtitle="Uygulanan aksiyonlar · Öğrenilen örüntüler · KPI sonuçları" />
-      <div className="scroll" style={{ padding: 'clamp(14px,3vw,24px) clamp(14px,3vw,24px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <Topbar title="Operasyonel Hafıza" subtitle="Uygulanan aksiyonlar · Öğrenilen örüntüler"/>
+      <div className="scroll" style={{ padding:'clamp(14px,3vw,24px)', display:'flex', flexDirection:'column', gap:16 }}>
 
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-4">
-          {[
-            { label: 'Toplam Aksiyon', value: MEMORY_ENTRIES.length, unit: 'kayıtlı', color: 'text-white', icon: <CheckCircle className="w-4 h-4" /> },
-            { label: 'Ort. İyileşme', value: `%${avgImprovement}`, unit: 'metrik düşüşü', color: 'text-emerald-400', icon: <TrendingDown className="w-4 h-4" /> },
-            { label: 'AI Önerisi', value: `%${Math.round(aiRecommendedCount/MEMORY_ENTRIES.length*100)}`, unit: `${aiRecommendedCount} aksiyondan`, color: 'text-indigo-400', icon: <Zap className="w-4 h-4" /> },
-            { label: 'Öğrenilen Örüntü', value: LEARNED_PATTERNS.length, unit: 'aktif pattern', color: 'text-orange-400', icon: <Brain className="w-4 h-4" /> },
-          ].map(({ label, value, unit, color, icon }) => (
-            <div key={label} className="card" style={{ padding: "20px" }}>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] uppercase tracking-widest">{label}</span>
-                <span className="opacity-40">{icon}</span>
+        {/* KPI */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(min(100%,180px),1fr))', gap:12 }}>
+          {kpis.map(({ label, value, sub, color, bg, Icon }) => (
+            <div key={label} className="kpi" style={{ borderLeft:`2.5px solid ${color}` }}>
+              <div style={{ width:30, height:30, borderRadius:8, background:bg, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:8 }}>
+                <Icon size={13} style={{ color }} strokeWidth={1.9}/>
               </div>
-              <div className="text-2xl font-bold font-mono">{value}</div>
-              <div className="text-[11px] mt-1">{unit}</div>
+              <p className="kpi-label">{label}</p>
+              <p className="kpi-value" style={{ fontSize:22, color }}>{value}</p>
+              <p className="kpi-sub">{sub}</p>
             </div>
           ))}
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 border rounded-xl p-1" style={{ background: 'var(--s2)', width: 'fit-content' }}>
-          {[{ id: 'history', label: '📋 Aksiyon Geçmişi' }, { id: 'patterns', label: '🧠 Öğrenilen Örüntüler' }].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id as any)}
-              className="px-5 py-2.5 rounded-lg text-xs font-medium transition-all">
+        <div className="tabs" style={{ borderRadius:10, width:'fit-content' }}>
+          {[{ id:'history', label:'📋 Aksiyon Geçmişi' }, { id:'patterns', label:'🧠 Örüntüler' }].map(t => (
+            <button key={t.id} className={`tab ${tab===t.id?'active':''}`} onClick={()=>setTab(t.id as any)}>
               {t.label}
             </button>
           ))}
@@ -60,76 +58,71 @@ export default function MemoryPage() {
 
         {/* History */}
         {tab === 'history' && (
-          <div className="space-y-3">
+          <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
             {MEMORY_ENTRIES.map(entry => {
-              const color = ACTION_COLORS[entry.actionType] ?? '#fff'
-              const scoreImprovement = entry.pulseBefore - entry.pulseAfter
+              const color = ACTION_COLORS[entry.actionType] ?? 'var(--ac)'
+              const scoreDiff = entry.pulseBefore - entry.pulseAfter
+              const beforeConfig = getRiskConfig(entry.pulseBefore >= 80 ? 'KRITIK' : entry.pulseBefore >= 60 ? 'RISKLI' : entry.pulseBefore >= 40 ? 'YOGUN' : 'NORMAL')
+              const afterConfig  = getRiskConfig(entry.pulseAfter  >= 80 ? 'KRITIK' : entry.pulseAfter  >= 60 ? 'RISKLI' : entry.pulseAfter  >= 40 ? 'YOGUN' : 'NORMAL')
               return (
-                <div key={entry.id} className="card" style={{ padding: "20px" }}>
-                  <div className="flex items-start gap-4">
-                    {/* Timeline dot */}
-                    <div className="flex flex-col items-center gap-1 shrink-0 pt-1">
-                      <div className="w-3 h-3 rounded-full" style={{ background: color, boxShadow: `0 0 8px ${color}60` }} />
-                      <div className="w-px flex-1 min-h-[40px]" style={{ background: 'var(--s2)' }} />
+                <div key={entry.id} className="card">
+                  <div style={{ padding:'16px 20px', display:'flex', gap:16 }}>
+                    {/* Timeline */}
+                    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4, flexShrink:0, paddingTop:4 }}>
+                      <div style={{ width:12, height:12, borderRadius:'50%', background:color, boxShadow:`0 0 8px ${color}60`, flexShrink:0 }}/>
+                      <div style={{ width:1, flex:1, minHeight:40, background:'var(--bdr)' }}/>
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
-                            style={{ background: color + '20', color, border: `1px solid ${color}30` }}>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      {/* Header */}
+                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8, flexWrap:'wrap', gap:6 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
+                          <span style={{ fontSize:10, fontWeight:700, padding:'2px 9px', borderRadius:20, background:`${color}18`, color, border:`1px solid ${color}30` }}>
                             {ACTION_LABELS[entry.actionType]}
                           </span>
-                          <span className="text-xs">{entry.restaurantName}</span>
+                          <span style={{ fontSize:12, color:'var(--tx2)' }}>{entry.restaurantName}</span>
                           {entry.aiRecommended && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded font-medium"
-                              style={{ background: 'rgba(129,140,248,0.15)', color: '#818cf8', border: '1px solid rgba(129,140,248,0.2)' }}>
+                            <span style={{ fontSize:9, fontWeight:700, padding:'2px 7px', borderRadius:5, background:'var(--ac2)', color:'var(--ac)', border:'1px solid rgba(124,106,247,.2)' }}>
                               AI Önerisi
                             </span>
                           )}
                         </div>
-                        <span className="text-[10px] font-mono shrink-0">{entry.date} {entry.time}</span>
+                        <span style={{ fontSize:11, fontFamily:'JetBrains Mono,monospace', color:'var(--tx3)' }}>{entry.date} {entry.time}</span>
                       </div>
 
-                      <div className="text-sm font-medium mb-3">{entry.action}</div>
+                      {/* Aksiyon */}
+                      <p style={{ fontSize:13.5, fontWeight:600, color:'var(--tx)', marginBottom:12, letterSpacing:'-.15px' }}>{entry.action}</p>
 
                       {/* Before → After */}
-                      <div className="flex items-center gap-4 mb-3">
-                        <div className="rounded-xl border px-4 py-2.5 min-w-[120px]"
-                          style={{ background: 'rgba(255,61,61,0.06)', borderColor: 'rgba(255,61,61,0.15)' }}>
-                          <div className="text-[9px] mb-0.5">Öncesi · {entry.before.metric}</div>
-                          <div className="text-sm font-bold font-mono">{entry.before.value}</div>
+                      <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10, flexWrap:'wrap' }}>
+                        <div style={{ padding:'10px 14px', borderRadius:10, background:'var(--red2)', border:'1px solid rgba(242,87,87,.18)', minWidth:110 }}>
+                          <p style={{ fontSize:9, color:'var(--tx3)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:3 }}>Öncesi · {entry.before.metric}</p>
+                          <p style={{ fontSize:14, fontWeight:700, fontFamily:'JetBrains Mono,monospace', color:'var(--red)' }}>{entry.before.value}</p>
                         </div>
-                        <ChevronRight className="w-4 h-4 shrink-0" />
-                        <div className="rounded-xl border px-4 py-2.5 min-w-[120px]"
-                          style={{ background: 'rgba(34,197,94,0.06)', borderColor: 'rgba(34,197,94,0.15)' }}>
-                          <div className="text-[9px] mb-0.5">Sonrası · {entry.after.metric}</div>
-                          <div className="text-sm font-bold font-mono">{entry.after.value}</div>
+                        <ChevronRight size={16} style={{ color:'var(--tx3)', flexShrink:0 }}/>
+                        <div style={{ padding:'10px 14px', borderRadius:10, background:'var(--green2)', border:'1px solid rgba(23,178,106,.18)', minWidth:110 }}>
+                          <p style={{ fontSize:9, color:'var(--tx3)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:3 }}>Sonrası · {entry.after.metric}</p>
+                          <p style={{ fontSize:14, fontWeight:700, fontFamily:'JetBrains Mono,monospace', color:'var(--green)' }}>{entry.after.value}</p>
                         </div>
-                        <div className="flex flex-col items-center">
-                          <div className="text-lg font-bold">↓%{entry.improvement}</div>
-                          {scoreImprovement > 0 && (
-                            <div className="text-[10px]">Nabız ↓{scoreImprovement}</div>
-                          )}
+                        <div style={{ textAlign:'center' }}>
+                          <p style={{ fontSize:20, fontWeight:700, color:'var(--green)' }}>↓%{entry.improvement}</p>
+                          {scoreDiff > 0 && <p style={{ fontSize:10, color:'var(--tx3)' }}>Nabız ↓{scoreDiff}</p>}
                         </div>
                       </div>
 
-                      {/* Pulse change */}
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="text-[10px]">Nabız:</div>
-                        <div className="flex items-center gap-2">
-                          <span className={cn('text-sm font-bold font-mono', getRiskConfig(entry.pulseBefore >= 80 ? 'KRITIK' : entry.pulseBefore >= 60 ? 'RISKLI' : entry.pulseBefore >= 40 ? 'YOGUN' : 'NORMAL').color)}>{entry.pulseBefore}</span>
-                          <span >→</span>
-                          <span className={cn('text-sm font-bold font-mono', getRiskConfig(entry.pulseAfter >= 80 ? 'KRITIK' : entry.pulseAfter >= 60 ? 'RISKLI' : entry.pulseAfter >= 40 ? 'YOGUN' : 'NORMAL').color)}>{entry.pulseAfter}</span>
-                        </div>
-                        <div className="text-[10px]">— {entry.appliedBy}</div>
+                      {/* Nabız */}
+                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom: entry.learnedPattern ? 8 : 0 }}>
+                        <span style={{ fontSize:10, color:'var(--tx3)' }}>Nabız:</span>
+                        <span style={{ fontSize:14, fontWeight:700, fontFamily:'JetBrains Mono,monospace', color:beforeConfig.colorHex }}>{entry.pulseBefore}</span>
+                        <span style={{ color:'var(--tx3)', fontSize:12 }}>→</span>
+                        <span style={{ fontSize:14, fontWeight:700, fontFamily:'JetBrains Mono,monospace', color:afterConfig.colorHex }}>{entry.pulseAfter}</span>
+                        <span style={{ fontSize:10, color:'var(--tx3)' }}>— {entry.appliedBy}</span>
                       </div>
 
                       {entry.learnedPattern && (
-                        <div className="flex items-center gap-2 mt-2 text-[11px] rounded-lg border px-3 py-2"
-                          style={{ background: 'rgba(249,115,22,0.04)', borderColor: 'rgba(249,115,22,0.12)' }}>
-                          <Brain className="w-3.5 h-3.5 shrink-0" />
-                          <span className="/70">Öğrenilen: {entry.learnedPattern}</span>
+                        <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 12px', borderRadius:9, background:'var(--amber2)', border:'1px solid rgba(240,168,67,.2)' }}>
+                          <Brain size={12} style={{ color:'var(--amber)', flexShrink:0 }}/>
+                          <span style={{ fontSize:11, color:'var(--tx2)' }}>Öğrenilen: {entry.learnedPattern}</span>
                         </div>
                       )}
                     </div>
@@ -142,31 +135,41 @@ export default function MemoryPage() {
 
         {/* Patterns */}
         {tab === 'patterns' && (
-          <div className="space-y-4">
+          <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
             {LEARNED_PATTERNS.map(p => (
-              <div key={p.id} className="card" style={{ padding: 24 }}>
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Brain className="w-4 h-4" />
-                      <span className="text-sm font-bold">{p.pattern}</span>
+              <div key={p.id} className="card">
+                <div style={{ padding:'18px 20px' }}>
+                  <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14, gap:12 }}>
+                    <div>
+                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:5 }}>
+                        <Brain size={15} style={{ color:'var(--ac)' }}/>
+                        <p style={{ fontSize:14, fontWeight:600, color:'var(--tx)', letterSpacing:'-.15px' }}>{p.pattern}</p>
+                      </div>
+                      <p style={{ fontSize:12, color:'var(--tx3)' }}>Tetikleyici: {p.trigger}</p>
                     </div>
-                    <div className="text-xs">Tetikleyici: {p.trigger}</div>
+                    <div style={{ textAlign:'right', flexShrink:0 }}>
+                      <p style={{ fontSize:26, fontWeight:700, fontFamily:'JetBrains Mono,monospace', color:'var(--green)', letterSpacing:'-.04em' }}>%{p.successRate}</p>
+                      <p style={{ fontSize:10, color:'var(--tx3)' }}>başarı oranı</p>
+                    </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-2xl font-bold font-mono">%{p.successRate}</div>
-                    <div className="text-[10px]">başarı oranı</div>
+
+                  <div style={{ padding:'12px 14px', borderRadius:10, background:'var(--ac2)', border:'1px solid rgba(124,106,247,.2)', marginBottom:14 }}>
+                    <p style={{ fontSize:10, color:'var(--tx3)', marginBottom:5, textTransform:'uppercase', letterSpacing:'.06em' }}>Önerilen Aksiyon</p>
+                    <p style={{ fontSize:13, color:'var(--tx)' }}>{p.recommendedAction}</p>
                   </div>
-                </div>
-                <div className="rounded-xl border px-4 py-3 mb-4"
-                  style={{ background: 'rgba(129,140,248,0.05)', borderColor: 'rgba(129,140,248,0.15)' }}>
-                  <div className="text-[10px]/60 mb-1">Önerilen Aksiyon</div>
-                  <div className="text-sm">{p.recommendedAction}</div>
-                </div>
-                <div className="flex items-center gap-6 text-xs">
-                  <span>{p.appliedCount} kez uygulandı</span>
-                  <span>Ort. %{p.avgImprovement} iyileşme</span>
-                  <span>{p.restaurants.length} restoran</span>
+
+                  <div style={{ display:'flex', gap:20 }}>
+                    {[
+                      { label:'Uygulama', value:p.appliedCount+' kez' },
+                      { label:'Ort. İyileşme', value:`%${p.avgImprovement}` },
+                      { label:'Restoran', value:p.restaurants.length+' lokasyon' },
+                    ].map(({ label, value }) => (
+                      <div key={label}>
+                        <p style={{ fontSize:10, color:'var(--tx3)', marginBottom:2 }}>{label}</p>
+                        <p style={{ fontSize:13, fontWeight:600, fontFamily:'JetBrains Mono,monospace', color:'var(--tx)' }}>{value}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             ))}

@@ -6,7 +6,7 @@
  */
 
 import { NextRequest } from 'next/server'
-import { verifyAPIKey, successResponse, unauthorizedResponse, errorResponse, validationErrorResponse } from '@/lib/auth'
+import { successResponse, errorResponse, validationErrorResponse } from '@/lib/auth'
 import { calculatePulseScore, PulseInput } from '@/services/pulse'
 
 interface SimulatePayload {
@@ -64,8 +64,6 @@ function applyChanges(base: PulseInput, changes: SimulatePayload['changes']): Pu
 }
 
 export async function POST(req: NextRequest) {
-  if (!verifyAPIKey(req)) return unauthorizedResponse()
-
   let body: SimulatePayload
   try { body = await req.json() } catch { return validationErrorResponse('Geçersiz JSON') }
   if (!body.current || !body.changes) return validationErrorResponse('current ve changes zorunlu')
