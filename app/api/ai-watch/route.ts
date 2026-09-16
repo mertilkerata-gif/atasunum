@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     sb().from('pulse_scores').select('*').order('computed_at', { ascending: false }).limit(30),
     sb().from('anomalies').select('*').eq('acknowledged', false),
     sb().from('orders').select('*').eq('status', 'ACTIVE'),
-    sb().from('stock_levels').select('*, products(name)').lte('quantity', 5),
+    sb().from('stock_levels').select('*, products(name, emoji)').lte('quantity', 10),
     sb().from('operation_snapshots').select('restaurant_id,rain_intensity,campaign_active,special_event,delay_rate').order('timestamp', { ascending: false }).limit(20),
     sb().from('shifts').select('restaurant_id,status,role').gte('shift_start', today + 'T00:00:00').lte('shift_start', today + 'T23:59:59'),
     sb().from('complaints').select('restaurant_id,reason').eq('status', 'OPEN').order('created_at', { ascending: false }).limit(20),
@@ -137,6 +137,16 @@ export async function POST(req: NextRequest) {
       violations.push({ restaurant_id: rid, type: 'PULSE_CRITICAL', value: p.score, severity: 'CRITICAL' })
   }
 
+  // Kritik stok için ek ihlaller
+  const stockByRest: Record<string,string[]> = {}
+  for (const s of (stockRows ?? [])) {
+    if (!stockByRest[s.restaurant_id]) stockByRest[s.restaurant_id] = []
+    stockByRest[s.restaurant_id].push(`${s.products?.emoji||''}${s.products?.name}(${s.quantity})`)
+  }
+  for (const [rid, items] of Object.entries(stockByRest)) {
+    violations.push({ restaurant_id: rid, type: 'STOCK_REPLENISHMENT', value: items.length, severity: 'MEDIUM', items })
+  }
+
   // Yağmur için ek ihlaller (latestPulse tanımlandıktan sonra)
   for (const rid of rainRestaurants) {
     const p = latestPulse[rid]
@@ -182,7 +192,7 @@ KURALLAR:
 1. decisions dizisinde her ihlal eden restoran için AYRI bir entry oluştur
 2. restaurant_id alanına MUTLAKA yukarıdaki listedeki gerçek ID'yi yaz (r1, r2, r3... gibi)
 3. voice_message'da restoran adını ve sorunu Türkçe açıkla
-4. action_type şunlardan biri olmalı: PACKING_OVERLOAD, PREP_SLOW, COURIER_WAIT, ORDER_SURGE, PULSE_CRITICAL
+4. action_type şunlardan biri olmalı: PACKING_OVERLOAD, PREP_SLOW, COURIER_WAIT, ORDER_SURGE, PULSE_CRITICAL, STOCK_REPLENISHMENT
 5. Yağmurlu restoranlarda kurye gecikmesine karşı önlem al, TG siparişlerinin artacağını belirt
 6. Kampanyalı restoranlarda kapasite baskısına dikkat et
 7. Gelmemiş personel varsa istasyon yükü artacağını hesaba kat
