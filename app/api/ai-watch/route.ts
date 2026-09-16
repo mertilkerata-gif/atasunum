@@ -102,7 +102,14 @@ export async function POST(req: NextRequest) {
   const liveWeather = await getLiveWeather()
   const today = new Date().toISOString().split('T')[0]
   const [{ data: pulseRows }, { data: anomalyRows }, { data: orderRows }, { data: stockRows }, { data: weatherEventRows }, { data: shiftRows }, { data: complaintRows }, { data: eventRows }] = await Promise.all([
-    sb().rpc('get_latest_pulse_scores'),
+    (async () => {
+      const rpcResult = await sb().rpc('get_latest_pulse_scores')
+      if (rpcResult.error || !rpcResult.data?.length) {
+        // RPC başarısız — direkt query ile al
+        return sb().from('pulse_scores').select('*').order('computed_at', { ascending: false }).limit(200)
+      }
+      return rpcResult
+    })(),
     sb().from('anomalies').select('*').eq('acknowledged', false),
     sb().from('orders').select('*').eq('status', 'ACTIVE'),
     sb().from('stock_levels').select('*, products(name, emoji)').lte('quantity', 10),
@@ -155,15 +162,29 @@ export async function POST(req: NextRequest) {
 
 
   // En güncel pulse/restoran
-  // RPC zaten DISTINCT ON ile her restoran için EN SON kaydı döndürüyor
+  // Her restoran için en son pulse — string değerleri number'a çevir
   const latestPulse: Record<string, any> = {}
   for (const p of (pulseRows ?? [])) {
-    latestPulse[p.restaurant_id] = p
+    const norm = {
+      ...p,
+      score:          Number(p.score ?? 0),
+      avg_prep_time:  Number(p.avg_prep_time ?? 0),
+      avg_packing_time: Number(p.avg_packing_time ?? 0),
+      courier_wait:   Number(p.courier_wait ?? 0),
+      open_orders:    Number(p.open_orders ?? 0),
+      station_scores: {
+        grill:   Number(p.station_scores?.grill   ?? 0),
+        fryer:   Number(p.station_scores?.fryer   ?? 0),
+        packing: Number(p.station_scores?.packing ?? 0),
+        courier: Number(p.station_scores?.courier ?? 0),
+      }
+    }
+    const ex = latestPulse[p.restaurant_id]
+    if (!ex || new Date(p.computed_at) > new Date(ex.computed_at)) {
+      latestPulse[p.restaurant_id] = norm
+    }
   }
-  
-  // Debug: kaç restoran geldi?
-  console.log('[ai-watch] latestPulse:', Object.keys(latestPulse).length, 'restoran', 
-    Object.entries(latestPulse).map(([id,p]:any) => `${id}:${p.score}`).join(', '))
+  console.log('[ai-watch] pulse:', Object.entries(latestPulse).map(([id,p]:any)=>`${id}=${p.score}`).join(' | '))
 
   // Eşik ihlali tespiti
   const violations: any[] = []
