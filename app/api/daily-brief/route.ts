@@ -1,12 +1,7 @@
 /**
- * GET /api/daily-brief
- * Günlük otomatik brifing:
- * 1. OpenAI web search ile bugünkü İstanbul hava + maç + özel gün çeker
- * 2. District→restoran eşleştirir
- * 3. events tablosuna yazar
- * 4. Pulse tahminlerini günceller
- * 
- * Vercel Cron ile her sabah 06:00'da çalışır
+ * GET/POST /api/daily-brief
+ * GPT-4o'ya bugünü sor → hava + maç + haber + özel gün → events tablosuna yaz
+ * Vercel Cron: her sabah 04:00 UTC (07:00 TR)
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
@@ -21,131 +16,93 @@ const DISTRICT_MAP: Record<string, string[]> = {
   'Bakırköy':['r9'], 'Üsküdar':['r10'],
 }
 
-// Stadyum → bölge eşleşmesi
-const COLLECT_API_KEY = 'apikey 1XOyvFOuk2Txiq3KnAfSD8:5jubPvRPCdXqqi4jQACuqD'
-
-// CollectAPI ile gerçek İstanbul hava durumu
-async function getIstanbulWeather() {
-  const DISTRICTS_TR = [
-    { name:'Beşiktaş', city:'Beşiktaş' },
-    { name:'Kadıköy',  city:'Kadıköy'  },
-    { name:'Şişli',    city:'Şişli'    },
-  ]
-  try {
-    // Genel İstanbul hava durumu
-    const res = await fetch('https://api.collectapi.com/weather/getWeather?lang=tr&city=istanbul', {
-      headers: {
-        'content-type': 'application/json',
-        'authorization': COLLECT_API_KEY,
-      }
-    })
-    if (!res.ok) throw new Error(`CollectAPI: ${res.status}`)
-    const data = await res.json()
-    
-    if (!data.success || !data.result?.length) throw new Error('Veri yok')
-    
-    const today = data.result[0] // Bugünkü hava
-    const desc = today.description?.toLowerCase() || ''
-    const isRain = desc.includes('yağmur') || desc.includes('sağanak') || desc.includes('yağış') || desc.includes('rain')
-    const isSnow = desc.includes('kar') || desc.includes('snow')
-    const isStormy = desc.includes('fırtına') || desc.includes('storm')
-    const degree = parseFloat(today.degree || '15')
-    
-    let rainIntensity = 0
-    if (isStormy) rainIntensity = 0.9
-    else if (isRain) rainIntensity = 0.6
-    else if (desc.includes('hafif yağmur') || desc.includes('çisenti')) rainIntensity = 0.3
-    
-    let orderImpact = 0
-    if (isRain || isSnow) orderImpact = 25
-    if (isStormy) orderImpact = 40
-    
-    return {
-      condition: isStormy ? 'fırtınalı' : isSnow ? 'karlı' : isRain ? 'yağmurlu' : 'normal',
-      description: today.description || 'Veri yok',
-      temperature: degree,
-      rain_intensity: rainIntensity,
-      order_impact_pct: orderImpact,
-      courier_impact: rainIntensity > 0.5 ? 'kurye gecikmesi bekleniyor' : 'normal',
-      raw: today,
-    }
-  } catch (e) {
-    console.error('CollectAPI hata:', e)
-    return null
-  }
-}
-
-const VENUE_DISTRICT: Record<string, string[]> = {
-  'Vodafone Park':          ['Beşiktaş', 'Şişli'],
-  'Ülker Stadyum':          ['Kadıköy', 'Maltepe'],
-  'Türk Telekom Stadyumu':  ['Şişli', 'Bağcılar'],
-  'Rams Park':              ['Bağcılar', 'Bakırköy'],
-  'Atatürk Olimpiyat':      ['Bağcılar', 'Şişli', 'Bakırköy'],
-  'Sinan Erdem':            ['Bakırköy', 'Bağcılar'],
-  'Volkswagen Arena':       ['Beşiktaş', 'Şişli'],
+const VENUE_MAP: Record<string, string[]> = {
+  'Vodafone Park':        ['Beşiktaş','Şişli'],
+  'Ülker Stadyumu':       ['Kadıköy','Maltepe'],
+  'Türk Telekom Stadyumu':['Şişli','Bağcılar'],
+  'Rams Park':            ['Bağcılar','Bakırköy'],
+  'Atatürk Olimpiyat':    ['Bağcılar','Şişli','Bakırköy'],
+  'Sinan Erdem':          ['Bakırköy','Bağcılar'],
+  'Taksim Meydanı':       ['Taksim','Şişli','Beşiktaş'],
+  'Harbiye Açıkhava':     ['Şişli','Beşiktaş'],
 }
 
 export async function GET(req: NextRequest) {
-  const apiKey = req.headers.get('x-api-key') || process.env.OPENAI_API_KEY
+  const apiKey = req.headers.get('x-api-key')
+    || req.nextUrl.searchParams.get('key')
+    || process.env.OPENAI_API_KEY
+
   if (!apiKey) return NextResponse.json({ error: 'API key gerekli' }, { status: 401 })
 
-  const today = new Date().toISOString().split('T')[0]
-  const todayFormatted = new Date().toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric', weekday:'long' })
+  const today     = new Date().toISOString().split('T')[0]
+  const now       = new Date()
+  const dayName   = now.toLocaleDateString('tr-TR', { weekday:'long' })
+  const dateStr   = now.toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' })
+  const timeStr   = now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' })
 
-  // 1. CollectAPI'den gerçek hava durumu çek
-  const realWeather = await getIstanbulWeather()
+  // GPT-4o'ya sor — kendi güncel bilgisi + web search
+  const prompt = `Bugün ${dayName}, ${dateStr}, saat ${timeStr} (Türkiye saati).
 
-  // 2. GPT-4o ile maç/etkinlik bul (hava bilgisi zaten elimizde)
-  const prompt = `Bugün ${todayFormatted} için İstanbul'daki restoran operasyonlarını etkileyen etkinlikleri bul.
-
-GERÇEK HAVA DURUMU (CollectAPI'den): ${realWeather ? `${realWeather.condition}, ${realWeather.temperature}°C, "${realWeather.description}"` : 'çekilemedi'}
-
-Sadece ETKINLIKLER için JSON döndür (hava bilgisini dahil etme, zaten var):
-Bugün ${todayFormatted} için İstanbul'daki restoran operasyonlarını etkileyen TÜM olayları bul ve JSON olarak döndür.
+Sen bir İstanbul operasyon analistisin. Burger King ve Popeyes restoranlarının satışlarını etkileyen TÜM faktörleri araştır ve JSON olarak döndür.
 
 ARAŞTIR:
-1. İstanbul hava durumu bugün (yağmur var mı, şiddet, sıcaklık)
-2. Bugün İstanbul'da oynanan futbol maçları (Süper Lig, UEFA, Türkiye Kupası)
-3. Bugün İstanbul'da konser/festival/büyük etkinlik var mı
-4. Bugün resmi tatil veya özel gün var mı (dini bayram, milli bayram, anneler günü vb.)
-5. Yarın veya bu hafta sonu önemli etkinlik var mı
+1. **Hava durumu**: Bugün İstanbul'da hava nasıl? Yağmur, kar, sıcaklık, rüzgar. Fast food teslimat siparişlerini nasıl etkiler?
 
-Her etkinlik için:
-- Hangi İstanbul ilçelerini etkiler: Beşiktaş, Kadıköy, Maltepe, Pendik, Ümraniye, Taksim, Bağcılar, Şişli, Bakırköy, Üsküdar
-- Fast food restoranlarına tahmini sipariş etkisi (% artış veya azalış)
-- Stadyum/mekan adı (futbol maçı ise)
-- Başlangıç saati
+2. **Futbol maçları**: Bugün İstanbul'da oynanan Süper Lig, UEFA, Türkiye Kupası maçları? Hangi stadyumda, saat kaçta? Beşiktaş/Fenerbahçe/Galatasaray/Başakşehir maçı var mı?
 
-JSON SADECE şu formatta döndür:
+3. **Özel günler**: Bugün resmi tatil, dini bayram, anneler günü, sevgililer günü, milli bayram, öğrenci sınavı (YKS/LGS/KPSS) gibi özel bir gün var mı?
+
+4. **Etkinlikler**: İstanbul'da büyük konser, festival, fuar, maraton, gösteri var mı? Nerede?
+
+5. **Gündem haberleri**: İstanbul'da bugün satışları doğrudan etkileyecek büyük bir olay var mı? (Ulaşım grevi, büyük spor organizasyonu, turizm yoğunluğu, tatil dönüşü trafiği vb.)
+
+6. **Yarın/Bu hafta sonu**: Yarın veya bu hafta sonu için önemli bir uyarı var mı?
+
+SADECE JSON döndür, başka bir şey yazma:
 {
   "date": "${today}",
+  "generated_at": "${now.toISOString()}",
+  "summary": "Bugün için 2-3 cümle operasyon özeti. Satışları etkileyecek ana faktörleri belirt.",
+  "tomorrow_preview": "Yarın için kısa uyarı veya boş string",
   "weather": {
-    "condition": "yağmurlu/güneşli/bulutlu/karlı",
-    "rain_intensity": 0.0,
-    "temperature": 18,
-    "wind_speed": 20,
-    "description": "Kısa hava açıklaması",
-    "affected_districts": ["tüm İstanbul ilçeleri"],
-    "order_impact_pct": 15,
-    "courier_impact": "kurye gecikmesi bekleniyor / normal"
+    "condition": "yağmurlu/güneşli/bulutlu/karlı/fırtınalı",
+    "temperature_min": 12,
+    "temperature_max": 18,
+    "rain_intensity": 0.6,
+    "description": "Öğleden sonra sağanak yağış bekleniyor",
+    "order_impact": "TG siparişleri %25 artar, kurye gecikmesi olabilir",
+    "order_impact_pct": 25
   },
   "events": [
     {
-      "type": "MATCH/CONCERT/HOLIDAY/CAMPAIGN/OTHER",
-      "title": "Etkinlik adı",
-      "description": "Kısa açıklama",
-      "venue": "Mekan adı veya null",
-      "kickoff_time": "20:00 veya null",
-      "home_team": "Takım adı veya null",
-      "away_team": "Takım adı veya null",
+      "type": "MATCH",
+      "title": "Beşiktaş - Galatasaray",
+      "description": "Süper Lig 28. hafta derbisi",
+      "venue": "Vodafone Park",
+      "kickoff_time": "20:00",
+      "home_team": "Beşiktaş",
+      "away_team": "Galatasaray",
       "affected_districts": ["Beşiktaş", "Şişli"],
-      "impact_level": "LOW/MEDIUM/HIGH/CRITICAL",
-      "expected_order_increase_pct": 35,
-      "notes": "Operasyon notu"
+      "impact_level": "CRITICAL",
+      "expected_order_increase_pct": 45,
+      "impact_window": "18:00-23:30",
+      "notes": "Maçtan 2 saat önce ve sonra pik bekleniyor"
+    },
+    {
+      "type": "HOLIDAY",
+      "title": "23 Nisan Ulusal Egemenlik Günü",
+      "description": "Resmi tatil — okullar kapalı, aileler evde",
+      "venue": null,
+      "kickoff_time": null,
+      "home_team": null,
+      "away_team": null,
+      "affected_districts": ["Beşiktaş","Kadıköy","Maltepe","Pendik","Ümraniye","Taksim","Bağcılar","Şişli","Bakırköy","Üsküdar"],
+      "impact_level": "HIGH",
+      "expected_order_increase_pct": 30,
+      "impact_window": "11:00-22:00",
+      "notes": "Tüm gün yüksek sipariş bekleniyor"
     }
-  ],
-  "tomorrow_preview": "Yarın için kısa uyarı veya boş string",
-  "summary": "Bugün için 1-2 cümle operasyon özeti"
+  ]
 }`
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -153,89 +110,63 @@ JSON SADECE şu formatta döndür:
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
       model: 'gpt-4o',
-      max_tokens: 2000,
+      max_tokens: 2500,
       temperature: 0.1,
       response_format: { type: 'json_object' },
       messages: [{ role: 'user', content: prompt }],
-      // Web search tool
-      tools: [{
-        type: 'function',
-        function: {
-          name: 'web_search',
-          description: 'Search the web for current information',
-          parameters: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] }
-        }
-      }]
     }),
   })
 
   if (!res.ok) {
     const err = await res.text()
-    return NextResponse.json({ error: `OpenAI: ${res.status}`, detail: err.slice(0,200) }, { status: 500 })
+    return NextResponse.json({ error: `OpenAI: ${res.status}`, detail: err.slice(0,300) }, { status: 500 })
   }
 
   const aiData = await res.json()
   let brief: any
   try {
-    const content = aiData.choices[0].message.content
-    brief = JSON.parse(content)
+    brief = JSON.parse(aiData.choices[0].message.content)
   } catch {
-    return NextResponse.json({ error: 'Parse hatası', raw: aiData.choices[0]?.message?.content?.slice(0,200) }, { status: 500 })
+    return NextResponse.json({ error: 'Parse hatası', raw: aiData.choices[0]?.message?.content?.slice(0,300) }, { status: 500 })
   }
 
-  // Önce bugünkü otomatik kayıtları temizle
-  await sb().from('events').delete().eq('event_date', today).eq('event_type', 'WEATHER')
+  // Bugünkü otomatik kayıtları temizle (güncelleme için)
+  await sb().from('events')
+    .delete()
+    .eq('event_date', today)
+    .in('event_type', ['WEATHER','MATCH','CONCERT','HOLIDAY','OTHER'])
 
   const saved: any[] = []
+  const allDistricts = Object.keys(DISTRICT_MAP)
 
-  // 1. Hava durumu kaydet — CollectAPI'den gelen gerçek veri
-  if (realWeather) {
-    const w = realWeather
-    const allDistricts = Object.keys(DISTRICT_MAP)
-    const { data: weatherEvent } = await sb().from('events').insert({
+  // 1. Hava kaydet
+  if (brief.weather) {
+    const w = brief.weather
+    const { data: wEv } = await sb().from('events').insert({
       event_date: today,
       event_type: 'WEATHER',
-      title: `Hava: ${w.condition} · ${w.temperature}°C`,
-      description: `${w.description} · Kurye: ${w.courier_impact}`,
-      affected_districts: w.rain_intensity > 0.3 ? allDistricts : allDistricts,
-      impact_level: w.rain_intensity > 0.7 ? 'HIGH' : w.rain_intensity > 0.3 ? 'MEDIUM' : 'LOW',
+      title: `Hava: ${w.condition} · ${w.temperature_min}–${w.temperature_max}°C`,
+      description: `${w.description} · ${w.order_impact}`,
+      affected_districts: allDistricts,
+      impact_level: w.rain_intensity > 0.6 ? 'HIGH' : w.rain_intensity > 0.3 ? 'MEDIUM' : 'LOW',
       expected_order_increase_pct: w.order_impact_pct || 0,
     }).select().single()
-    if (weatherEvent) saved.push(weatherEvent)
-
-    // Snapshot'lara yağmur bilgisi yaz
-    if (w.rain_intensity > 0.3) {
-      const { data: rests } = await sb().from('restaurants').select('id')
-      for (const r of (rests ?? [])) {
-        const { data: cur } = await sb().from('operation_snapshots')
-          .select('*').eq('restaurant_id', r.id).order('timestamp', { ascending: false }).limit(1).single()
-        if (cur) {
-          await sb().from('operation_snapshots').insert({
-            ...cur, id: undefined,
-            rain_intensity: Math.round(w.rain_intensity * 10),
-            timestamp: new Date().toISOString(),
-          })
-        }
-      }
-    }
+    if (wEv) saved.push(wEv)
   }
 
   // 2. Etkinlikleri kaydet
   for (const ev of (brief.events || [])) {
-    // Venue'dan district bul
-    let districts = ev.affected_districts || []
-    if (ev.venue && VENUE_DISTRICT[ev.venue]) {
-      districts = [...new Set([...districts, ...VENUE_DISTRICT[ev.venue]])]
+    // Venue'dan otomatik district ekle
+    let districts: string[] = ev.affected_districts || []
+    if (ev.venue && VENUE_MAP[ev.venue]) {
+      districts = [...new Set([...districts, ...VENUE_MAP[ev.venue]])]
     }
-
-    // Bugünkü aynı etkinlik varsa atla
-    const { data: exists } = await sb().from('events')
-      .select('id').eq('event_date', today).eq('title', ev.title).limit(1)
-    if (exists?.length) continue
+    // Hiç district yoksa tüm ağ
+    if (!districts.length) districts = allDistricts
 
     const { data: newEv } = await sb().from('events').insert({
       event_date: today,
-      event_type: ev.type,
+      event_type: ev.type || 'OTHER',
       title: ev.title,
       description: ev.description,
       venue: ev.venue || null,
@@ -243,7 +174,7 @@ JSON SADECE şu formatta döndür:
       home_team: ev.home_team || null,
       away_team: ev.away_team || null,
       affected_districts: districts,
-      impact_level: ev.impact_level,
+      impact_level: ev.impact_level || 'MEDIUM',
       expected_order_increase_pct: ev.expected_order_increase_pct || 0,
     }).select().single()
     if (newEv) saved.push(newEv)
@@ -256,8 +187,9 @@ JSON SADECE şu formatta döndür:
     resource: 'events',
     details: {
       date: today,
+      generated_at: brief.generated_at,
       weather: brief.weather?.condition,
-      events_found: brief.events?.length || 0,
+      events_found: (brief.events || []).length,
       events_saved: saved.length,
       summary: brief.summary,
       tomorrow_preview: brief.tomorrow_preview,
@@ -269,11 +201,11 @@ JSON SADECE şu formatta döndür:
     date: today,
     summary: brief.summary,
     tomorrow_preview: brief.tomorrow_preview,
-    weather: realWeather || brief.weather,
+    weather: brief.weather,
     events_saved: saved.length,
     events: saved,
+    raw_events: brief.events,
   })
 }
 
-// Vercel Cron için POST de destekle
 export const POST = GET
