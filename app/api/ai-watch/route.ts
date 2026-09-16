@@ -85,15 +85,37 @@ export async function POST(req: NextRequest) {
 
   // Canlı verileri çek
   const today = new Date().toISOString().split('T')[0]
-  const [{ data: pulseRows }, { data: anomalyRows }, { data: orderRows }, { data: stockRows }, { data: snapRows }, { data: shiftRows }, { data: complaintRows }] = await Promise.all([
+  const [{ data: pulseRows }, { data: anomalyRows }, { data: orderRows }, { data: stockRows }, { data: snapRows }, { data: shiftRows }, { data: complaintRows }, { data: eventRows }] = await Promise.all([
     sb().from('pulse_scores').select('*').order('computed_at', { ascending: false }).limit(30),
     sb().from('anomalies').select('*').eq('acknowledged', false),
     sb().from('orders').select('*').eq('status', 'ACTIVE'),
     sb().from('stock_levels').select('*, products(name, emoji)').lte('quantity', 10),
     sb().from('operation_snapshots').select('restaurant_id,rain_intensity,campaign_active,special_event,delay_rate').order('timestamp', { ascending: false }).limit(20),
     sb().from('shifts').select('restaurant_id,status,role').gte('shift_start', today + 'T00:00:00').lte('shift_start', today + 'T23:59:59'),
-    sb().from('complaints').select('restaurant_id,reason').eq('status', 'OPEN').order('created_at', { ascending: false }).limit(20),
+    sb().from('events').select('*').gte('event_date', today).lte('event_date', new Date(Date.now()+86400000*2).toISOString().split('T')[0]),
+    sb().from('complaints').select('restaurant_id,reason').eq('status', 'OPEN').order('created_at', { ascending: false }).limit(20) as any,
   ])
+
+  // District → Restaurant ID map
+  const DISTRICT_MAP: Record<string, string[]> = {
+    'Beşiktaş':['r1'],'Kadıköy':['r2'],'Maltepe':['r3'],'Pendik':['r4'],
+    'Ümraniye':['r5'],'Taksim':['r6'],'Bağcılar':['r7'],'Şişli':['r8'],
+    'Bakırköy':['r9'],'Üsküdar':['r10'],
+  }
+
+  // Events → hangi restoranlar etkileniyor
+  const todayEvents = (eventRows ?? []).filter((e:any) => e.event_date === today)
+  const upcomingEvents = (eventRows ?? []).filter((e:any) => e.event_date !== today)
+  const eventImpactMap: Record<string,any[]> = {}
+  for (const ev of (eventRows ?? [])) {
+    for (const district of (ev.affected_districts || [])) {
+      const rids = DISTRICT_MAP[district] || []
+      for (const rid of rids) {
+        if (!eventImpactMap[rid]) eventImpactMap[rid] = []
+        eventImpactMap[rid].push(ev)
+      }
+    }
+  }
 
   // Snapshot map
   const snapMap: Record<string,any> = {}
@@ -188,6 +210,18 @@ GELMEMİŞ PERSONEL: ${Object.entries(absentByRest).map(([id,n])=>`${restNames[i
 AÇIK ŞİKAYET: ${Object.entries(complaintsByRest).map(([id,n])=>`${restNames[id]||id}: ${n}`).join(', ')||'Yok'}
 SAAT: ${new Date().toLocaleTimeString('tr-TR')} — ${new Date().getHours()>=18&&new Date().getHours()<=21?'AKŞAM YOĞUNLUK SAATİ (18-21)':new Date().getHours()>=11&&new Date().getHours()<=14?'ÖĞLE YOĞUNLUK SAATİ (11-14)':'normal saat'}
 
+BUGÜNKÜ ÖZEL ETKINLIKLER:
+${todayEvents.length === 0 ? 'Yok' : todayEvents.map((e:any) => {
+  const affRests = (e.affected_districts||[]).flatMap((d:string)=>(DISTRICT_MAP[d]||[]).map((r:string)=>restNames[r]||r))
+  return `- ${e.event_type}: "${e.title}" | Etki: %+${e.expected_order_increase_pct} sipariş | Seviye: ${e.impact_level} | ${e.venue||''} ${e.kickoff_time?'Başlangıç:'+e.kickoff_time:''} | Etkilenen restoranlar: ${affRests.join(', ')}`
+}).join('\n')}
+
+YAKLAŞAN ETKİNLİKLER (2 gün):
+${upcomingEvents.length === 0 ? 'Yok' : upcomingEvents.map((e:any) => `- ${e.event_date}: ${e.event_type} — "${e.title}" (+%${e.expected_order_increase_pct})`).join('\n')}
+
+ETKINLIK ETKİSİNDEKİ RESTORANLAR (bugün):
+${Object.entries(eventImpactMap).filter(([,evs])=>(evs as any[]).some((e:any)=>e.event_date===today)).map(([rid,evs])=>`${restNames[rid]||rid}: ${(evs as any[]).map((e:any)=>e.title).join(', ')}`).join('\n')||'Yok'}
+
 KURALLAR:
 1. decisions dizisinde her ihlal eden restoran için AYRI bir entry oluştur
 2. restaurant_id alanına MUTLAKA yukarıdaki listedeki gerçek ID'yi yaz (r1, r2, r3... gibi)
@@ -197,6 +231,9 @@ KURALLAR:
 6. Kampanyalı restoranlarda kapasite baskısına dikkat et
 7. Gelmemiş personel varsa istasyon yükü artacağını hesaba kat
 8. Akşam yoğunluk saatinde (18-21) kararları daha proaktif ver
+9. Maç/konser/tatil olan bölgelerdeki restoranlar için önceden (maçtan 2 saat önce) stok ve personel hazırlığı öner
+10. Etkinlik bölgelerinde sipariş artışı %30+ beklentisiyle kapasite planlaması yap
+11. Maç sonrası (22:00-23:30) kurye baskısına karşı önceden kurye kapasitesini artır
 
 JSON formatı:
 {

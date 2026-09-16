@@ -12,3 +12,17 @@ export const RESTAURANTS: Restaurant[] = [
   { id: 'r9', name: 'Burger King Pendik', brand: 'BURGER_KING', city: 'İstanbul', district: 'Pendik', address: 'Ankara Cad. No:120', region: 'Anadolu Yakası', capacity: 95, lat: 40.8753, lng: 29.2313, is_active: true },
   { id: 'r10', name: 'Popeyes Bakırköy', brand: 'POPEYES', city: 'İstanbul', district: 'Bakırköy', address: 'İncirli Cad. No:34', region: 'Avrupa Yakası', capacity: 65, lat: 40.9814, lng: 28.8731, is_active: true },
 ]
+
+// District → restaurant ID mapping (events için)
+export const DISTRICT_RESTAURANT_MAP: Record<string, string[]> = {
+  'Beşiktaş':  ['r1'],
+  'Kadıköy':   ['r2'],
+  'Maltepe':   ['r3'],
+  'Pendik':    ['r4'],
+  'Ümraniye':  ['r5'],
+  'Taksim':    ['r6'],
+  'Bağcılar':  ['r7'],
+  'Şişli':     ['r8'],
+  'Bakırköy':  ['r9'],
+  'Üsküdar':   ['r10'],
+}
