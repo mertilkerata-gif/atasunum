@@ -79,17 +79,17 @@ export async function POST(req: NextRequest) {
   }
 
   // Kritik stok
-  const { data: stockRows } = await sb().from('stock_levels').select('restaurant_id, quantity, products(name, emoji)').lte('quantity', 10)
+  const { data: stockRows } = await sb().from('stock_levels').select('restaurant_id, quantity, min_threshold').lte('quantity', 10)
   const stockMap: Record<string,string[]> = {}
   for (const s of (stockRows ?? [])) {
     if (!stockMap[s.restaurant_id]) stockMap[s.restaurant_id] = []
-    stockMap[s.restaurant_id].push(`${(s as any).products?.name}(${s.quantity})`)
+    stockMap[s.restaurant_id].push(`stok(${s.quantity})`)
   }
   for (const [rid, items] of Object.entries(stockMap)) {
     violations.push({ restaurant_id:rid, type:'STOCK_REPLENISHMENT', value:items.length, severity:'MEDIUM', items })
   }
 
-  console.log('[ai-watch] ihlaller:', violations.length, violations.map(v=>`${v.restaurant_id}:${v.type}`).join(' '))
+  console.log('[ai-watch] ihlaller:', violations.length, violations.map((v:any)=>`${v.restaurant_id}:${v.type}`).join(' '))
 
   if (!violations.length) return NextResponse.json({ status:'OK', message:'Tüm sistemler normal', violations:0, decisions:[] })
 
