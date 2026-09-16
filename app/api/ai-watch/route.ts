@@ -122,11 +122,18 @@ KURALLAR:
     body: JSON.stringify({ model:'gpt-4o', max_tokens:1000, temperature:0.1, response_format:{type:'json_object'}, messages:[{role:'user',content:prompt}] }),
   })
 
-  if (!res.ok) return NextResponse.json({ error:`OpenAI: ${res.status}` }, { status:500 })
+  if (!res.ok) {
+    const errBody = await res.text().catch(()=>'')
+    console.error('[ai-watch] OpenAI hata:', res.status, errBody.slice(0,200))
+    return NextResponse.json({ error:`OpenAI: ${res.status}`, detail: errBody.slice(0,200) }, { status:500 })
+  }
   const aiData = await res.json()
   let result: any
   try { result = JSON.parse(aiData.choices[0].message.content) }
-  catch { return NextResponse.json({ error:'Parse hatası' }, { status:500 }) }
+  catch(e) {
+    console.error('[ai-watch] Parse hatası:', aiData.choices?.[0]?.message?.content?.slice(0,200))
+    return NextResponse.json({ error:'Parse hatası' }, { status:500 })
+  }
 
   // 5. Uygula + kaydet
   const applied: any[] = []
