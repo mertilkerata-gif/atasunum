@@ -117,27 +117,49 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ status: 'OK', message: 'Tüm sistemler normal', violations: 0, decisions: [] })
   }
 
-  // GPT-4o'ya gönder
-  const prompt = `TAB Gıda Mutfak Nabzı AI Karar Motoru. Anlık ihlaller:
+  // Restoran adlarını ekle
+  const restNames: Record<string,string> = {}
+  for (const [rid, p] of Object.entries(latestPulse)) {
+    restNames[rid] = (p as any).restaurant_name || rid
+  }
+  // Supabase'den restoran adlarını çek
+  const { data: restRows } = await sb().from('restaurants').select('id,name')
+  if (restRows) { for (const r of restRows) restNames[r.id] = r.name }
 
-${violations.map(v => `- ${v.restaurant_id}: ${v.type} = ${v.value} [${v.severity}]`).join('\n')}
-Onaysız anomali: ${(anomalyRows ?? []).length}
-Kritik stok: ${(stockRows ?? []).map((s:any)=>`${s.restaurant_id}:${s.products?.name}(${s.quantity})`).join(', ')||'Yok'}
-Aktif sipariş: ${(orderRows ?? []).length}
+  // GPT-4o'ya gönder — HER ihlal için ayrı karar zorunlu
+  const violationLines = violations.map(v => {
+    const name = restNames[v.restaurant_id] || v.restaurant_id
+    const p = latestPulse[v.restaurant_id]
+    return `- ${v.restaurant_id} (${name}): ${v.type} = ${v.value} [${v.severity}] | Nabız:${p?.score} | Hazırlama:${p?.avg_prep_time?.toFixed(1)}dk | Kurye:${p?.courier_wait?.toFixed(1)}dk`
+  }).join('\n')
 
-JSON döndür:
+  const prompt = `Sen TAB Gıda Mutfak Nabzı AI Karar Motorusun. Aşağıdaki GERÇEK ihlalleri analiz et ve HER ihlal için AYRI bir karar üret.
+
+MEVCUT İHLALLER (restoran adıyla):
+${violationLines}
+
+ONAYSIZ ANOMALİ: ${(anomalyRows ?? []).length}
+KRİTİK STOK: ${(stockRows ?? []).map((s:any)=>`${restNames[s.restaurant_id]||s.restaurant_id}: ${s.products?.name}(${s.quantity})`).join(', ')||'Yok'}
+
+KURALLAR:
+1. decisions dizisinde her ihlal eden restoran için AYRI bir entry oluştur
+2. restaurant_id alanına MUTLAKA yukarıdaki listedeki gerçek ID'yi yaz (r1, r2, r3... gibi)
+3. voice_message'da restoran adını ve sorunu Türkçe açıkla
+4. action_type şunlardan biri olmalı: PACKING_OVERLOAD, PREP_SLOW, COURIER_WAIT, ORDER_SURGE, PULSE_CRITICAL
+
+JSON formatı:
 {
   "decisions": [
     {
-      "restaurant_id": "r6",
+      "restaurant_id": "buraya_gercek_id_yaz",
       "action_type": "PACKING_OVERLOAD",
-      "action": "3 personel packing takviyesi yapıldı",
+      "action": "Yapılan somut aksiyon",
       "severity": "HIGH",
-      "voice_message": "Popeyes Taksim paketleme kritik. 3 personel takviye ediyorum. Onaylıyor musunuz?",
-      "expected_impact": "Packing %78'e düşer, nabız 15 puan azalır"
+      "voice_message": "Restoran Adı'nda sorun. Aksiyon alıyorum.",
+      "expected_impact": "Beklenen etki"
     }
   ],
-  "summary": "kısa özet"
+  "summary": "kısa genel özet"
 }`
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
