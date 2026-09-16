@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
   const liveWeather = await getLiveWeather()
   const today = new Date().toISOString().split('T')[0]
   const [{ data: pulseRows }, { data: anomalyRows }, { data: orderRows }, { data: stockRows }, { data: weatherEventRows }, { data: shiftRows }, { data: complaintRows }, { data: eventRows }] = await Promise.all([
-    sb().from('pulse_scores').select('*').order('computed_at', { ascending: false }).limit(30),
+    sb().from('pulse_scores').select('*').order('computed_at', { ascending: false }).limit(100),
     sb().from('anomalies').select('*').eq('acknowledged', false),
     sb().from('orders').select('*').eq('status', 'ACTIVE'),
     sb().from('stock_levels').select('*, products(name, emoji)').lte('quantity', 10),
@@ -155,9 +155,13 @@ export async function POST(req: NextRequest) {
 
 
   // En güncel pulse/restoran
+  // Her restoran için EN SON kaydı al (computed_at karşılaştırarak)
   const latestPulse: Record<string, any> = {}
   for (const p of (pulseRows ?? [])) {
-    if (!latestPulse[p.restaurant_id]) latestPulse[p.restaurant_id] = p
+    const existing = latestPulse[p.restaurant_id]
+    if (!existing || new Date(p.computed_at) > new Date(existing.computed_at)) {
+      latestPulse[p.restaurant_id] = p
+    }
   }
 
   // Eşik ihlali tespiti
