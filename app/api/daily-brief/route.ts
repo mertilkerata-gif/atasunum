@@ -22,6 +22,59 @@ const DISTRICT_MAP: Record<string, string[]> = {
 }
 
 // Stadyum → bölge eşleşmesi
+const COLLECT_API_KEY = 'apikey 1XOyvFOuk2Txiq3KnAfSD8:5jubPvRPCdXqqi4jQACuqD'
+
+// CollectAPI ile gerçek İstanbul hava durumu
+async function getIstanbulWeather() {
+  const DISTRICTS_TR = [
+    { name:'Beşiktaş', city:'Beşiktaş' },
+    { name:'Kadıköy',  city:'Kadıköy'  },
+    { name:'Şişli',    city:'Şişli'    },
+  ]
+  try {
+    // Genel İstanbul hava durumu
+    const res = await fetch('https://api.collectapi.com/weather/getWeather?lang=tr&city=istanbul', {
+      headers: {
+        'content-type': 'application/json',
+        'authorization': COLLECT_API_KEY,
+      }
+    })
+    if (!res.ok) throw new Error(`CollectAPI: ${res.status}`)
+    const data = await res.json()
+    
+    if (!data.success || !data.result?.length) throw new Error('Veri yok')
+    
+    const today = data.result[0] // Bugünkü hava
+    const desc = today.description?.toLowerCase() || ''
+    const isRain = desc.includes('yağmur') || desc.includes('sağanak') || desc.includes('yağış') || desc.includes('rain')
+    const isSnow = desc.includes('kar') || desc.includes('snow')
+    const isStormy = desc.includes('fırtına') || desc.includes('storm')
+    const degree = parseFloat(today.degree || '15')
+    
+    let rainIntensity = 0
+    if (isStormy) rainIntensity = 0.9
+    else if (isRain) rainIntensity = 0.6
+    else if (desc.includes('hafif yağmur') || desc.includes('çisenti')) rainIntensity = 0.3
+    
+    let orderImpact = 0
+    if (isRain || isSnow) orderImpact = 25
+    if (isStormy) orderImpact = 40
+    
+    return {
+      condition: isStormy ? 'fırtınalı' : isSnow ? 'karlı' : isRain ? 'yağmurlu' : 'normal',
+      description: today.description || 'Veri yok',
+      temperature: degree,
+      rain_intensity: rainIntensity,
+      order_impact_pct: orderImpact,
+      courier_impact: rainIntensity > 0.5 ? 'kurye gecikmesi bekleniyor' : 'normal',
+      raw: today,
+    }
+  } catch (e) {
+    console.error('CollectAPI hata:', e)
+    return null
+  }
+}
+
 const VENUE_DISTRICT: Record<string, string[]> = {
   'Vodafone Park':          ['Beşiktaş', 'Şişli'],
   'Ülker Stadyum':          ['Kadıköy', 'Maltepe'],
@@ -39,8 +92,16 @@ export async function GET(req: NextRequest) {
   const today = new Date().toISOString().split('T')[0]
   const todayFormatted = new Date().toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric', weekday:'long' })
 
-  // GPT-4o web search ile günlük brifing çek
-  const prompt = `Bugün ${todayFormatted} için İstanbul'daki restoran operasyonlarını etkileyen TÜM olayları bul ve JSON olarak döndür.
+  // 1. CollectAPI'den gerçek hava durumu çek
+  const realWeather = await getIstanbulWeather()
+
+  // 2. GPT-4o ile maç/etkinlik bul (hava bilgisi zaten elimizde)
+  const prompt = `Bugün ${todayFormatted} için İstanbul'daki restoran operasyonlarını etkileyen etkinlikleri bul.
+
+GERÇEK HAVA DURUMU (CollectAPI'den): ${realWeather ? `${realWeather.condition}, ${realWeather.temperature}°C, "${realWeather.description}"` : 'çekilemedi'}
+
+Sadece ETKINLIKLER için JSON döndür (hava bilgisini dahil etme, zaten var):
+Bugün ${todayFormatted} için İstanbul'daki restoran operasyonlarını etkileyen TÜM olayları bul ve JSON olarak döndür.
 
 ARAŞTIR:
 1. İstanbul hava durumu bugün (yağmur var mı, şiddet, sıcaklık)
@@ -127,16 +188,16 @@ JSON SADECE şu formatta döndür:
 
   const saved: any[] = []
 
-  // 1. Hava durumu kaydet
-  if (brief.weather) {
-    const w = brief.weather
+  // 1. Hava durumu kaydet — CollectAPI'den gelen gerçek veri
+  if (realWeather) {
+    const w = realWeather
     const allDistricts = Object.keys(DISTRICT_MAP)
     const { data: weatherEvent } = await sb().from('events').insert({
       event_date: today,
       event_type: 'WEATHER',
       title: `Hava: ${w.condition} · ${w.temperature}°C`,
       description: `${w.description} · Kurye: ${w.courier_impact}`,
-      affected_districts: w.rain_intensity > 0.3 ? allDistricts : (w.affected_districts || []),
+      affected_districts: w.rain_intensity > 0.3 ? allDistricts : allDistricts,
       impact_level: w.rain_intensity > 0.7 ? 'HIGH' : w.rain_intensity > 0.3 ? 'MEDIUM' : 'LOW',
       expected_order_increase_pct: w.order_impact_pct || 0,
     }).select().single()
@@ -208,7 +269,7 @@ JSON SADECE şu formatta döndür:
     date: today,
     summary: brief.summary,
     tomorrow_preview: brief.tomorrow_preview,
-    weather: brief.weather,
+    weather: realWeather || brief.weather,
     events_saved: saved.length,
     events: saved,
   })

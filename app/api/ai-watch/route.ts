@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+const COLLECT_API_KEY = 'apikey 1XOyvFOuk2Txiq3KnAfSD8:5jubPvRPCdXqqi4jQACuqD'
+
+async function getLiveWeather() {
+  try {
+    const res = await fetch('https://api.collectapi.com/weather/getWeather?lang=tr&city=istanbul', {
+      headers: { 'content-type':'application/json', 'authorization':COLLECT_API_KEY }
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    if (!data.success || !data.result?.[0]) return null
+    const desc = (data.result[0].description || '').toLowerCase()
+    const isRain = ['yagmur','saganak','yagis','firtina','yagmurlu'].some(k=>desc.includes(k))
+    return { isRain, intensity: desc.includes('saganak')||desc.includes('firtina') ? 0.8 : isRain ? 0.5 : 0, desc: data.result[0].description }
+  } catch { return null }
+}
+
 const SB_URL  = 'https://exkhzmpowcoxdzzvzisv.supabase.co'
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4a2h6bXBvd2NveGR6enZ6aXN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg5OTUsImV4cCI6MjEwMzQxNDk5NX0.bysVio77j6ncmzYjt3T2saDPCmV3NnqbOyWFS987YIQ'
 const sb = () => createClient(SB_URL, SB_ANON)
@@ -83,7 +99,7 @@ export async function POST(req: NextRequest) {
   const apiKey = api_key || process.env.OPENAI_API_KEY
   if (!apiKey) return NextResponse.json({ error: 'OpenAI API key gerekli' }, { status: 400 })
 
-  // Canlı verileri çek
+  const liveWeather = await getLiveWeather()
   const today = new Date().toISOString().split('T')[0]
   const [{ data: pulseRows }, { data: anomalyRows }, { data: orderRows }, { data: stockRows }, { data: weatherEventRows }, { data: shiftRows }, { data: complaintRows }, { data: eventRows }] = await Promise.all([
     sb().from('pulse_scores').select('*').order('computed_at', { ascending: false }).limit(30),
@@ -117,14 +133,16 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Hava durumu — events tablosundan al (daily-brief'ten gelir veya manuel girilir)
+  // Hava — CollectAPI önce, events tablosu fallback
   const weatherEvent = (weatherEventRows ?? [])[0]
-  const rainActive = weatherEvent && (weatherEvent.impact_level === 'HIGH' || weatherEvent.impact_level === 'MEDIUM' || weatherEvent.impact_level === 'CRITICAL')
-  const rainIntensity = rainActive ? (weatherEvent.impact_level === 'CRITICAL' ? 0.9 : weatherEvent.impact_level === 'HIGH' ? 0.7 : 0.4) : 0
+  const rainFromAPI = liveWeather?.isRain ?? false
+  const rainFromDB  = weatherEvent && ['HIGH','MEDIUM','CRITICAL'].includes(weatherEvent.impact_level)
+  const rainActive  = rainFromAPI || rainFromDB
+  const rainIntensity = liveWeather?.intensity ?? (rainFromDB ? 0.7 : 0)
+  const rainDesc = liveWeather?.desc ?? weatherEvent?.description ?? ''
+  const rainRestaurants = rainActive ? Object.keys(DISTRICT_MAP).flatMap((d:string) => DISTRICT_MAP[d]) : []
+  const campaignRestaurants: string[] = []
 
-  // Yağmur varsa TÜM restoranlar etkilenir (İstanbul geneli)
-  const rainRestaurants = rainActive ? Object.keys(DISTRICT_MAP).flatMap(d => DISTRICT_MAP[d]) : []
-  const campaignRestaurants: string[] = [] // events tablosundan CAMPAIGN tiplerinden gelecek
   const absentByRest: Record<string,number> = {}
   for (const sh of (shiftRows ?? [])) {
     if (sh.status === 'ABSENT') absentByRest[sh.restaurant_id] = (absentByRest[sh.restaurant_id]||0) + 1
