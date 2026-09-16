@@ -2,7 +2,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Topbar } from '@/components/layout/topbar'
 import { getSupabase } from '@/lib/supabase-client'
-import { Calendar, Plus, Zap, Trash2, X, AlertTriangle, Trophy, Music, Star, Cloud } from 'lucide-react'
+import { Calendar, Plus, Zap, Trash2, X, RefreshCw, Sun, CloudRain } from 'lucide-react'
+import { getOpenAIKey } from '@/lib/config-store'
 
 const EVENT_TYPES = [
   { value:'MATCH',    label:'Futbol Maçı',  icon:'⚽', color:'var(--green)',  bg:'var(--green2)'  },
@@ -26,6 +27,8 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [saving, setSaving]   = useState(false)
+  const [briefing, setBriefing] = useState(false)
+  const [briefResult, setBriefResult] = useState<any>(null)
   const [form, setForm] = useState({
     event_date: new Date().toISOString().split('T')[0],
     event_type: 'MATCH', title: '', description: '',
@@ -33,6 +36,26 @@ export default function EventsPage() {
     impact_level: 'HIGH', expected_order_increase_pct: 30,
     home_team: '', away_team: '', venue: '', kickoff_time: '',
   })
+
+  const fetchBrief = async () => {
+    const apiKey = getOpenAIKey()
+    if (!apiKey) { alert('Ayarlar sayfasından OpenAI API Key giriniz'); return }
+    setBriefing(true)
+    try {
+      const res = await fetch('/api/daily-brief', {
+        headers: { 'x-api-key': apiKey }
+      })
+      const data = await res.json()
+      if (data.ok) {
+        setBriefResult(data)
+        await load()
+      } else {
+        alert('Hata: ' + (data.error || 'Bilinmeyen hata'))
+      }
+    } catch (e: any) {
+      alert('Bağlantı hatası: ' + e.message)
+    } finally { setBriefing(false) }
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -80,9 +103,16 @@ export default function EventsPage() {
     <div className="dm">
       <Topbar title="Etkinlik Takvimi" subtitle="Maç · Konser · Tatil · AI bağlamı"
         action={
-          <button onClick={() => setShowAdd(true)} className="btn" style={{ padding:'6px 14px', fontSize:12 }}>
-            <Plus size={12}/> Etkinlik Ekle
-          </button>
+          <div style={{ display:'flex', gap:8 }}>
+            <button onClick={fetchBrief} disabled={briefing}
+              className="btn-ghost" style={{ padding:'6px 14px', fontSize:12, display:'flex', alignItems:'center', gap:5 }}>
+              <RefreshCw size={12} style={{ animation:briefing?'spin .7s linear infinite':undefined }}/>
+              {briefing ? 'Çekiliyor…' : '🌐 Günlük Brifing'}
+            </button>
+            <button onClick={() => setShowAdd(true)} className="btn" style={{ padding:'6px 14px', fontSize:12 }}>
+              <Plus size={12}/> Etkinlik Ekle
+            </button>
+          </div>
         }
       />
 
@@ -129,6 +159,27 @@ export default function EventsPage() {
             </div>
           ))}
         </div>
+
+        {/* Brifing sonucu */}
+        {briefResult && (
+          <div style={{ background:'var(--green2)', border:'1px solid var(--green-ln)', borderRadius:14, padding:'16px 20px' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
+              <span style={{ fontSize:18 }}>🌐</span>
+              <p style={{ fontSize:13, fontWeight:700, color:'var(--green)' }}>Günlük Brifing Tamamlandı — {briefResult.date}</p>
+              <button onClick={()=>setBriefResult(null)} style={{ marginLeft:'auto', background:'none', border:'none', cursor:'pointer', color:'var(--tx3)' }}><X size={14}/></button>
+            </div>
+            <p style={{ fontSize:13, color:'var(--tx2)', lineHeight:1.6, marginBottom:6 }}>{briefResult.summary}</p>
+            <div style={{ display:'flex', gap:16, flexWrap:'wrap' }}>
+              {briefResult.weather && (
+                <span style={{ fontSize:12, color:'var(--tx3)' }}>
+                  🌡 {briefResult.weather.condition} · {briefResult.weather.temperature}°C
+                </span>
+              )}
+              <span style={{ fontSize:12, color:'var(--tx3)' }}>📅 {briefResult.events_saved} etkinlik kaydedildi</span>
+              {briefResult.tomorrow_preview && <span style={{ fontSize:12, color:'var(--amber)' }}>📌 Yarın: {briefResult.tomorrow_preview}</span>}
+            </div>
+          </div>
+        )}
 
         {/* AI bağlam açıklaması */}
         <div style={{ display:'flex', gap:12, padding:'14px 18px', background:'var(--ac2)', border:'1px solid rgba(124,106,247,.2)', borderRadius:12 }}>
