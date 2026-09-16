@@ -1,5 +1,5 @@
 'use client'
-import { use, useState } from 'react'
+import { use, useState, useEffect } from 'react'
 import { Topbar } from '@/components/layout/topbar'
 import { PulseGauge } from '@/components/cards/pulse-gauge'
 import { KPICard } from '@/components/cards/kpi-card'
@@ -7,53 +7,57 @@ import { StationBar } from '@/components/cards/station-bar'
 import { HourlyChart } from '@/components/charts/hourly-chart'
 import { RESTAURANTS } from '@/data/seed/restaurants'
 import { getPulseScore, getSnapshot, getPredictions, getWeather, getHourlyForecast, getRecommendation } from '@/data/seed/mock-data'
-import { getRiskConfig, cn, formatDuration } from '@/lib/utils'
-import { AlertTriangle, CheckCircle, Clock, Package, Flame, ChevronLeft, Zap, Users, CloudRain } from 'lucide-react'
+import { getRiskConfig } from '@/lib/utils'
+import { AlertTriangle, CheckCircle2, Clock, Package, Flame, Zap, Users, CloudRain, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
-import { RecommendationAction } from '@/types'
+import { getSupabase } from '@/lib/supabase-client'
+import { insertAuditLog } from '@/lib/supabase-client'
 
 export default function RestaurantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const restaurant = RESTAURANTS.find(r => r.id === id)
-  if (!restaurant) return <div className="p-8 text-white/50">Restoran bulunamadı.</div>
+  if (!restaurant) return (
+    <div style={{ padding:40, color:'var(--tx3)', fontSize:14 }}>Restoran bulunamadı.</div>
+  )
 
-  const pulse = getPulseScore(id)
-  const snapshot = getSnapshot(id)
+  const pulse      = getPulseScore(id)
+  const snapshot   = getSnapshot(id)
   const predictions = getPredictions(id)
-  const weather = getWeather(id)
-  const forecast = getHourlyForecast(id)
+  const weather    = getWeather(id)
+  const forecast   = getHourlyForecast(id)
   const recommendation = getRecommendation(id)
-  const config = getRiskConfig(pulse.risk_level)
+  const config     = getRiskConfig(pulse.risk_level)
 
   return (
-    <div>
+    <div className="dm">
       <Topbar
         title={restaurant.name}
         subtitle={`${restaurant.district}, ${restaurant.city} · ${weather.icon} ${weather.condition}, ${weather.temperature}°C`}
       />
-      <div className="p-6 space-y-6">
+      <div className="scroll" style={{ padding:'clamp(14px,3vw,24px)', display:'flex', flexDirection:'column', gap:16 }}>
 
-        {/* Back + header */}
-        <div className="flex items-center gap-3">
-          <Link href="/overview" className="text-white/30 hover:text-white/60 transition-colors">
-            <ChevronLeft className="w-5 h-5" />
+        {/* Back nav */}
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <Link href="/restaurants" style={{ color:'var(--tx3)', display:'flex', alignItems:'center', textDecoration:'none' }}>
+            <ChevronLeft size={16}/>
           </Link>
-          <span className="text-xs text-white/30">{restaurant.brand.replace('_', ' ')}</span>
-          <span className="text-white/20">·</span>
-          <span className="text-xs text-white/30">{restaurant.region}</span>
+          <span style={{ fontSize:12, color:'var(--tx3)' }}>{restaurant.brand.replace('_',' ')}</span>
+          <span style={{ color:'var(--bdr2)' }}>·</span>
+          <span style={{ fontSize:12, color:'var(--tx3)' }}>{restaurant.region}</span>
         </div>
 
-        {/* Pulse + KPIs */}
-        <div className="grid grid-cols-12 gap-4">
-          {/* Pulse score card */}
-          <div className={cn('col-span-3 rounded-xl border p-6 flex flex-col items-center justify-center gap-4', config.bg, config.border)}>
-            <div className="text-xs text-white/40 uppercase tracking-widest font-medium">Operasyon Nabzı</div>
-            <PulseGauge score={pulse.score} riskLevel={pulse.risk_level} size="lg" />
+        {/* Üst grid — Nabız + KPI + İstasyon */}
+        <div style={{ display:'grid', gridTemplateColumns:'clamp(200px,22%,260px) 1fr clamp(180px,28%,300px)', gap:14, alignItems:'start' }}>
+
+          {/* Nabız kartı */}
+          <div style={{ borderRadius:14, border:`1px solid ${config.colorHex}30`, background:config.bg, padding:'22px 20px', display:'flex', flexDirection:'column', alignItems:'center', gap:14 }}>
+            <p style={{ fontSize:9.5, color:'rgba(255,255,255,.35)', textTransform:'uppercase', letterSpacing:'3px', fontWeight:600 }}>Operasyon Nabzı</p>
+            <PulseGauge score={pulse.score} riskLevel={pulse.risk_level} size="lg"/>
             {pulse.top_signals.length > 0 && (
-              <div className="w-full space-y-1.5 mt-2">
+              <div style={{ width:'100%', display:'flex', flexDirection:'column', gap:5 }}>
                 {pulse.top_signals.map((s, i) => (
-                  <div key={i} className={cn('flex items-start gap-1.5 text-xs', config.color)}>
-                    <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
+                  <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:6, fontSize:11.5, color:config.colorHex }}>
+                    <AlertTriangle size={11} style={{ flexShrink:0, marginTop:1 }}/>
                     <span>{s}</span>
                   </div>
                 ))}
@@ -61,39 +65,37 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
             )}
           </div>
 
-          {/* KPIs */}
-          <div className="col-span-5 grid grid-cols-2 gap-3">
-            <KPICard label="Açık Sipariş" value={String(pulse.open_orders)} trend="up" trendValue="Normalin %35 üstünde" alert={pulse.open_orders > 25} icon={<Package className="w-4 h-4" />} />
-            <KPICard label="Ort. Hazırlama" value={pulse.avg_prep_time.toFixed(1)} unit="dk" trend={pulse.avg_prep_time > 9 ? 'up' : 'neutral'} trendValue={pulse.avg_prep_time > 9 ? 'Hedef: 7 dk' : 'Normal'} alert={pulse.avg_prep_time > 10} icon={<Flame className="w-4 h-4" />} />
-            <KPICard label="Packing Süresi" value={pulse.avg_packing_time.toFixed(1)} unit="dk" trend="neutral" trendValue="Stabil" icon={<Package className="w-4 h-4" />} />
-            <KPICard label="Kurye Bekleme" value={pulse.courier_wait.toFixed(1)} unit="dk" trend={pulse.courier_wait > 6 ? 'up' : 'neutral'} trendValue={pulse.courier_wait > 6 ? 'Artıyor' : 'Normal'} alert={pulse.courier_wait > 7} icon={<Clock className="w-4 h-4" />} />
-            <KPICard label="Aktif Personel" value={String(snapshot.active_staff)} unit="kişi" icon={<Users className="w-4 h-4" />} />
-            <KPICard label="Yağış Yoğunluğu" value={String(weather.rain_intensity)} unit="/10" icon={<CloudRain className="w-4 h-4" />} />
+          {/* KPI 2x3 grid */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+            <KPICard label="Açık Sipariş"    value={String(pulse.open_orders)} trend="up" trendValue="Normalin %35 üstünde" alert={pulse.open_orders>25} icon={<Package size={14}/>}/>
+            <KPICard label="Ort. Hazırlama"  value={pulse.avg_prep_time.toFixed(1)} unit="dk" trend={pulse.avg_prep_time>9?'up':'neutral'} trendValue={pulse.avg_prep_time>9?'Hedef: 7 dk':'Normal'} alert={pulse.avg_prep_time>10} icon={<Flame size={14}/>}/>
+            <KPICard label="Packing Süresi"  value={pulse.avg_packing_time.toFixed(1)} unit="dk" trend="neutral" trendValue="Stabil" icon={<Package size={14}/>}/>
+            <KPICard label="Kurye Bekleme"   value={pulse.courier_wait.toFixed(1)} unit="dk" trend={pulse.courier_wait>6?'up':'neutral'} trendValue={pulse.courier_wait>6?'Artıyor':'Normal'} alert={pulse.courier_wait>7} icon={<Clock size={14}/>}/>
+            <KPICard label="Aktif Personel"  value={String(snapshot.active_staff)} unit="kişi" icon={<Users size={14}/>}/>
+            <KPICard label="Yağış Yoğunluğu" value={String(weather.rain_intensity)} unit="/10" icon={<CloudRain size={14}/>}/>
           </div>
 
-          {/* Stations */}
-          <div className="col-span-4 rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-            <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">İstasyon Nabzı</div>
-            <div className="space-y-3">
-              <StationBar label="Grill" score={pulse.station_scores.grill} icon="🔥" />
-              <StationBar label="Fryer" score={pulse.station_scores.fryer} icon="🍟" />
-              <StationBar label="Packing" score={pulse.station_scores.packing} icon="📦" />
-              <StationBar label="Kurye" score={pulse.station_scores.courier} icon="🛵" />
+          {/* İstasyon + Kanal */}
+          <div style={{ background:'var(--s1)', border:'1px solid var(--bdr)', borderRadius:14, padding:'18px 18px' }}>
+            <p style={{ fontSize:9.5, color:'var(--tx3)', textTransform:'uppercase', letterSpacing:'2px', fontWeight:600, marginBottom:14 }}>İstasyon Nabzı</p>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              <StationBar label="Grill"   score={pulse.station_scores.grill}   icon="🔥"/>
+              <StationBar label="Fryer"   score={pulse.station_scores.fryer}   icon="🍟"/>
+              <StationBar label="Packing" score={pulse.station_scores.packing} icon="📦"/>
+              <StationBar label="Kurye"   score={pulse.station_scores.courier} icon="🛵"/>
             </div>
-
-            {/* Channel breakdown */}
-            <div className="mt-5 pt-4 border-t border-white/[0.06]">
-              <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-3">Sipariş Kanalı</div>
-              <div className="space-y-1.5">
+            <div style={{ marginTop:16, paddingTop:14, borderTop:'1px solid var(--bdr)' }}>
+              <p style={{ fontSize:9.5, color:'var(--tx3)', textTransform:'uppercase', letterSpacing:'2px', fontWeight:600, marginBottom:10 }}>Sipariş Kanalı</p>
+              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
                 {[
-                  { label: 'Tıkla Gelsin Paket', value: snapshot.tiklagelsin_delivery_orders, color: 'bg-orange-500' },
-                  { label: 'Tıkla Gelsin Gel Al', value: snapshot.tiklagelsin_pickup_orders, color: 'bg-blue-500' },
-                  { label: 'Normal Restoran', value: snapshot.restaurant_orders, color: 'bg-purple-500' },
+                  { label:'Tıkla Gelsin Paket', value:snapshot.tiklagelsin_delivery_orders, color:'var(--amber)' },
+                  { label:'Tıkla Gelsin Gel Al', value:snapshot.tiklagelsin_pickup_orders,  color:'var(--blue)'  },
+                  { label:'Normal Restoran',     value:snapshot.restaurant_orders,           color:'var(--ac)'    },
                 ].map(({ label, value, color }) => (
-                  <div key={label} className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${color}`} />
-                    <span className="text-xs text-white/50 flex-1">{label}</span>
-                    <span className="text-xs font-bold text-white">{value}</span>
+                  <div key={label} style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <div style={{ width:7, height:7, borderRadius:'50%', background:color, flexShrink:0 }}/>
+                    <span style={{ fontSize:11.5, color:'var(--tx3)', flex:1 }}>{label}</span>
+                    <span style={{ fontSize:12, fontWeight:700, fontFamily:'JetBrains Mono,monospace', color:'var(--tx)' }}>{value}</span>
                   </div>
                 ))}
               </div>
@@ -101,34 +103,36 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
           </div>
         </div>
 
-        {/* Forecast row */}
-        <div className="grid grid-cols-12 gap-4">
-          {/* Hourly chart */}
-          <div className="col-span-8 rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-xs text-white/40 uppercase tracking-wide font-medium">Saatlik Sipariş Trendi</div>
-              <div className="flex items-center gap-4 text-xs text-white/30">
-                <span className="flex items-center gap-1.5"><span className="w-4 h-0.5 bg-orange-500 inline-block" />Gerçek</span>
-                <span className="flex items-center gap-1.5"><span className="w-4 h-0.5 bg-indigo-500 inline-block border-dashed" />Tahmin</span>
+        {/* Grafik + Tahmin */}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr clamp(180px,28%,300px)', gap:14 }}>
+          <div style={{ background:'var(--s1)', border:'1px solid var(--bdr)', borderRadius:14, padding:'18px 18px' }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+              <p style={{ fontSize:9.5, color:'var(--tx3)', textTransform:'uppercase', letterSpacing:'2px', fontWeight:600 }}>Saatlik Sipariş Trendi</p>
+              <div style={{ display:'flex', gap:14 }}>
+                <span style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'var(--tx3)' }}>
+                  <span style={{ width:16, height:2, background:'var(--amber)', display:'inline-block', borderRadius:2 }}/>Gerçek
+                </span>
+                <span style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'var(--tx3)' }}>
+                  <span style={{ width:16, height:2, background:'var(--ac)', display:'inline-block', borderRadius:2, borderTop:'2px dashed var(--ac)' }}/>Tahmin
+                </span>
               </div>
             </div>
-            <HourlyChart data={forecast} />
+            <HourlyChart data={forecast}/>
           </div>
 
-          {/* Predictions */}
-          <div className="col-span-4 rounded-xl border border-white/[0.08] bg-white/[0.04] p-5">
-            <div className="text-xs text-white/40 uppercase tracking-wide font-medium mb-4">İleriye Dönük Tahmin</div>
-            <div className="space-y-3">
+          <div style={{ background:'var(--s1)', border:'1px solid var(--bdr)', borderRadius:14, padding:'18px 18px' }}>
+            <p style={{ fontSize:9.5, color:'var(--tx3)', textTransform:'uppercase', letterSpacing:'2px', fontWeight:600, marginBottom:14 }}>İleriye Dönük Tahmin</p>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
               {predictions.map(p => {
-                const pConfig = getRiskConfig(p.predicted_pulse_score >= 80 ? 'KRITIK' : p.predicted_pulse_score >= 60 ? 'RISKLI' : p.predicted_pulse_score >= 40 ? 'YOGUN' : 'NORMAL')
+                const pc = getRiskConfig(p.predicted_pulse_score>=80?'KRITIK':p.predicted_pulse_score>=60?'RISKLI':p.predicted_pulse_score>=40?'YOGUN':'NORMAL')
                 return (
-                  <div key={p.horizon_minutes} className={cn('rounded-lg border p-3', pConfig.bg, pConfig.border)}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-white/50 font-medium">+{p.horizon_minutes} dk</span>
-                      <span className={cn('text-lg font-bold tabular-nums', pConfig.color)}>{p.predicted_pulse_score}</span>
+                  <div key={p.horizon_minutes} style={{ borderRadius:10, border:`1px solid ${pc.colorHex}30`, background:pc.bg, padding:'10px 14px' }}>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }}>
+                      <span style={{ fontSize:11, color:'rgba(255,255,255,.45)', fontWeight:500 }}>+{p.horizon_minutes} dk</span>
+                      <span style={{ fontSize:20, fontWeight:800, fontFamily:'JetBrains Mono,monospace', color:pc.colorHex, letterSpacing:'-.04em' }}>{p.predicted_pulse_score}</span>
                     </div>
-                    <div className="text-xs text-white/40">{p.predicted_orders} sipariş bekleniyor</div>
-                    <div className="text-xs text-white/30 mt-0.5">Güven: %{Math.round(p.confidence_score * 100)}</div>
+                    <p style={{ fontSize:11, color:'rgba(255,255,255,.35)', marginBottom:2 }}>{p.predicted_orders} sipariş bekleniyor</p>
+                    <p style={{ fontSize:10, color:'rgba(255,255,255,.25)' }}>Güven: %{Math.round(p.confidence_score*100)}</p>
                   </div>
                 )
               })}
@@ -136,68 +140,106 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
           </div>
         </div>
 
-        {/* AI Recommendation */}
-        {recommendation && (
-          <RecommendationPanel recommendation={recommendation} />
-        )}
+        {/* AI Reçete */}
+        {recommendation && <RecommendationPanel recommendation={recommendation} restaurantId={id}/>}
 
-        {/* Ürün & Stok + Şikayet özeti */}
-        <ProductComplaintRow restaurantId={id} />
+        {/* Alt grid */}
+        <ProductComplaintRow restaurantId={id}/>
 
       </div>
     </div>
   )
 }
 
-function RecommendationPanel({ recommendation }: { recommendation: NonNullable<ReturnType<typeof getRecommendation>> }) {
-  const [actions, setActions] = useState(recommendation.actions)
+// ── Reçete paneli — checkbox Supabase'e yazar ─────────────────────────────
+function RecommendationPanel({ recommendation, restaurantId }: { recommendation: any; restaurantId: string }) {
+  const [actions, setActions] = useState<any[]>(recommendation.actions ?? [])
+  const [saving, setSaving] = useState<string|null>(null)
 
-  const toggle = (id: string) => {
-    setActions(prev => prev.map(a => a.id === id ? { ...a, applied: !a.applied, applied_at: !a.applied ? new Date().toISOString() : undefined } : a))
+  const toggle = async (actionId: string) => {
+    const action = actions.find(a => a.id === actionId)
+    if (!action) return
+    const newApplied = !action.applied
+    const appliedAt  = newApplied ? new Date().toISOString() : null
+
+    setSaving(actionId)
+    // Optimistic update
+    setActions(prev => prev.map(a => a.id===actionId ? { ...a, applied:newApplied, applied_at:appliedAt } : a))
+
+    try {
+      // Supabase'e yaz
+      await getSupabase()
+        .from('recommendation_actions')
+        .update({ applied: newApplied, applied_at: appliedAt })
+        .eq('id', actionId)
+
+      // Audit log
+      await insertAuditLog({
+        user_role: 'Müdür',
+        action: newApplied ? 'ACTION_APPLIED' : 'ACTION_UNDONE',
+        resource: 'recommendation_actions',
+        details: { action_id:actionId, restaurant_id:restaurantId, action_text:action.action_text, applied:newApplied },
+      })
+    } catch (e) {
+      // Rollback
+      setActions(prev => prev.map(a => a.id===actionId ? { ...a, applied:action.applied, applied_at:action.applied_at } : a))
+    } finally { setSaving(null) }
   }
 
   return (
-    <div className="rounded-xl border border-indigo-500/30 bg-indigo-500/[0.05] p-5">
-      <div className="flex items-center gap-2 mb-1">
-        <Zap className="w-4 h-4 text-indigo-400" />
-        <span className="text-sm font-semibold text-indigo-300">Operasyon Reçetesi</span>
-        <span className="ml-auto text-xs text-white/30">{new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
+    <div style={{ borderRadius:14, border:'1px solid rgba(124,106,247,.25)', background:'rgba(124,106,247,.04)', padding:'18px 20px' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+        <Zap size={15} style={{ color:'var(--ac)' }}/>
+        <span style={{ fontSize:13.5, fontWeight:600, color:'var(--ac)', letterSpacing:'-.15px' }}>Operasyon Reçetesi</span>
+        <span style={{ marginLeft:'auto', fontSize:11, color:'var(--tx3)', fontFamily:'JetBrains Mono,monospace' }}>
+          {new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}
+        </span>
       </div>
-      <p className="text-xs text-white/60 mb-1">{recommendation.summary}</p>
-      <p className="text-xs text-white/40 mb-4">{recommendation.risk_explanation}</p>
+      <p style={{ fontSize:12, color:'var(--tx3)', marginBottom:2, lineHeight:1.5 }}>{recommendation.summary}</p>
+      <p style={{ fontSize:11.5, color:'rgba(255,255,255,.25)', marginBottom:16, lineHeight:1.5 }}>{recommendation.risk_explanation}</p>
 
-      <div className="space-y-2">
+      <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
         {actions.map(action => (
-          <div key={action.id} className={cn(
-            'flex items-start gap-3 rounded-lg border p-3 transition-all',
-            action.applied
-              ? 'border-emerald-500/30 bg-emerald-500/[0.06]'
-              : action.priority === 'HIGH'
-                ? 'border-red-500/20 bg-red-500/[0.04]'
-                : 'border-white/[0.08] bg-white/[0.03]'
-          )}>
-            <button
-              onClick={() => toggle(action.id)}
-              className={cn(
-                'mt-0.5 w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all',
-                action.applied
-                  ? 'bg-emerald-500 border-emerald-500'
-                  : 'border-white/20 hover:border-white/40'
-              )}
-            >
-              {action.applied && <CheckCircle className="w-3 h-3 text-white" />}
+          <div key={action.id} style={{
+            display:'flex', alignItems:'flex-start', gap:12,
+            borderRadius:10, padding:'12px 14px',
+            border:`1px solid ${action.applied?'rgba(34,211,160,.25)':action.priority==='HIGH'?'rgba(242,87,87,.18)':'rgba(255,255,255,.07)'}`,
+            background:action.applied?'rgba(34,211,160,.05)':action.priority==='HIGH'?'rgba(242,87,87,.04)':'rgba(255,255,255,.02)',
+            transition:'all .2s',
+            opacity: saving===action.id ? .6 : 1,
+          }}>
+            {/* Checkbox */}
+            <button onClick={()=>toggle(action.id)} disabled={saving===action.id}
+              style={{
+                marginTop:2, width:18, height:18, borderRadius:5, flexShrink:0,
+                border:`2px solid ${action.applied?'#22d3a0':'rgba(255,255,255,.2)'}`,
+                background:action.applied?'#22d3a0':'transparent',
+                display:'flex', alignItems:'center', justifyContent:'center',
+                cursor:'pointer', transition:'all .15s',
+              }}>
+              {action.applied && <CheckCircle2 size={11} color="#fff" strokeWidth={3}/>}
             </button>
-            <div className="flex-1">
-              <div className={cn('text-sm', action.applied ? 'text-white/40 line-through' : 'text-white/80')}>{action.action_text}</div>
+
+            <div style={{ flex:1, minWidth:0 }}>
+              <p style={{ fontSize:13, color:action.applied?'rgba(255,255,255,.35)':'rgba(255,255,255,.8)', textDecoration:action.applied?'line-through':'none', lineHeight:1.5 }}>
+                {action.action_text}
+              </p>
               {action.expected_improvement && !action.applied && (
-                <div className="text-xs text-white/35 mt-0.5">→ {action.expected_improvement}</div>
+                <p style={{ fontSize:11, color:'rgba(255,255,255,.3)', marginTop:3 }}>→ {action.expected_improvement}</p>
               )}
               {action.applied && action.applied_at && (
-                <div className="text-xs text-emerald-400/70 mt-0.5">✓ Uygulandı · {new Date(action.applied_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</div>
+                <p style={{ fontSize:11, color:'#22d3a0', marginTop:3 }}>
+                  ✓ Uygulandı · {new Date(action.applied_at).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}
+                </p>
               )}
             </div>
-            <span className={cn('text-[10px] px-1.5 py-0.5 rounded font-medium uppercase', action.priority === 'HIGH' ? 'bg-red-500/20 text-red-300' : 'bg-white/[0.06] text-white/40')}>
-              {action.priority === 'HIGH' ? 'Acil' : 'Orta'}
+
+            <span style={{
+              fontSize:10, padding:'2px 8px', borderRadius:5, fontWeight:700, textTransform:'uppercase', flexShrink:0,
+              background: action.priority==='HIGH'?'rgba(242,87,87,.15)':'rgba(255,255,255,.06)',
+              color: action.priority==='HIGH'?'#f25757':'rgba(255,255,255,.35)',
+            }}>
+              {action.priority==='HIGH'?'Acil':'Orta'}
             </span>
           </div>
         ))}
@@ -206,95 +248,90 @@ function RecommendationPanel({ recommendation }: { recommendation: NonNullable<R
   )
 }
 
+// ── Alt grid — Ürün + Şikayet + Ciro ─────────────────────────────────────
 function ProductComplaintRow({ restaurantId }: { restaurantId: string }) {
   const { getProductSnapshot } = require('@/data/seed/products')
   const { getComplaintSummary, REASON_LABELS } = require('@/data/seed/complaints')
   const { getRevenueSnapshot } = require('@/data/seed/revenue')
-  const { cn } = require('@/lib/utils')
 
-  const products = getProductSnapshot(restaurantId)
+  const products   = getProductSnapshot(restaurantId)
   const complaints = getComplaintSummary(restaurantId)
-  const revenue = getRevenueSnapshot(restaurantId)
+  const revenue    = getRevenueSnapshot(restaurantId)
 
-  const topProducts = [...products.products].sort((a: any, b: any) => b.demandIndex - a.demandIndex).slice(0, 4)
-  const topComplaint = Object.entries(complaints.byReason as Record<string, number>)
-    .sort(([,a], [,b]) => (b as number) - (a as number)).slice(0, 3)
+  const topProducts = [...products.products].sort((a:any,b:any)=>b.demandIndex-a.demandIndex).slice(0,4)
+  const topComplaint = Object.entries(complaints.byReason as Record<string,number>).sort(([,a],[,b])=>b-a).slice(0,3)
+
+  const S = { card:'var(--s1)', border:'1px solid var(--bdr)', borderRadius:14, padding:'18px 18px' }
+  const label = { fontSize:9.5, color:'var(--tx3)', textTransform:'uppercase' as const, letterSpacing:'2px', fontWeight:600 as const, marginBottom:14 }
 
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap:14 }}>
+
       {/* Ürün yoğunluğu */}
-      <div className="rounded-xl border p-5" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
-        <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-4">Ürün Yoğunluğu</div>
-        <div className="space-y-3">
-          {topProducts.map((p: any) => {
-            const color = p.demandIndex >= 150 ? '#ff3d3d' : p.demandIndex >= 120 ? '#f97316' : p.demandIndex >= 100 ? '#eab308' : '#22c55e'
+      <div style={S}>
+        <p style={label}>Ürün Yoğunluğu</p>
+        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+          {topProducts.map((p:any) => {
+            const c = p.demandIndex>=150?'#f25757':p.demandIndex>=120?'#f97316':p.demandIndex>=100?'#eab308':'#22c55e'
             return (
-              <div key={p.id} className="flex items-center gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-white/60">{p.name}</span>
-                    <span className="text-xs font-bold font-mono" style={{ color }}>%{p.demandIndex}</span>
-                  </div>
-                  <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden">
-                    <div className="h-full rounded-full" style={{ width: `${Math.min(p.demandIndex, 200) / 2}%`, background: color }} />
-                  </div>
+              <div key={p.id}>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                  <span style={{ fontSize:11.5, color:'var(--tx2)' }}>{p.name}</span>
+                  <span style={{ fontSize:12, fontWeight:700, fontFamily:'JetBrains Mono,monospace', color:c }}>%{p.demandIndex}</span>
                 </div>
-                {p.stockRisk !== 'ok' && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded font-bold text-red-300" style={{ background: 'rgba(255,61,61,0.15)' }}>
-                    {p.stockUnits}a
-                  </span>
-                )}
+                <div style={{ height:4, borderRadius:2, background:'rgba(255,255,255,.06)', overflow:'hidden' }}>
+                  <div style={{ height:'100%', borderRadius:2, width:`${Math.min(p.demandIndex,200)/2}%`, background:c }}/>
+                </div>
               </div>
             )
           })}
         </div>
       </div>
 
-      {/* Şikayet özeti */}
-      <div className="rounded-xl border p-5" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-xs text-white/40 uppercase tracking-widest font-medium">Müşteri Şikayeti</div>
-          <span className={cn('text-xl font-bold font-mono', complaints.total > 15 ? 'text-red-400' : complaints.total > 8 ? 'text-orange-400' : 'text-white/50')}>{complaints.total}</span>
+      {/* Şikayetler */}
+      <div style={S}>
+        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:14 }}>
+          <p style={{ ...label, marginBottom:0 }}>Müşteri Şikayeti</p>
+          <span style={{ fontSize:22, fontWeight:800, fontFamily:'JetBrains Mono,monospace', color:complaints.total>15?'var(--red)':complaints.total>8?'var(--amber)':'var(--tx3)' }}>{complaints.total}</span>
         </div>
-        <div className="space-y-2 mb-4">
-          {topComplaint.map(([reason, count]: [string, any]) => count > 0 && (
-            <div key={reason} className="flex items-center justify-between">
-              <span className="text-xs text-white/50">{(REASON_LABELS as any)[reason]}</span>
-              <span className="text-xs font-bold text-white/70">{count}</span>
+        <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:14 }}>
+          {topComplaint.map(([reason,count]:any)=> count>0 && (
+            <div key={reason} style={{ display:'flex', justifyContent:'space-between' }}>
+              <span style={{ fontSize:11.5, color:'var(--tx3)' }}>{(REASON_LABELS as any)[reason]}</span>
+              <span style={{ fontSize:12, fontWeight:600, color:'var(--tx)' }}>{count}</span>
             </div>
           ))}
         </div>
-        <div className="flex items-center gap-3 pt-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-          <div className="flex-1">
-            <div className="text-[10px] text-white/30">Kayıp Ciro</div>
-            <div className="text-sm font-bold font-mono text-red-400">{complaints.totalLostRevenue.toLocaleString('tr-TR')} ₺</div>
+        <div style={{ display:'flex', gap:20, paddingTop:12, borderTop:'1px solid var(--bdr)' }}>
+          <div>
+            <p style={{ fontSize:10, color:'var(--tx3)', marginBottom:2 }}>Kayıp Ciro</p>
+            <p style={{ fontSize:13.5, fontWeight:700, fontFamily:'JetBrains Mono,monospace', color:'var(--red)' }}>{complaints.totalLostRevenue.toLocaleString('tr-TR')} ₺</p>
           </div>
           <div>
-            <div className="text-[10px] text-white/30">Çözüm</div>
-            <div className="text-sm font-bold font-mono text-emerald-400">%{Math.round(complaints.resolvedRate * 100)}</div>
+            <p style={{ fontSize:10, color:'var(--tx3)', marginBottom:2 }}>Çözüm</p>
+            <p style={{ fontSize:13.5, fontWeight:700, fontFamily:'JetBrains Mono,monospace', color:'var(--green)' }}>%{Math.round(complaints.resolvedRate*100)}</p>
           </div>
         </div>
       </div>
 
-      {/* Ciro özeti */}
-      <div className="rounded-xl border p-5" style={{ background: 'var(--bg-surface)', borderColor: 'rgba(255,255,255,0.07)' }}>
-        <div className="text-xs text-white/40 uppercase tracking-widest font-medium mb-4">Ciro Durumu</div>
-        <div className="space-y-3">
+      {/* Ciro */}
+      <div style={S}>
+        <p style={label}>Ciro Durumu</p>
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
           <div>
-            <div className="text-[10px] text-white/30 mb-0.5">Gerçekleşen</div>
-            <div className="text-xl font-bold font-mono text-white">{revenue.actualRevenue.toLocaleString('tr-TR')} ₺</div>
+            <p style={{ fontSize:10, color:'var(--tx3)', marginBottom:3 }}>Gerçekleşen</p>
+            <p style={{ fontSize:22, fontWeight:800, fontFamily:'JetBrains Mono,monospace', color:'var(--tx)' }}>{revenue.actualRevenue.toLocaleString('tr-TR')} ₺</p>
           </div>
           <div>
-            <div className="text-[10px] text-white/30 mb-0.5">Kayıp Ciro</div>
-            <div className="text-lg font-bold font-mono text-red-400">{revenue.totalLostRevenue.toLocaleString('tr-TR')} ₺</div>
+            <p style={{ fontSize:10, color:'var(--tx3)', marginBottom:3 }}>Kayıp Ciro</p>
+            <p style={{ fontSize:18, fontWeight:700, fontFamily:'JetBrains Mono,monospace', color:'var(--red)' }}>{revenue.totalLostRevenue.toLocaleString('tr-TR')} ₺</p>
           </div>
-          <div className="pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-            <div className="text-[10px] text-white/30 mb-1.5">Kapasite Kullanımı</div>
-            <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-              <div className="h-full rounded-full transition-all"
-                style={{ width: `${revenue.capacityUtilization}%`, background: revenue.capacityUtilization > 80 ? '#ff3d3d' : '#22c55e' }} />
+          <div style={{ paddingTop:10, borderTop:'1px solid var(--bdr)' }}>
+            <p style={{ fontSize:10, color:'var(--tx3)', marginBottom:6 }}>Kapasite Kullanımı</p>
+            <div style={{ height:6, borderRadius:3, background:'rgba(255,255,255,.06)', overflow:'hidden', marginBottom:5 }}>
+              <div style={{ height:'100%', borderRadius:3, width:`${revenue.capacityUtilization}%`, background:revenue.capacityUtilization>80?'var(--red)':'var(--green)', transition:'width .7s ease' }}/>
             </div>
-            <div className="text-xs font-mono text-white/40 mt-1">%{revenue.capacityUtilization}</div>
+            <p style={{ fontSize:11, fontFamily:'JetBrains Mono,monospace', color:'var(--tx3)' }}>%{revenue.capacityUtilization}</p>
           </div>
         </div>
       </div>
