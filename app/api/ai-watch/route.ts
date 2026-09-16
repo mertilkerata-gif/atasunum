@@ -84,12 +84,36 @@ export async function POST(req: NextRequest) {
   if (!apiKey) return NextResponse.json({ error: 'OpenAI API key gerekli' }, { status: 400 })
 
   // Canlı verileri çek
-  const [{ data: pulseRows }, { data: anomalyRows }, { data: orderRows }, { data: stockRows }] = await Promise.all([
+  const today = new Date().toISOString().split('T')[0]
+  const [{ data: pulseRows }, { data: anomalyRows }, { data: orderRows }, { data: stockRows }, { data: snapRows }, { data: shiftRows }, { data: complaintRows }] = await Promise.all([
     sb().from('pulse_scores').select('*').order('computed_at', { ascending: false }).limit(30),
     sb().from('anomalies').select('*').eq('acknowledged', false),
     sb().from('orders').select('*').eq('status', 'ACTIVE'),
     sb().from('stock_levels').select('*, products(name)').lte('quantity', 5),
+    sb().from('operation_snapshots').select('restaurant_id,rain_intensity,campaign_active,special_event,delay_rate').order('timestamp', { ascending: false }).limit(20),
+    sb().from('shifts').select('restaurant_id,status,role').gte('shift_start', today + 'T00:00:00').lte('shift_start', today + 'T23:59:59'),
+    sb().from('complaints').select('restaurant_id,reason').eq('status', 'OPEN').order('created_at', { ascending: false }).limit(20),
   ])
+
+  // Snapshot map
+  const snapMap: Record<string,any> = {}
+  for (const s of (snapRows ?? [])) {
+    if (!snapMap[s.restaurant_id]) snapMap[s.restaurant_id] = s
+  }
+
+  // Kontextüel durumlar
+  const rainRestaurants = Object.entries(snapMap).filter(([,s]) => (s.rain_intensity||0) > 0.5).map(([id]) => id)
+  const campaignRestaurants = Object.entries(snapMap).filter(([,s]) => s.campaign_active).map(([id]) => id)
+  const absentByRest: Record<string,number> = {}
+  for (const sh of (shiftRows ?? [])) {
+    if (sh.status === 'ABSENT') absentByRest[sh.restaurant_id] = (absentByRest[sh.restaurant_id]||0) + 1
+  }
+  const complaintsByRest: Record<string,number> = {}
+  for (const c of (complaintRows ?? [])) {
+    complaintsByRest[c.restaurant_id] = (complaintsByRest[c.restaurant_id]||0) + 1
+  }
+
+
 
   // En güncel pulse/restoran
   const latestPulse: Record<string, any> = {}
@@ -111,6 +135,14 @@ export async function POST(req: NextRequest) {
       violations.push({ restaurant_id: rid, type: 'ORDER_SURGE', value: p.open_orders, severity: 'HIGH' })
     if ((p.score ?? 0) >= THRESHOLDS.pulse_critical)
       violations.push({ restaurant_id: rid, type: 'PULSE_CRITICAL', value: p.score, severity: 'CRITICAL' })
+  }
+
+  // Yağmur için ek ihlaller (latestPulse tanımlandıktan sonra)
+  for (const rid of rainRestaurants) {
+    const p = latestPulse[rid]
+    if (p && !violations.find((v:any)=>v.restaurant_id===rid && v.type==='COURIER_WAIT')) {
+      violations.push({ restaurant_id: rid, type: 'COURIER_WAIT', value: (p.courier_wait||3) + 3, severity: 'MEDIUM', context: 'yağmur' })
+    }
   }
 
   if (violations.length === 0 && !(anomalyRows?.length)) {
@@ -140,12 +172,21 @@ ${violationLines}
 
 ONAYSIZ ANOMALİ: ${(anomalyRows ?? []).length}
 KRİTİK STOK: ${(stockRows ?? []).map((s:any)=>`${restNames[s.restaurant_id]||s.restaurant_id}: ${s.products?.name}(${s.quantity})`).join(', ')||'Yok'}
+YAĞMUR ETKİSİNDEKİ RESTORANLAR: ${rainRestaurants.map(id=>restNames[id]||id).join(', ')||'Yok'} — kurye gecikmesi beklenebilir, TG siparişleri artış gösterir
+KAMPANYALı RESTORANLAR: ${campaignRestaurants.map(id=>restNames[id]||id).join(', ')||'Yok'} — ekstra kapasite baskısı var
+GELMEMİŞ PERSONEL: ${Object.entries(absentByRest).map(([id,n])=>`${restNames[id]||id}: ${n} kişi`).join(', ')||'Yok'}
+AÇIK ŞİKAYET: ${Object.entries(complaintsByRest).map(([id,n])=>`${restNames[id]||id}: ${n}`).join(', ')||'Yok'}
+SAAT: ${new Date().toLocaleTimeString('tr-TR')} — ${new Date().getHours()>=18&&new Date().getHours()<=21?'AKŞAM YOĞUNLUK SAATİ (18-21)':new Date().getHours()>=11&&new Date().getHours()<=14?'ÖĞLE YOĞUNLUK SAATİ (11-14)':'normal saat'}
 
 KURALLAR:
 1. decisions dizisinde her ihlal eden restoran için AYRI bir entry oluştur
 2. restaurant_id alanına MUTLAKA yukarıdaki listedeki gerçek ID'yi yaz (r1, r2, r3... gibi)
 3. voice_message'da restoran adını ve sorunu Türkçe açıkla
 4. action_type şunlardan biri olmalı: PACKING_OVERLOAD, PREP_SLOW, COURIER_WAIT, ORDER_SURGE, PULSE_CRITICAL
+5. Yağmurlu restoranlarda kurye gecikmesine karşı önlem al, TG siparişlerinin artacağını belirt
+6. Kampanyalı restoranlarda kapasite baskısına dikkat et
+7. Gelmemiş personel varsa istasyon yükü artacağını hesaba kat
+8. Akşam yoğunluk saatinde (18-21) kararları daha proaktif ver
 
 JSON formatı:
 {
