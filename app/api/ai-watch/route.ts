@@ -85,12 +85,12 @@ export async function POST(req: NextRequest) {
 
   // Canlı verileri çek
   const today = new Date().toISOString().split('T')[0]
-  const [{ data: pulseRows }, { data: anomalyRows }, { data: orderRows }, { data: stockRows }, { data: snapRows }, { data: shiftRows }, { data: complaintRows }, { data: eventRows }] = await Promise.all([
+  const [{ data: pulseRows }, { data: anomalyRows }, { data: orderRows }, { data: stockRows }, { data: weatherEventRows }, { data: shiftRows }, { data: complaintRows }, { data: eventRows }] = await Promise.all([
     sb().from('pulse_scores').select('*').order('computed_at', { ascending: false }).limit(30),
     sb().from('anomalies').select('*').eq('acknowledged', false),
     sb().from('orders').select('*').eq('status', 'ACTIVE'),
     sb().from('stock_levels').select('*, products(name, emoji)').lte('quantity', 10),
-    sb().from('operation_snapshots').select('restaurant_id,rain_intensity,campaign_active,special_event,delay_rate').order('timestamp', { ascending: false }).limit(20),
+    sb().from('events').select('*').eq('event_date', today).eq('event_type', 'WEATHER').limit(1),
     sb().from('shifts').select('restaurant_id,status,role').gte('shift_start', today + 'T00:00:00').lte('shift_start', today + 'T23:59:59'),
     sb().from('events').select('*').gte('event_date', today).lte('event_date', new Date(Date.now()+86400000*2).toISOString().split('T')[0]),
     sb().from('complaints').select('restaurant_id,reason').eq('status', 'OPEN').order('created_at', { ascending: false }).limit(20) as any,
@@ -117,15 +117,14 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Snapshot map
-  const snapMap: Record<string,any> = {}
-  for (const s of (snapRows ?? [])) {
-    if (!snapMap[s.restaurant_id]) snapMap[s.restaurant_id] = s
-  }
+  // Hava durumu — events tablosundan al (daily-brief'ten gelir veya manuel girilir)
+  const weatherEvent = (weatherEventRows ?? [])[0]
+  const rainActive = weatherEvent && (weatherEvent.impact_level === 'HIGH' || weatherEvent.impact_level === 'MEDIUM' || weatherEvent.impact_level === 'CRITICAL')
+  const rainIntensity = rainActive ? (weatherEvent.impact_level === 'CRITICAL' ? 0.9 : weatherEvent.impact_level === 'HIGH' ? 0.7 : 0.4) : 0
 
-  // Kontextüel durumlar
-  const rainRestaurants = Object.entries(snapMap).filter(([,s]) => (s.rain_intensity||0) > 0.5).map(([id]) => id)
-  const campaignRestaurants = Object.entries(snapMap).filter(([,s]) => s.campaign_active).map(([id]) => id)
+  // Yağmur varsa TÜM restoranlar etkilenir (İstanbul geneli)
+  const rainRestaurants = rainActive ? Object.keys(DISTRICT_MAP).flatMap(d => DISTRICT_MAP[d]) : []
+  const campaignRestaurants: string[] = [] // events tablosundan CAMPAIGN tiplerinden gelecek
   const absentByRest: Record<string,number> = {}
   for (const sh of (shiftRows ?? [])) {
     if (sh.status === 'ABSENT') absentByRest[sh.restaurant_id] = (absentByRest[sh.restaurant_id]||0) + 1
@@ -169,11 +168,19 @@ export async function POST(req: NextRequest) {
     violations.push({ restaurant_id: rid, type: 'STOCK_REPLENISHMENT', value: items.length, severity: 'MEDIUM', items })
   }
 
-  // Yağmur için ek ihlaller (latestPulse tanımlandıktan sonra)
-  for (const rid of rainRestaurants) {
-    const p = latestPulse[rid]
-    if (p && !violations.find((v:any)=>v.restaurant_id===rid && v.type==='COURIER_WAIT')) {
-      violations.push({ restaurant_id: rid, type: 'COURIER_WAIT', value: (p.courier_wait||3) + 3, severity: 'MEDIUM', context: 'yağmur' })
+  // Yağmur için ek ihlaller
+  if (rainActive) {
+    for (const rid of rainRestaurants) {
+      const p = latestPulse[rid]
+      if (p && !violations.find((v:any) => v.restaurant_id===rid && v.type==='COURIER_WAIT')) {
+        violations.push({
+          restaurant_id: rid,
+          type: 'COURIER_WAIT',
+          value: +(( (p.courier_wait||3) + rainIntensity*8 )).toFixed(1),
+          severity: rainIntensity > 0.6 ? 'HIGH' : 'MEDIUM',
+          context: 'yağmur'
+        })
+      }
     }
   }
 
@@ -204,7 +211,7 @@ ${violationLines}
 
 ONAYSIZ ANOMALİ: ${(anomalyRows ?? []).length}
 KRİTİK STOK: ${(stockRows ?? []).map((s:any)=>`${restNames[s.restaurant_id]||s.restaurant_id}: ${s.products?.name}(${s.quantity})`).join(', ')||'Yok'}
-YAĞMUR ETKİSİNDEKİ RESTORANLAR: ${rainRestaurants.map(id=>restNames[id]||id).join(', ')||'Yok'} — kurye gecikmesi beklenebilir, TG siparişleri artış gösterir
+YAĞMUR DURUMU: ${rainActive ? `YAĞMURLU — ${weatherEvent?.title} — Tüm ağda kurye gecikmesi, TG siparişleri artıyor` : 'Yok — hava normal'}
 KAMPANYALı RESTORANLAR: ${campaignRestaurants.map(id=>restNames[id]||id).join(', ')||'Yok'} — ekstra kapasite baskısı var
 GELMEMİŞ PERSONEL: ${Object.entries(absentByRest).map(([id,n])=>`${restNames[id]||id}: ${n} kişi`).join(', ')||'Yok'}
 AÇIK ŞİKAYET: ${Object.entries(complaintsByRest).map(([id,n])=>`${restNames[id]||id}: ${n}`).join(', ')||'Yok'}
