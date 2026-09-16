@@ -17,6 +17,9 @@ async function applyToPulse(restaurantId: string, actionType: string) {
     case 'COURIER_WAIT':     stations.courier=Math.max(20,(stations.courier||80)-20); courier=Math.max(2,courier-4); score=Math.max(10,score-10); break
     case 'ORDER_SURGE':      orders=Math.max(5,orders-12); score=Math.max(10,score-12); break
     case 'PULSE_CRITICAL':   stations.packing=Math.max(20,(stations.packing||90)-20); stations.grill=Math.max(20,(stations.grill||85)-15); stations.courier=Math.max(20,(stations.courier||80)-15); prep=Math.max(4,prep-2); courier=Math.max(2,courier-2); orders=Math.max(5,orders-8); score=Math.max(10,score-20); break
+    case 'STOCK_REPLENISHMENT': score=Math.max(10,score-8); break
+    case 'STAFF_ADD':    stations.packing=Math.max(20,(stations.packing||80)-18); prep=Math.max(4,prep-2); score=Math.max(10,score-12); break
+    default:             score=Math.max(10,score-5); break
   }
   const risk = score>=80?'KRITIK':score>=60?'RISKLI':score>=40?'YOGUN':'NORMAL'
   const { error } = await sb().from('pulse_scores').insert({
