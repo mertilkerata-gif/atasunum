@@ -151,10 +151,12 @@ export default function OverviewPage() {
         }
       />
 
-      <div className="scroll" style={{ padding:'clamp(14px,3vw,24px)', display:'flex', flexDirection:'column', gap:16 }}>
-
-        {/* AI Otopilot */}
+      {/* AI Otopilot — sabit şerit, scroll dışında */}
+      <div style={{ padding:'0 clamp(14px,3vw,24px)', flexShrink:0 }}>
         <AIAutopilot interval={30} onRefresh={load}/>
+      </div>
+
+      <div className="scroll" style={{ padding:'clamp(14px,3vw,24px)', display:'flex', flexDirection:'column', gap:16 }}>
 
         {/* AI Error */}
         {aiError && (
