@@ -147,9 +147,10 @@ export function AIAutopilot({ interval = 30, onRefresh }: { interval?: number; o
 
     try {
       const isAuto = autoMode  // closure'dan oku
+      // Yarı otomatikte ilk taramada uygulama -- sadece karar al
       const res = await fetch('/api/ai-watch', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ api_key: apiKey, auto_apply: isAuto }),
+        body: JSON.stringify({ api_key: apiKey, auto_apply: false }),
       })
       const data = await res.json()
 
@@ -163,16 +164,22 @@ export function AIAutopilot({ interval = 30, onRefresh }: { interval?: number; o
       setStats(s=>({...s, violations:s.violations+data.violations, applied:s.applied+applied.length}))
 
       if (isAuto) {
-        // TAM OTOMATİK — sadece sesli bildir
+        // TAM OTOMATİK — uygula + sesli bildir
         setStatus('applying')
-        setDecisions(prev=>[...applied, ...prev].slice(0,30))
-        for (const d of applied) {
+        // Tam otomatikte gerçekten uygula
+        const applyRes = await fetch('/api/ai-watch', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ api_key: apiKey, auto_apply: true }),
+        })
+        const applyData = await applyRes.json()
+        setDecisions(prev=>[...(applyData.decisions||applied), ...prev].slice(0,30))
+        for (const d of (applyData.decisions||applied)) {
           log(`🤖 ${d.restaurant_id}: ${d.action}`, 'ai')
         }
-        if (data.pulse_updates?.length) {
-          data.pulse_updates.forEach((u:any)=>log(`📉 ${u.restaurant_id}: ${u.old_score}→${u.new_score} (${u.new_risk})`, 'ok'))
+        if (applyData.pulse_updates?.length) {
+          applyData.pulse_updates.forEach((u:any)=>log(`📉 ${u.restaurant_id}: ${u.old_score}→${u.new_score} (${u.new_risk})`, 'ok'))
         }
-        const msgs = applied.map(d=>d.voice_message).join(' Ayrıca, ')
+        const msgs = (applyData.decisions||applied).map((d:any)=>d.voice_message).join(' Ayrıca, ')
         speak(msgs + ' Kararlar uygulandı.')
         onRefresh?.()
         setStatus('idle')
