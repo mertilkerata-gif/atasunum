@@ -66,7 +66,12 @@ export async function POST(req: NextRequest) {
     if (!ex || new Date(p.computed_at) > new Date(ex.computed_at)) latest[p.restaurant_id] = norm
   }
 
-  console.log('[ai-watch] restoranlar:', Object.entries(latest).map(([id,p]:any)=>`${id}=${p.score}`).join(' '))
+  // Restoran adlarını çek
+  const { data: restRows } = await sb().from('restaurants').select('id, name')
+  const restNames: Record<string,string> = {}
+  for (const r of (restRows ?? [])) restNames[r.id] = r.name
+
+  console.log('[ai-watch] restoranlar:', Object.entries(latest).map(([id,p]:any)=>`${restNames[id]||id}(${id})=${p.score}`).join(' | '))
 
   // 2. Restoran başına EN KRİTİK tek ihlal — GPT'ye max 5 restoran gönder
   const sevOrder: Record<string,number> = { CRITICAL:0, HIGH:1, MEDIUM:2, LOW:3 }
