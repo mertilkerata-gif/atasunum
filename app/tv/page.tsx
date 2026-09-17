@@ -77,7 +77,7 @@ export default function TVPage() {
       const [pulseRows, snapRows] = await Promise.all([fetchAllPulseScores(), fetchLatestSnapshots()])
       const pm = Object.fromEntries(pulseRows.map((p:any)=>[p.restaurant_id,p]))
       const sm = Object.fromEntries(snapRows.map((s:any)=>[s.restaurant_id,s]))
-      const data = (restRows.length ? restRows : RESTAURANTS).map((r:any) => ({
+      const data = RESTAURANTS.map((r:any) => ({
         restaurant: r,
         pulse: pm[r.id] ?? { score:0, risk_level:'NORMAL', open_orders:0, avg_prep_time:0, courier_wait:0, station_scores:{} },
         snapshot: sm[r.id] ?? {},

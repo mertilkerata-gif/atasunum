@@ -77,7 +77,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
             <PulseGauge score={pulse.score} riskLevel={pulse.risk_level} size="lg"/>
             {pulse.top_signals.length > 0 && (
               <div style={{ width:'100%', display:'flex', flexDirection:'column', gap:5 }}>
-                {pulse.top_signals.map((s, i) => (
+                {pulse.top_signals.map((s: string, i: number) => (
                   <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:6, fontSize:11.5, color:config.colorHex }}>
                     <AlertTriangle size={11} style={{ flexShrink:0, marginTop:1 }}/>
                     <span>{s}</span>
