@@ -86,11 +86,11 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
           {/* KPI 2x3 grid */}
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
             <KPICard label="Açık Sipariş"    value={String(pulse.open_orders)} trend="up" trendValue="Normalin %35 üstünde" alert={pulse.open_orders>25} icon={<Package size={14}/>}/>
-            <KPICard label="Ort. Hazırlama"  value={pulse.avg_prep_time.toFixed(1)} unit="dk" trend={pulse.avg_prep_time>9?'up':'neutral'} trendValue={pulse.avg_prep_time>9?'Hedef: 7 dk':'Normal'} alert={pulse.avg_prep_time>10} icon={<Flame size={14}/>}/>
-            <KPICard label="Packing Süresi"  value={pulse.avg_packing_time.toFixed(1)} unit="dk" trend="neutral" trendValue="Stabil" icon={<Package size={14}/>}/>
-            <KPICard label="Kurye Bekleme"   value={pulse.courier_wait.toFixed(1)} unit="dk" trend={pulse.courier_wait>6?'up':'neutral'} trendValue={pulse.courier_wait>6?'Artıyor':'Normal'} alert={pulse.courier_wait>7} icon={<Clock size={14}/>}/>
+            <KPICard label="Ort. Hazırlama"  value={(pulse.avg_prep_time??0).toFixed(1)} unit="dk" trend={pulse.avg_prep_time>9?'up':'neutral'} trendValue={pulse.avg_prep_time>9?'Hedef: 7 dk':'Normal'} alert={pulse.avg_prep_time>10} icon={<Flame size={14}/>}/>
+            <KPICard label="Packing Süresi"  value={(pulse.avg_packing_time??0).toFixed(1)} unit="dk" trend="neutral" trendValue="Stabil" icon={<Package size={14}/>}/>
+            <KPICard label="Kurye Bekleme"   value={(pulse.courier_wait??0).toFixed(1)} unit="dk" trend={pulse.courier_wait>6?'up':'neutral'} trendValue={pulse.courier_wait>6?'Artıyor':'Normal'} alert={pulse.courier_wait>7} icon={<Clock size={14}/>}/>
             <KPICard label="Aktif Personel"  value={String((snapshot?.active_staff??0))} unit="kişi" icon={<Users size={14}/>}/>
-            <KPICard label="Yağış Yoğunluğu" value={String(0_intensity)} unit="/10" icon={<CloudRain size={14}/>}/>
+            <KPICard label="Yağış Yoğunluğu" value={String(snapshot?.rain_intensity??0)} unit="/10" icon={<CloudRain size={14}/>}/>
           </div>
 
           {/* İstasyon + Kanal */}
