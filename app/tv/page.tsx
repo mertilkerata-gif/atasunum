@@ -91,14 +91,16 @@ export default function TVPage() {
 
   useEffect(() => {
     load()
-    const t = setInterval(() => {
-      setTick(p=>p+1)
-      setTime(new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}))
-      setDate(new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'}))
-      if (tick % 10 === 0) load() // Her 10 saniyede Supabase güncelle
+    // Saat: her saniye
+    const clock = setInterval(() => {
+      setTick(p => p + 1)
+      setTime(new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
+      setDate(new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' }))
     }, 1000)
-    return () => clearInterval(t)
-  }, [load, tick])
+    // Supabase: her 10 saniye bagımsız interval
+    const refresh = setInterval(() => { load() }, 10000)
+    return () => { clearInterval(clock); clearInterval(refresh) }
+  }, [load])
 
   useEffect(() => {
     if (!auto || allData.length === 0) return
