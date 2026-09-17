@@ -50,7 +50,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
     <div className="dm">
       <Topbar
         title={restaurant.name}
-        subtitle={`${restaurant.district}, ${restaurant.city} · ${📍 Canlı Veri`}
+        subtitle={`${restaurant.district}, ${restaurant.city} · Canlı Veri`}
       />
       <div className="scroll" style={{ padding:'clamp(14px,3vw,24px)', display:'flex', flexDirection:'column', gap:16 }}>
 
