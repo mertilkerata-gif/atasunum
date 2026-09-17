@@ -99,9 +99,6 @@ export async function POST(req: NextRequest) {
   if (!violations.length) return NextResponse.json({ status:'OK', message:'Tüm sistemler normal', violations:0, decisions:[] })
 
   // 3. Restoran adlarını çek
-  const { data: restRows } = await sb().from('restaurants').select('id, name, district')
-  const restNames: Record<string,string> = {}
-  for (const r of (restRows ?? [])) restNames[r.id] = r.name
 
   // 4. GPT-4o'ya gönder
   const violationText = violations.map(v => {

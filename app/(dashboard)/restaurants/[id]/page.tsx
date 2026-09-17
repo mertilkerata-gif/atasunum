@@ -36,17 +36,15 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
   if (sbLoading || !pulse) return <div style={{display:'flex',justifyContent:'center',padding:48}}><div style={{width:20,height:20,border:'2px solid var(--s4)',borderTopColor:'var(--ac)',borderRadius:'50%',animation:'spin .7s linear infinite'}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>
 
   const config = getRiskConfig(pulse.risk_level)
-  // snapshot alanlarını normalize et
-  if (snapshot) {
-    (snapshot?.avg_preparation_time??pulse.avg_prep_time??0) = (snapshot?.avg_preparation_time??pulse.avg_prep_time??0) ?? pulse.avg_prep_time
-    (snapshot?.avg_courier_wait??pulse.courier_wait??0) = (snapshot?.avg_courier_wait??pulse.courier_wait??0) ?? pulse.courier_wait
-    (snapshot?.open_orders??pulse.open_orders??0) = (snapshot?.open_orders??pulse.open_orders??0) ?? pulse.open_orders
-    const ps = pulse.station_scores ?? {}
-    (snapshot?.grill_load??0)   = (snapshot?.grill_load??0)   ?? ps.grill   ?? 0
-    (snapshot?.fryer_load??0)   = (snapshot?.fryer_load??0)   ?? ps.fryer   ?? 0
-    (snapshot?.packing_load??0) = (snapshot?.packing_load??0) ?? ps.packing ?? 0
-    (snapshot?.courier_load??0) = (snapshot?.courier_load??0) ?? ps.courier ?? 0
-  }
+  // snapshot alanlarını normalize et — computed değişkenler
+  const ps = pulse.station_scores ?? {}
+  const snap_prep    = snapshot?.avg_preparation_time ?? pulse.avg_prep_time ?? 0
+  const snap_courier = snapshot?.avg_courier_wait     ?? pulse.courier_wait  ?? 0
+  const snap_orders  = snapshot?.open_orders          ?? pulse.open_orders   ?? 0
+  const snap_grill   = snapshot?.grill_load           ?? ps.grill   ?? 0
+  const snap_fryer   = snapshot?.fryer_load           ?? ps.fryer   ?? 0
+  const snap_packing = snapshot?.packing_load         ?? ps.packing ?? 0
+  const snap_cload   = snapshot?.courier_load         ?? ps.courier ?? 0
 
   return (
     <div className="dm">
