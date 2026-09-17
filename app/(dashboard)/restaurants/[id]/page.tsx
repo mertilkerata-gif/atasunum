@@ -36,6 +36,10 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
   if (sbLoading || !pulse) return <div style={{display:'flex',justifyContent:'center',padding:48}}><div style={{width:20,height:20,border:'2px solid var(--s4)',borderTopColor:'var(--ac)',borderRadius:'50%',animation:'spin .7s linear infinite'}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>
 
   const config = getRiskConfig(pulse.risk_level)
+  // Eski mock değişkenler — Supabase'de karşılık henüz yok
+  const forecast: any[] = []
+  const predictions: any[] = []
+  const recommendation: any = null
   // snapshot alanlarını normalize et — computed değişkenler
   const ps = pulse.station_scores ?? {}
   const snap_prep    = snapshot?.avg_preparation_time ?? pulse.avg_prep_time ?? 0
