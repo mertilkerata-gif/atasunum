@@ -45,28 +45,49 @@ export default function ExplainerPage() {
     } finally { setLoading(false) }
   }, [restaurantId])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load()
+    const t = setInterval(() => load(), 10000)
+    return () => clearInterval(t)
+  }, [load])
 
   const config = pulse ? getRiskConfig(pulse.risk_level) : getRiskConfig('NORMAL')
-  const stations = (pulse?.station_scores ?? {}) as Record<string, number>
+  // station_scores önce pulse'dan, boşsa snap'taki ayrı sütunlardan al
+  const stations: Record<string, number> = (() => {
+    const ps = pulse?.station_scores ?? {}
+    if (Object.keys(ps).length > 0) return ps as Record<string, number>
+    if (!snap) return {}
+    return {
+      grill:   snap.grill_load   ?? 0,
+      fryer:   snap.fryer_load   ?? 0,
+      packing: snap.packing_load ?? 0,
+      courier: snap.courier_load ?? 0,
+    }
+  })()
 
   // Component skorları — station_scores'dan türet
   const compScores: Record<string, number> = {
-    order_pressure:   Math.min(100, ((snap?.open_orders ?? 0) / 15) * 60),
-    prep_performance: Math.min(100, ((snap?.avg_preparation_time ?? 0) / 7) * 50),
-    station_load:     Math.round(((stations.grill ?? 0) + (stations.packing ?? 0)) / 2),
-    courier_load:     Math.min(100, ((snap?.avg_courier_wait ?? 0) / 5) * 70),
-    delay_risk:       Math.min(100, ((snap?.delay_rate ?? 0) + (snap?.cancellation_rate ?? 0)) * 300),
+    order_pressure:   Math.min(100, Math.round(((snap?.open_orders ?? pulse?.open_orders ?? 0) / 15) * 60)),
+    prep_performance: Math.min(100, Math.round(((snap?.avg_preparation_time ?? pulse?.avg_prep_time ?? 0) / 7) * 50)),
+    station_load:     Math.round(((stations.grill ?? 0) * 0.4 + (stations.packing ?? 0) * 0.6)),
+    courier_load:     Math.min(100, Math.round(((snap?.avg_courier_wait ?? pulse?.courier_wait ?? 0) / 5) * 70)),
+    delay_risk:       Math.min(100, Math.round(((snap?.delay_rate ?? 0) + (snap?.cancellation_rate ?? 0)) * 400 + (stations.courier >= 80 ? 20 : 0))),
   }
 
-  const inputs = snap ? [
-    { label: 'Açık Sipariş', value: String(snap.open_orders), baseline: '15', unit: '' },
-    { label: 'Hazırlama', value: snap.avg_preparation_time?.toFixed(1), baseline: '7', unit: 'dk' },
-    { label: 'Packing', value: snap.avg_packing_time?.toFixed(1), baseline: '3', unit: 'dk' },
-    { label: 'Kurye Bekl.', value: snap.avg_courier_wait?.toFixed(1), baseline: '3', unit: 'dk' },
-    { label: 'Gecikme', value: `%${Math.round((snap.delay_rate ?? 0) * 100)}`, baseline: '%3', unit: '' },
-    { label: 'İptal', value: `%${Math.round((snap.cancellation_rate ?? 0) * 100)}`, baseline: '%2', unit: '' },
-  ] : []
+  const _o  = snap?.open_orders          ?? pulse?.open_orders    ?? 0
+  const _pr = snap?.avg_preparation_time ?? pulse?.avg_prep_time  ?? 0
+  const _pa = snap?.avg_packing_time     ?? pulse?.avg_packing_time?? 0
+  const _cw = snap?.avg_courier_wait     ?? pulse?.courier_wait    ?? 0
+  const _dr = snap?.delay_rate           ?? 0
+  const _cr = snap?.cancellation_rate    ?? 0
+  const inputs = [
+    { label: 'Açık Sipariş', value: String(_o),               baseline: '15', unit: '' },
+    { label: 'Hazırlama',    value: Number(_pr).toFixed(1),    baseline: '7',  unit: 'dk' },
+    { label: 'Packing',      value: Number(_pa).toFixed(1),    baseline: '3',  unit: 'dk' },
+    { label: 'Kurye Bekl.',  value: Number(_cw).toFixed(1),    baseline: '3',  unit: 'dk' },
+    { label: 'Gecikme',      value: `%${Math.round(_dr*100)}`, baseline: '%3', unit: '' },
+    { label: 'İptal',        value: `%${Math.round(_cr*100)}`, baseline: '%2', unit: '' },
+  ]
 
   return (
     <div className="dm">
