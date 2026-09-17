@@ -1,5 +1,5 @@
-import { RESTAURANTS } from '@/data/seed/restaurants'
 'use client'
+import { RESTAURANTS } from '@/data/seed/restaurants'
 import { useState, useEffect, useCallback } from 'react'
 import { fetchAllPulseScores, fetchLatestSnapshots } from '@/lib/supabase-client'
 import { Zap, ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react'
