@@ -1,8 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { fetchAllPulseScores, fetchLatestSnapshots } from '@/lib/supabase-client'
-import { RESTAURANTS } from '@/data/seed/restaurants'
-import { getPulseScore, getSnapshot } from '@/data/seed/mock-data'
 import { Zap, ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react'
 
 function riskMeta(level: string) {
@@ -80,12 +78,12 @@ export default function TVPage() {
       const sm = Object.fromEntries(snapRows.map((s:any)=>[s.restaurant_id,s]))
       const data = RESTAURANTS.map(r => ({
         restaurant: r,
-        pulse: pm[r.id] ?? getPulseScore(r.id),
-        snapshot: sm[r.id] ?? getSnapshot(r.id),
+        pulse: pm[r.id] ?? { score:0, risk_level:'NORMAL', open_orders:0, avg_prep_time:0, courier_wait:0, station_scores:{} },
+        snapshot: sm[r.id] ?? {},
       })).sort((a:any,b:any)=>b.pulse.score-a.pulse.score)
       setAllData(data)
     } catch {
-      setAllData(RESTAURANTS.map(r=>({ restaurant:r, pulse:getPulseScore(r.id), snapshot:getSnapshot(r.id) })).sort((a,b)=>b.pulse.score-a.pulse.score))
+      setAllData([])
     }
   }, [])
 

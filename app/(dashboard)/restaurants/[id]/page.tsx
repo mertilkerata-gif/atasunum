@@ -6,7 +6,7 @@ import { KPICard } from '@/components/cards/kpi-card'
 import { StationBar } from '@/components/cards/station-bar'
 import { HourlyChart } from '@/components/charts/hourly-chart'
 import { RESTAURANTS } from '@/data/seed/restaurants'
-import { getPulseScore, getSnapshot, getPredictions, getWeather, getHourlyForecast, getRecommendation } from '@/data/seed/mock-data'
+import { fetchPulseScore, fetchSnapshot, fetchForecasts } from '@/lib/supabase-client'
 import { getRiskConfig } from '@/lib/utils'
 import { AlertTriangle, CheckCircle2, Clock, Package, Flame, Zap, Users, CloudRain, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -16,23 +16,43 @@ import { insertAuditLog } from '@/lib/supabase-client'
 export default function RestaurantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const restaurant = RESTAURANTS.find(r => r.id === id)
-  if (!restaurant) return (
-    <div style={{ padding:40, color:'var(--tx3)', fontSize:14 }}>Restoran bulunamadı.</div>
-  )
+  const [pulse, setPulse] = useState<any>(null)
+  const [snapshot, setSnapshot] = useState<any>(null)
+  const [sbLoading, setSbLoading] = useState(true)
 
-  const pulse      = getPulseScore(id)
-  const snapshot   = getSnapshot(id)
-  const predictions = getPredictions(id)
-  const weather    = getWeather(id)
-  const forecast   = getHourlyForecast(id)
-  const recommendation = getRecommendation(id)
-  const config     = getRiskConfig(pulse.risk_level)
+  useEffect(() => {
+    Promise.all([fetchPulseScore(id), fetchSnapshot(id)])
+      .then(([p,s]) => { if(p) setPulse(p); if(s) setSnapshot(s) })
+      .catch(console.error)
+      .finally(() => setSbLoading(false))
+    const t = setInterval(() =>
+      Promise.all([fetchPulseScore(id), fetchSnapshot(id)])
+        .then(([p,s]) => { if(p) setPulse(p); if(s) setSnapshot(s) }).catch(()=>{})
+    , 10000)
+    return () => clearInterval(t)
+  }, [id])
+
+  if (!restaurant) return <div style={{ padding:40, color:'var(--tx3)', fontSize:14 }}>Restoran bulunamadı.</div>
+  if (sbLoading || !pulse) return <div style={{display:'flex',justifyContent:'center',padding:48}}><div style={{width:20,height:20,border:'2px solid var(--s4)',borderTopColor:'var(--ac)',borderRadius:'50%',animation:'spin .7s linear infinite'}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>
+
+  const config = getRiskConfig(pulse.risk_level)
+  // snapshot alanlarını normalize et
+  if (snapshot) {
+    (snapshot?.avg_preparation_time??pulse.avg_prep_time??0) = (snapshot?.avg_preparation_time??pulse.avg_prep_time??0) ?? pulse.avg_prep_time
+    (snapshot?.avg_courier_wait??pulse.courier_wait??0) = (snapshot?.avg_courier_wait??pulse.courier_wait??0) ?? pulse.courier_wait
+    (snapshot?.open_orders??pulse.open_orders??0) = (snapshot?.open_orders??pulse.open_orders??0) ?? pulse.open_orders
+    const ps = pulse.station_scores ?? {}
+    (snapshot?.grill_load??0)   = (snapshot?.grill_load??0)   ?? ps.grill   ?? 0
+    (snapshot?.fryer_load??0)   = (snapshot?.fryer_load??0)   ?? ps.fryer   ?? 0
+    (snapshot?.packing_load??0) = (snapshot?.packing_load??0) ?? ps.packing ?? 0
+    (snapshot?.courier_load??0) = (snapshot?.courier_load??0) ?? ps.courier ?? 0
+  }
 
   return (
     <div className="dm">
       <Topbar
         title={restaurant.name}
-        subtitle={`${restaurant.district}, ${restaurant.city} · ${weather.icon} ${weather.condition}, ${weather.temperature}°C`}
+        subtitle={`${restaurant.district}, ${restaurant.city} · ${📍 Canlı Veri`}
       />
       <div className="scroll" style={{ padding:'clamp(14px,3vw,24px)', display:'flex', flexDirection:'column', gap:16 }}>
 
@@ -71,8 +91,8 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
             <KPICard label="Ort. Hazırlama"  value={pulse.avg_prep_time.toFixed(1)} unit="dk" trend={pulse.avg_prep_time>9?'up':'neutral'} trendValue={pulse.avg_prep_time>9?'Hedef: 7 dk':'Normal'} alert={pulse.avg_prep_time>10} icon={<Flame size={14}/>}/>
             <KPICard label="Packing Süresi"  value={pulse.avg_packing_time.toFixed(1)} unit="dk" trend="neutral" trendValue="Stabil" icon={<Package size={14}/>}/>
             <KPICard label="Kurye Bekleme"   value={pulse.courier_wait.toFixed(1)} unit="dk" trend={pulse.courier_wait>6?'up':'neutral'} trendValue={pulse.courier_wait>6?'Artıyor':'Normal'} alert={pulse.courier_wait>7} icon={<Clock size={14}/>}/>
-            <KPICard label="Aktif Personel"  value={String(snapshot.active_staff)} unit="kişi" icon={<Users size={14}/>}/>
-            <KPICard label="Yağış Yoğunluğu" value={String(weather.rain_intensity)} unit="/10" icon={<CloudRain size={14}/>}/>
+            <KPICard label="Aktif Personel"  value={String((snapshot?.active_staff??0))} unit="kişi" icon={<Users size={14}/>}/>
+            <KPICard label="Yağış Yoğunluğu" value={String(0_intensity)} unit="/10" icon={<CloudRain size={14}/>}/>
           </div>
 
           {/* İstasyon + Kanal */}

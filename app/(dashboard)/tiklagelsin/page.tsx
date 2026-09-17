@@ -6,7 +6,7 @@ import { MENU, CATEGORIES, MenuItem } from '@/data/seed/menu'
 import { LiveOrder, STATUS_LABELS, STATUS_DESCRIPTIONS, STATUS_FLOW, getStatusStep, getNextStatus, generateOrderId, estimateReady } from '@/data/seed/order-store'
 import { getRiskConfig } from '@/lib/utils'
 import { Plus, Minus, ArrowLeft, Zap, Store, Truck, CheckCircle, ShoppingCart } from 'lucide-react'
-import { getPulseScore } from '@/data/seed/mock-data'
+import { fetchPulseScore } from '@/lib/supabase-client'
 import { OrderEventType } from '@/types'
 import { Restaurant } from '@/types'
 
@@ -31,10 +31,16 @@ export default function TiklaGelsinPage() {
   const [address, setAddress] = useState('')
 
   const restaurant = RESTAURANTS.find(r => r.id === restaurantId)!
-  const pulse = getPulseScore(restaurantId)
-  const pulseConfig = getRiskConfig(pulse.risk_level)
+  const [pulseData, setPulseData] = useState<any>({ score:0, risk_level:'NORMAL', open_orders:0, avg_prep_time:7, courier_wait:3 })
+  const pulseConfig = getRiskConfig(pulseData.risk_level)
   const cartTotal = cart.reduce((s, c) => s + c.item.price * c.qty, 0)
   const cartCount = cart.reduce((s, c) => s + c.qty, 0)
+
+  useEffect(() => {
+    fetchPulseScore(restaurantId).then(p => { if(p) setPulseData(p) }).catch(()=>{})
+    const t = setInterval(() => fetchPulseScore(restaurantId).then(p => { if(p) setPulseData(p) }).catch(()=>{}), 15000)
+    return () => clearInterval(t)
+  }, [restaurantId])
 
   const addToCart = (item: MenuItem) =>
     setCart(prev => prev.find(c => c.item.id === item.id)
@@ -89,7 +95,7 @@ export default function TiklaGelsinPage() {
     }))
   }, [trackingOrder])
 
-  if (view === 'kitchen') return <KitchenView orders={orders} onAdvance={advanceOrder} onBack={() => setView('menu')} restaurantName={restaurant.name} pulse={pulse.score} pulseConfig={pulseConfig} />
+  if (view === 'kitchen') return <KitchenView orders={orders} onAdvance={advanceOrder} onBack={() => setView('menu')} restaurantName={restaurant.name} pulse={pulseData.score} pulseConfig={pulseConfig} />
   if (view === 'tracking' && trackingOrder) return <TrackingView order={trackingOrder} onNewOrder={() => { setTrackingOrder(null); setView('menu') }} onKitchen={() => setView('kitchen')} />
   if (view === 'checkout') return <CheckoutView cart={cart} total={cartTotal} channel={channel} restaurant={restaurant} customerName={customerName} setCustomerName={setCustomerName} address={address} setAddress={setAddress} onBack={() => setView('menu')} onPlace={placeOrder} setChannel={setChannel} />
 
@@ -115,7 +121,7 @@ export default function TiklaGelsinPage() {
                 </div>
                 <div style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 12px', borderRadius:8, background: pulseConfig.bg, border:`1px solid ${pulseConfig.border}` }}>
                   <Zap size={12} style={{ color: pulseConfig.color }} strokeWidth={2}/>
-                  <span style={{ fontSize:12, fontWeight:600, color: pulseConfig.color }}>Nabız: {pulse.score} · {pulseConfig.label}</span>
+                  <span style={{ fontSize:12, fontWeight:600, color: pulseConfig.color }}>Nabız: {pulseData.score} · {pulseConfig.label}</span>
                 </div>
               </div>
 

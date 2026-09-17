@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { Topbar } from '@/components/layout/topbar'
 import { fetchRestaurants, fetchAllPulseScores } from '@/lib/supabase-client'
 import { RESTAURANTS } from '@/data/seed/restaurants'
-import { getPulseScore } from '@/data/seed/mock-data'
 import { getRiskConfig } from '@/lib/utils'
 import { Store, MapPin, Wifi, ExternalLink, UtensilsCrossed, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
@@ -23,12 +22,12 @@ export default function RestaurantsPage() {
       const pm = Object.fromEntries(pulseRows.map((p:any) => [p.restaurant_id, p]))
       const merged: any[] = restRows.length > 0
         ? restRows.map((r:any) => ({ ...r, ...(pm[r.id] ? { score:pm[r.id].score, risk_level:pm[r.id].risk_level, open_orders:pm[r.id].open_orders, avg_prep_time:pm[r.id].avg_prep_time, courier_wait:pm[r.id].courier_wait } : { score:0, risk_level:'NORMAL', open_orders:0 }) }))
-        : RESTAURANTS.map(r => { const p = pm[r.id] ?? getPulseScore(r.id); return { ...r, is_active:true, score:p.score, risk_level:p.risk_level, open_orders:p.open_orders, avg_prep_time:p.avg_prep_time, courier_wait:p.courier_wait } })
+        : restRows.map((r:any) => { const p = pm[r.id] ?? {}; return { ...r, score:p.score??0, risk_level:p.risk_level??'NORMAL', open_orders:p.open_orders??0, avg_prep_time:p.avg_prep_time??0, courier_wait:p.courier_wait??0 } })
       merged.sort((a,b) => b.score - a.score)
       setRestaurants(merged)
       setIsLive(restRows.length > 0 && pulseRows.length > 0)
     } catch {
-      setRestaurants(RESTAURANTS.map(r => { const p = getPulseScore(r.id); return { ...r, is_active:true, score:p.score, risk_level:p.risk_level, open_orders:p.open_orders, avg_prep_time:p.avg_prep_time, courier_wait:p.courier_wait } }))
+      setRestaurants([])
       setIsLive(false)
     } finally { setLoading(false) }
   }, [])

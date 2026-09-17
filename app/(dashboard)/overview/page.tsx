@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { Topbar } from '@/components/layout/topbar'
 import { RestaurantCard } from '@/components/cards/restaurant-card'
 import { fetchAllPulseScores, fetchRestaurants, fetchLatestSnapshots } from '@/lib/supabase-client'
-import { getPredictions, getWeather, getHourlyForecast, getRecommendation, getSnapshot, getPulseScore } from '@/data/seed/mock-data'
 import { RESTAURANTS } from '@/data/seed/restaurants'
 import { RestaurantDashboard, RiskLevel } from '@/types'
 import { RefreshCw, Wifi, WifiOff, AlertCircle, TrendingUp, UtensilsCrossed, Activity, Brain, FileText, CheckCircle2, X, Zap, TriangleAlert } from 'lucide-react'
@@ -47,21 +46,21 @@ export default function OverviewPage() {
       const allRests: any[] = restRows.length > 0 ? restRows : RESTAURANTS
       const result: RestaurantDashboard[] = allRests.map(r => ({
         restaurant: r as RestaurantDashboard['restaurant'],
-        pulse: (pm[r.id] ?? getPulseScore(r.id)) as RestaurantDashboard['pulse'],
-        snapshot: (sm[r.id] ?? getSnapshot(r.id)) as RestaurantDashboard['snapshot'],
-        predictions: getPredictions(r.id),
-        latest_recommendation: getRecommendation(r.id),
-        weather: getWeather(r.id),
-        hourly_forecast: getHourlyForecast(r.id),
+        pulse: pm[r.id] as RestaurantDashboard['pulse'],
+        snapshot: sm[r.id] as RestaurantDashboard['snapshot'],
+        predictions: [],
+        latest_recommendation: null,
+        weather: null,
+        hourly_forecast: [],
       })).sort((a,b) => RISK_ORDER[a.pulse.risk_level]-RISK_ORDER[b.pulse.risk_level])
       setBoards(result); setIsLive(pulseRows.length>0); setRefreshed(new Date())
     } catch {
       const fb = RESTAURANTS.map(r => ({
         restaurant: r as RestaurantDashboard['restaurant'],
-        pulse: getPulseScore(r.id) as RestaurantDashboard['pulse'],
-        snapshot: getSnapshot(r.id) as RestaurantDashboard['snapshot'],
-        predictions: getPredictions(r.id), latest_recommendation: getRecommendation(r.id),
-        weather: getWeather(r.id), hourly_forecast: getHourlyForecast(r.id),
+        pulse: pm[r.id] as RestaurantDashboard['pulse'],
+        snapshot: sm[r.id] as RestaurantDashboard['snapshot'],
+        predictions: [], latest_recommendation: null,
+        weather: null, hourly_forecast: [],
       })).sort((a,b) => RISK_ORDER[a.pulse.risk_level]-RISK_ORDER[b.pulse.risk_level])
       setBoards(fb); setIsLive(false)
     } finally { setLoading(false) }

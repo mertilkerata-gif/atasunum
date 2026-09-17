@@ -1,10 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Topbar } from '@/components/layout/topbar'
-import { RESTAURANTS } from '@/data/seed/restaurants'
-import { getPulseScore } from '@/data/seed/mock-data'
-import { getComplaintSummary } from '@/data/seed/complaints'
-import { getRevenueSnapshot } from '@/data/seed/revenue'
+import { fetchAllPulseScores, fetchRestaurants, fetchComplaints } from '@/lib/supabase-client'
 import { getRiskConfig } from '@/lib/utils'
 
 const QUADRANTS = [
@@ -13,45 +10,61 @@ const QUADRANTS = [
   { x:0,   y:0,   w:0.5, h:0.5, label:'Kabul Et',     desc:'Düşük etki, düşük olasılık',  color:'rgba(23,178,106,0.05)', border:'rgba(23,178,106,0.10)' },
   { x:0.5, y:0,   w:0.5, h:0.5, label:'Azalt',        desc:'Düşük etki, yüksek olasılık', color:'rgba(249,115,22,0.05)', border:'rgba(249,115,22,0.12)' },
 ]
+const LEGEND = [
+  { label:'Acil Aksiyon', desc:'Hemen müdahale',    color:'var(--red)' },
+  { label:'İzle',         desc:'Hazırlıklı bekle',  color:'#eab308' },
+  { label:'Azalt',        desc:'Riski minimize et', color:'var(--amber)' },
+  { label:'Kabul Et',     desc:'Standart izleme',   color:'var(--green)' },
+]
 
 export default function RiskMatrixPage() {
   const [hovered, setHovered] = useState<string|null>(null)
+  const [data, setData] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const data = RESTAURANTS.map(r => {
-    const pulse = getPulseScore(r.id)
-    const comp  = getComplaintSummary(r.id)
-    const rev   = getRevenueSnapshot(r.id)
-    const probability = pulse.score / 100
-    const impact = Math.min(1, (rev.totalLostRevenue/5000 + comp.total/25) / 2)
-    return { restaurant:r, pulse, comp, rev, probability, impact }
-  })
+  const load = useCallback(async () => {
+    try {
+      const [pulseRows, restRows, complaintRows] = await Promise.all([
+        fetchAllPulseScores(), fetchRestaurants(), fetchComplaints()
+      ])
+      const pm = Object.fromEntries(pulseRows.map((p:any) => [p.restaurant_id, p]))
+      const cm: Record<string,number> = {}
+      for (const c of complaintRows) cm[c.restaurant_id] = (cm[c.restaurant_id]??0)+1
 
-  const W = 560, H = 380
+      setData(restRows.map((r:any) => {
+        const p = pm[r.id] ?? { score:0, risk_level:'NORMAL' }
+        const complaints = cm[r.id] ?? 0
+        const probability = (p.score ?? 0) / 100
+        // Etki: şikayet + courier_wait + prep_time normalleştirilmiş
+        const impact = Math.min(1, (
+          (complaints / 20) * 0.4 +
+          (Math.min(p.courier_wait ?? 0, 15) / 15) * 0.3 +
+          (Math.min(p.avg_prep_time ?? 0, 15) / 15) * 0.3
+        ))
+        return { restaurant:r, pulse:p, complaints, probability, impact }
+      }))
+    } catch(e) { console.error(e) }
+    finally { setLoading(false) }
+  }, [])
 
-  const LEGEND = [
-    { label:'Acil Aksiyon', desc:'Hemen müdahale',   color:'var(--red)' },
-    { label:'İzle',         desc:'Hazırlıklı bekle', color:'var(--yellow,#eab308)' },
-    { label:'Azalt',        desc:'Riski minimize et', color:'var(--amber)' },
-    { label:'Kabul Et',     desc:'Standart izleme',  color:'var(--green)' },
-  ]
+  useEffect(() => { load(); const t = setInterval(load,30000); return ()=>clearInterval(t) }, [load])
+
+  const W=560, H=380
+
+  if (loading) return <div className="dm"><Topbar title="Operasyonel Risk Matrisi" subtitle="Olasılık × Etki büyüklüğü"/><div style={{display:'flex',justifyContent:'center',padding:48}}><div style={{width:20,height:20,border:'2px solid var(--s4)',borderTopColor:'var(--ac)',borderRadius:'50%',animation:'spin .7s linear infinite'}}/></div><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>
 
   return (
     <div className="dm">
       <Topbar title="Operasyonel Risk Matrisi" subtitle="Olasılık × Etki büyüklüğü"/>
       <div className="scroll" style={{ padding:'clamp(14px,3vw,24px)', display:'flex', flexDirection:'column', gap:16 }}>
-
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,420px),1fr))', gap:16, alignItems:'start' }}>
-          {/* Matris */}
+
           <div className="card">
             <div className="card-h"><span className="card-title">Risk Matrisi</span><span className="card-meta">hover ile detay</span></div>
             <div style={{ padding:'16px 20px 20px' }}>
               <div style={{ position:'relative', paddingLeft:32, paddingBottom:28 }}>
-                <p style={{ position:'absolute', left:0, top:'50%', transform:'translateY(-50%) rotate(-90deg)', fontSize:9, color:'var(--tx3)', textTransform:'uppercase', letterSpacing:'.1em', whiteSpace:'nowrap', transformOrigin:'center' }}>
-                  Etki Büyüklüğü →
-                </p>
-                <p style={{ position:'absolute', bottom:0, left:'50%', transform:'translateX(-50%)', fontSize:9, color:'var(--tx3)', textTransform:'uppercase', letterSpacing:'.1em' }}>
-                  Oluşma Olasılığı →
-                </p>
+                <p style={{ position:'absolute', left:0, top:'50%', transform:'translateY(-50%) rotate(-90deg)', fontSize:9, color:'var(--tx3)', textTransform:'uppercase', letterSpacing:'.1em', whiteSpace:'nowrap', transformOrigin:'center' }}>Etki Büyüklüğü →</p>
+                <p style={{ position:'absolute', bottom:0, left:'50%', transform:'translateX(-50%)', fontSize:9, color:'var(--tx3)', textTransform:'uppercase', letterSpacing:'.1em' }}>Oluşma Olasılığı →</p>
                 <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow:'visible', display:'block' }}>
                   {QUADRANTS.map((q,i) => (
                     <g key={i}>
@@ -73,22 +86,18 @@ export default function RiskMatrixPage() {
                     const cy = (1 - d.impact) * H
                     const rc = getRiskConfig(d.pulse.risk_level)
                     const isH = hovered === d.restaurant.id
-                    const r = isH ? 15 : 10
+                    const rr = isH ? 15 : 10
                     return (
                       <g key={d.restaurant.id} onMouseEnter={()=>setHovered(d.restaurant.id)} onMouseLeave={()=>setHovered(null)} style={{ cursor:'pointer' }}>
-                        <circle cx={cx} cy={cy} r={r+6} fill={rc.colorHex+'18'}/>
-                        <circle cx={cx} cy={cy} r={r} fill={rc.colorHex} opacity={isH?1:.85} style={{ filter:`drop-shadow(0 0 ${isH?10:5}px ${rc.colorHex}80)` }}/>
-                        <text x={cx} y={cy} textAnchor="middle" dy=".35em" fill="white" fontSize={isH?9:7} fontWeight="700">
-                          {d.restaurant.id.toUpperCase()}
-                        </text>
+                        <circle cx={cx} cy={cy} r={rr+6} fill={rc.colorHex+'18'}/>
+                        <circle cx={cx} cy={cy} r={rr} fill={rc.colorHex} opacity={isH?1:.85} style={{ filter:`drop-shadow(0 0 ${isH?10:5}px ${rc.colorHex}80)` }}/>
+                        <text x={cx} y={cy} textAnchor="middle" dy=".35em" fill="white" fontSize={isH?9:7} fontWeight="700">{d.restaurant.id.toUpperCase()}</text>
                         {isH && (
                           <g>
-                            <rect x={cx+16} y={cy-30} width={140} height={58} rx="8" fill="var(--s2)" stroke="var(--bdr2)" strokeWidth="1"/>
-                            <text x={cx+24} y={cy-16} fill="rgba(255,255,255,.85)" fontSize="11" fontWeight="600">
-                              {d.restaurant.name.replace('Burger King ','BK ').replace('Popeyes ','Pop.')}
-                            </text>
-                            <text x={cx+24} y={cy+1} fill="rgba(255,255,255,.4)" fontSize="10">Nabız: {d.pulse.score} · {d.rev.totalLostRevenue.toLocaleString('tr-TR')} ₺</text>
-                            <text x={cx+24} y={cy+15} fill="rgba(255,255,255,.4)" fontSize="10">Şikayet: {d.comp.total} · {d.pulse.risk_level}</text>
+                            <rect x={cx+16} y={cy-30} width={150} height={58} rx="8" fill="var(--s2)" stroke="var(--bdr2)" strokeWidth="1"/>
+                            <text x={cx+24} y={cy-16} fill="rgba(255,255,255,.85)" fontSize="11" fontWeight="600">{d.restaurant.name.replace('Burger King ','BK ').replace('Popeyes ','Pop.')}</text>
+                            <text x={cx+24} y={cy+1} fill="rgba(255,255,255,.4)" fontSize="10">Nabız: {d.pulse.score} · {d.pulse.risk_level}</text>
+                            <text x={cx+24} y={cy+15} fill="rgba(255,255,255,.4)" fontSize="10">Şikayet: {d.complaints} · Etki: %{Math.round(d.impact*100)}</text>
                           </g>
                         )}
                       </g>
@@ -99,9 +108,7 @@ export default function RiskMatrixPage() {
             </div>
           </div>
 
-          {/* Sağ panel */}
           <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-            {/* Legend */}
             <div className="card">
               <div className="card-h"><span className="card-title">Kadrant Rehberi</span></div>
               <div style={{ padding:'12px 20px', display:'flex', flexDirection:'column', gap:10 }}>
@@ -117,9 +124,8 @@ export default function RiskMatrixPage() {
               </div>
             </div>
 
-            {/* Öncelikli riskler */}
             <div className="card">
-              <div className="card-h"><span className="card-title">Öncelikli Riskler</span></div>
+              <div className="card-h"><span className="card-title">Öncelikli Riskler</span><span className="card-meta">Supabase · canlı</span></div>
               <div>
                 {[...data].sort((a,b)=>(b.probability+b.impact)-(a.probability+a.impact)).slice(0,6).map((d,i) => {
                   const rc = getRiskConfig(d.pulse.risk_level)
@@ -139,6 +145,7 @@ export default function RiskMatrixPage() {
           </div>
         </div>
       </div>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 }

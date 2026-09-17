@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { Topbar } from '@/components/layout/topbar'
 import { fetchAllPulseScores, fetchLatestSnapshots, fetchActiveOrders, subscribeToOrders, subscribeToPulseScores } from '@/lib/supabase-client'
 import { RESTAURANTS } from '@/data/seed/restaurants'
-import { getPulseScore, getSnapshot } from '@/data/seed/mock-data'
 import { getRiskConfig } from '@/lib/utils'
 import { PulseScore, OperationSnapshot } from '@/types'
 import { Wifi, RefreshCw } from 'lucide-react'
@@ -31,14 +30,14 @@ export default function LiveOperationsPage() {
 
       const result: LiveData[] = RESTAURANTS.map(r => ({
         restaurant: r,
-        pulse: (pm[r.id] ?? getPulseScore(r.id)) as PulseScore,
-        snapshot: (sm[r.id] ?? getSnapshot(r.id)) as OperationSnapshot,
-        activeOrders: oc[r.id] ?? pm[r.id]?.open_orders ?? getPulseScore(r.id).open_orders,
+        pulse: pm[r.id] as PulseScore,
+        snapshot: sm[r.id] as OperationSnapshot,
+        activeOrders: oc[r.id] ?? pm[r.id]?.open_orders ?? 0,
       })).sort((a,b)=>b.pulse.score-a.pulse.score)
 
       setData(result); setIsLive(pulseRows.length>0)
     } catch {
-      setData(RESTAURANTS.map(r=>({ restaurant:r, pulse:getPulseScore(r.id), snapshot:getSnapshot(r.id), activeOrders:getPulseScore(r.id).open_orders })))
+      setData([])
       setIsLive(false)
     } finally { setLoading(false) }
   }, [])
