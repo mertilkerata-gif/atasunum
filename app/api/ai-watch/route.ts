@@ -68,28 +68,28 @@ export async function POST(req: NextRequest) {
 
   console.log('[ai-watch] restoranlar:', Object.entries(latest).map(([id,p]:any)=>`${id}=${p.score}`).join(' '))
 
-  // 2. İhlalleri tespit et
-  const violations: any[] = []
-  for (const [rid, p] of Object.entries(latest)) {
-    if (p.station_scores.packing >= THRESHOLDS.packing) violations.push({ restaurant_id:rid, type:'PACKING_OVERLOAD', value:p.station_scores.packing, severity:'HIGH' })
-    if (p.avg_prep_time >= THRESHOLDS.prep)             violations.push({ restaurant_id:rid, type:'PREP_SLOW',        value:p.avg_prep_time,            severity:'HIGH' })
-    if (p.courier_wait  >= THRESHOLDS.courier)          violations.push({ restaurant_id:rid, type:'COURIER_WAIT',     value:p.courier_wait,             severity:'MEDIUM' })
-    if (p.open_orders   >= THRESHOLDS.orders)           violations.push({ restaurant_id:rid, type:'ORDER_SURGE',      value:p.open_orders,              severity:'HIGH' })
-    if (p.score         >= THRESHOLDS.pulse)            violations.push({ restaurant_id:rid, type:'PULSE_CRITICAL',   value:p.score,                    severity:'CRITICAL' })
+  // 2. Restoran başına EN KRİTİK tek ihlal — GPT'ye max 5 restoran gönder
+  const sevOrder: Record<string,number> = { CRITICAL:0, HIGH:1, MEDIUM:2, LOW:3 }
+  const perRest: Record<string, any> = {}
+  for (const [rid, p] of Object.entries(latest) as any) {
+    const candidates: any[] = []
+    if (p.score         >= THRESHOLDS.pulse)            candidates.push({ type:'PULSE_CRITICAL',   value:p.score,                    severity:'CRITICAL' })
+    if (p.station_scores.packing >= THRESHOLDS.packing) candidates.push({ type:'PACKING_OVERLOAD', value:p.station_scores.packing,   severity:'HIGH' })
+    if (p.open_orders   >= THRESHOLDS.orders)           candidates.push({ type:'ORDER_SURGE',      value:p.open_orders,              severity:'HIGH' })
+    if (p.avg_prep_time >= THRESHOLDS.prep)             candidates.push({ type:'PREP_SLOW',        value:p.avg_prep_time,            severity:'HIGH' })
+    if (p.courier_wait  >= THRESHOLDS.courier)          candidates.push({ type:'COURIER_WAIT',     value:p.courier_wait,             severity:'MEDIUM' })
+    if (candidates.length) {
+      candidates.sort((a,b) => (sevOrder[a.severity]??9) - (sevOrder[b.severity]??9))
+      perRest[rid] = { restaurant_id:rid, ...candidates[0] }
+    }
   }
+  // En kritik 5 restoran — CRITICAL önce, sonra score'a göre
+  const violations: any[] = Object.values(perRest)
+    .sort((a,b) => (sevOrder[a.severity]??9) - (sevOrder[b.severity]??9))
+    .slice(0, 5)
 
-  // Kritik stok
-  const { data: stockRows } = await sb().from('stock_levels').select('restaurant_id, quantity, min_threshold').lte('quantity', 10)
-  const stockMap: Record<string,string[]> = {}
-  for (const s of (stockRows ?? [])) {
-    if (!stockMap[s.restaurant_id]) stockMap[s.restaurant_id] = []
-    stockMap[s.restaurant_id].push(`stok(${s.quantity})`)
-  }
-  for (const [rid, items] of Object.entries(stockMap)) {
-    violations.push({ restaurant_id:rid, type:'STOCK_REPLENISHMENT', value:items.length, severity:'MEDIUM', items })
-  }
-
-  console.log('[ai-watch] ihlaller:', violations.length, violations.map((v:any)=>`${v.restaurant_id}:${v.type}`).join(' '))
+  const totalViolations = Object.keys(perRest).length
+  console.log('[ai-watch] ihlaller:', totalViolations, 'GPT\'ye giden:', violations.length, violations.map((v:any)=>`${v.restaurant_id}:${v.type}`).join(' '))
 
   if (!violations.length) return NextResponse.json({ status:'OK', message:'Tüm sistemler normal', violations:0, decisions:[] })
 
@@ -119,7 +119,7 @@ KURALLAR:
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method:'POST', headers:{'Content-Type':'application/json', Authorization:`Bearer ${apiKey}`},
-    body: JSON.stringify({ model:'gpt-4o', max_tokens:1000, temperature:0.1, response_format:{type:'json_object'}, messages:[{role:'user',content:prompt}] }),
+    body: JSON.stringify({ model:'gpt-4o', max_tokens:2000, temperature:0.1, response_format:{type:'json_object'}, messages:[{role:'user',content:prompt}] }),
   })
 
   if (!res.ok) {
@@ -131,8 +131,23 @@ KURALLAR:
   let result: any
   try { result = JSON.parse(aiData.choices[0].message.content) }
   catch(e) {
-    console.error('[ai-watch] Parse hatası:', aiData.choices?.[0]?.message?.content?.slice(0,200))
-    return NextResponse.json({ error:'Parse hatası' }, { status:500 })
+    console.error('[ai-watch] Parse hatası:', aiData.choices?.[0]?.message?.content?.slice(0,300))
+    // Parse hatası olsa bile violations'ı döndür — "normal" yazmasın
+    return NextResponse.json({
+      status: 'DECISIONS_MADE',
+      violations: totalViolations,
+      decisions: violations.map(v => ({
+        restaurant_id: v.restaurant_id,
+        action_type: v.type,
+        action: `${v.type} tespit edildi`,
+        severity: v.severity,
+        voice_message: `${v.restaurant_id} restoranında ${v.type} ihlali var`,
+        expected_impact: 'Manuel müdahale gerekli',
+      })),
+      summary: `${totalViolations} restoranda ihlal — GPT parse hatası, ham ihlaller döndürüldü`,
+      auto_applied: false,
+      timestamp: new Date().toISOString(),
+    })
   }
 
   // 5. Uygula + kaydet
