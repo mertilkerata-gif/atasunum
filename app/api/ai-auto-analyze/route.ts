@@ -230,11 +230,52 @@ Yanıtını MUTLAKA aşağıdaki JSON formatında ver, başka hiçbir şey yazma
     },
   })
 
+  // ── 7. n8n webhook dispatch (HIGH priority varsa) ───────────────
+  let n8nResult: any = null
+  const webhookUrl = process.env.N8N_WEBHOOK_URL
+  const highPriority = (analysis.recommendations ?? []).filter((r: any) => r.priority === 'HIGH')
+
+  if (webhookUrl && highPriority.length > 0) {
+    // pulse ve snapshot map'lerini yeniden oluştur
+    const pulseMap2: Record<string, any> = {}
+    const seen3 = new Set<string>()
+    for (const p of (pulseScores ?? [])) {
+      if (!seen3.has(p.restaurant_id)) { seen3.add(p.restaurant_id); pulseMap2[p.restaurant_id] = p }
+    }
+    const snapMap2: Record<string, any> = {}
+    const seen4 = new Set<string>()
+    for (const s of (snapshots ?? [])) {
+      if (!seen4.has(s.restaurant_id)) { seen4.add(s.restaurant_id); snapMap2[s.restaurant_id] = s }
+    }
+    const restMap2: Record<string, any> = {}
+    for (const r of (restaurants ?? [])) { restMap2[r.id] = r }
+
+    try {
+      const dispatchRes = await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL || 'https://atasunum.vercel.app'}/api/webhook/n8n-dispatch`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recommendations: highPriority,
+            pulse_map: pulseMap2,
+            snap_map: snapMap2,
+            restaurant_map: restMap2,
+          }),
+        }
+      )
+      n8nResult = await dispatchRes.json()
+    } catch (err) {
+      n8nResult = { error: String(err) }
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     analysis,
     saved_recommendations: savedRecs.length,
     auto_acked_anomalies: autoAcked.length,
+    n8n_dispatch: n8nResult ?? (webhookUrl ? 'no_high_priority' : 'webhook_url_not_set'),
     timestamp: new Date().toISOString(),
   })
 }

@@ -5,6 +5,7 @@
 
 export interface AppConfig {
   openai_api_key: string
+  n8n_webhook_url: string
   n8n_webhook_secret: string
   mutfak_nabzi_api_key: string
   supabase_url: string
@@ -24,6 +25,7 @@ const STORAGE_KEY = 'mutfak_nabzi_config'
 
 const DEFAULTS: AppConfig = {
   openai_api_key: '',
+  n8n_webhook_url: '',
   n8n_webhook_secret: '',
   mutfak_nabzi_api_key: '',
   supabase_url: '',
@@ -56,6 +58,10 @@ export function saveConfig(config: Partial<AppConfig>): void {
 
 export function getOpenAIKey(): string {
   return getConfig().openai_api_key || process.env.OPENAI_API_KEY || ''
+}
+
+export function getN8nWebhookUrl(): string {
+  return getConfig().n8n_webhook_url || process.env.N8N_WEBHOOK_URL || ''
 }
 
 export function hasRequiredConfig(): { ok: boolean; missing: string[] } {

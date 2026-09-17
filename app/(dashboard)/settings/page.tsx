@@ -43,6 +43,24 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 2000)
   }
 
+  const [n8nTested, setN8nTested] = useState<'idle'|'ok'|'err'>('idle')
+  const [n8nTesting, setN8nTesting] = useState(false)
+
+  const testN8n = async () => {
+    const url = (cfg as any).n8n_webhook_url || ''
+    if (!url) { alert('Önce n8n Webhook URL girin'); return }
+    setN8nTesting(true); setN8nTested('idle')
+    try {
+      const res = await fetch('/api/webhook/n8n-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ n8n_url: url }),
+      })
+      setN8nTested(res.ok ? 'ok' : 'err')
+    } catch { setN8nTested('err') }
+    setN8nTesting(false)
+  }
+
   const testOpenAI = async () => {
     const key = cfg.openai_api_key || ''
     if (!key) { alert('Önce OpenAI API Key girin'); return }
@@ -57,6 +75,7 @@ export default function SettingsPage() {
   const API_KEYS = [
     { key:'openai_api_key',    label:'OpenAI API Key',    placeholder:'sk-proj-...',          secret:true  },
     { key:'tiklagelsin_api_key',label:'Tıkla Gelsin API', placeholder:'tg_live_...',           secret:true  },
+    { key:'n8n_webhook_url',    label:'n8n Webhook URL',   placeholder:'https://xxx.app.n8n.cloud/webhook/...', secret:false },
     { key:'n8n_webhook_secret', label:'n8n Webhook Secret',placeholder:'whsec_...',            secret:true  },
     { key:'whatsapp_token',     label:'WhatsApp Token',   placeholder:'EAAxxxxxxxx...',         secret:true  },
     { key:'supabase_url',       label:'Supabase URL',     placeholder:'https://xxx.supabase.co',secret:false },
@@ -111,6 +130,12 @@ export default function SettingsPage() {
                 <div className="card-h">
                   <span className="card-title">API Anahtarları</span>
                   <div style={{ display:'flex', gap:8 }}>
+                    <button onClick={testN8n} disabled={n8nTesting}
+                      style={{ display:'flex', alignItems:'center', gap:5, padding:'4px 12px', borderRadius:8, fontSize:11.5, fontWeight:600, cursor:'pointer', border:'1px solid var(--bdr)',
+                        background: n8nTested==='ok'?'var(--green2)':n8nTested==='err'?'var(--red2)':'var(--s2)',
+                        color: n8nTested==='ok'?'var(--green)':n8nTested==='err'?'var(--red)':'var(--tx2)' }}>
+                      {n8nTesting ? '…Gönderiliyor' : n8nTested==='ok' ? '✓ n8n Bağlı' : n8nTested==='err' ? '✗ n8n Hata' : '🔗 n8n Test'}
+                    </button>
                     <button onClick={testOpenAI} disabled={testing}
                       style={{ display:'flex', alignItems:'center', gap:5, padding:'4px 12px', borderRadius:8, fontSize:11.5, fontWeight:600, cursor:'pointer', border:'1px solid var(--bdr)',
                         background: tested==='ok'?'var(--green2)':tested==='err'?'var(--red2)':'var(--s2)',
