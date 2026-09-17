@@ -8,5 +8,10 @@
       "path": "/api/pulse-reset",
       "schedule": "*/15 * * * *"
     }
-  ]
+  ],
+  "functions": {
+    "app/api/ai-watch/route.ts": {
+      "maxDuration": 30
+    }
+  }
 }
