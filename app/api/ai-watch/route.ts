@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
   const apiKey = body.api_key || process.env.OPENAI_API_KEY 
   if (!apiKey) return NextResponse.json({ error: 'API key gerekli' }, { status: 400 })
-  const auto_apply = body.auto_apply ?? true
+  const auto_apply = false // Pulse score asla ai-watch'tan yazılmaz, sadece kullanıcı onayı ile ai-apply'dan
 
   // 1. Her restoran için EN SON pulse — DISTINCT ON ile
   const { data: pulseRows, error: pulseErr } = await sb().rpc('get_latest_pulse_scores')

@@ -12,7 +12,7 @@ interface Log { time: string; msg: string; type: 'info'|'ok'|'warn'|'err'|'ai' }
 
 export function AIAutopilot({ interval = 30, onRefresh }: { interval?: number; onRefresh?: () => void }) {
   const [running, setRunning]   = useState(false)
-  const [autoMode, setAutoMode] = useState(true)
+  const [autoMode, setAutoMode] = useState(false)
   const [muted, setMuted]       = useState(false)
   const [expanded, setExpanded] = useState(true)
   const [status, setStatus]     = useState<'idle'|'scanning'|'applying'|'speaking'|'listening'|'error'>('idle')
