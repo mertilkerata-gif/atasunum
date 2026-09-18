@@ -46,13 +46,13 @@ export default function OverviewPage() {
       const allRests: any[] = restRows.length > 0 ? restRows : RESTAURANTS
       const result: RestaurantDashboard[] = allRests.map(r => ({
         restaurant: r as RestaurantDashboard['restaurant'],
-        pulse: {} as RestaurantDashboard['pulse'],
-        snapshot: {} as RestaurantDashboard['snapshot'],
+        pulse: (pm[r.id] ?? {}) as RestaurantDashboard['pulse'],
+        snapshot: (sm[r.id] ?? {}) as RestaurantDashboard['snapshot'],
         predictions: [] as any,
         latest_recommendation: undefined,
         weather: null as any,
         hourly_forecast: [] as any,
-      })).sort((a,b) => RISK_ORDER[a.pulse.risk_level]-RISK_ORDER[b.pulse.risk_level])
+      })).sort((a,b) => (RISK_ORDER[a.pulse?.risk_level]??99)-(RISK_ORDER[b.pulse?.risk_level]??99))
       setBoards(result as any); setIsLive(pulseRows.length>0); setRefreshed(new Date())
     } catch {
       const fb = RESTAURANTS.map(r => ({
